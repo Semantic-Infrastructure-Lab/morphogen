@@ -22,7 +22,7 @@ pip install -e .
 **Solution**:
 ```bash
 # Install in development mode
-cd /path/to/tia-projects
+cd /path/to/morphogen
 pip install -e .
 ```
 

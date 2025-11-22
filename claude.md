@@ -15,7 +15,7 @@
 
 1. **Install and verify**
    ```bash
-   cd kairo
+   cd morphogen
    pip install -e ".[dev,audio,viz]"
    pytest tests/test_field_operations.py -v  # Should pass
    ```
@@ -72,7 +72,7 @@ All domains share:
 ```bash
 # Clone and install
 git clone https://github.com/scottsen/morphogen.git
-cd kairo
+cd morphogen
 pip install -e .
 
 # With optional dependencies

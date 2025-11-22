@@ -380,7 +380,7 @@ Research topics needing ongoing discussion:
 - [ ] Replace all naming references
 - [ ] Initialize fresh git, push to main
 - [ ] Archive old kairo repository
-- [ ] Update TIA integration paths
+- [ ] Update development environment paths
 - [ ] Verify all tests passing
 
 ### Week 2-3: Foundation Work

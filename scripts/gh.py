@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-TIA GitHub Helper - Universal Issue & PR Management
+GitHub Helper - Universal Issue & PR Management
 
 PURPOSE:
-  Smooth GitHub workflow for issues and PRs across all TIA projects.
+  Smooth GitHub workflow for issues and PRs.
   Auto-detects repository from git, works without gh CLI.
 
 AUTHENTICATION:
@@ -13,35 +13,35 @@ AUTHENTICATION:
 
 USAGE:
   # Auto-detect repo from current directory
-  tia-gh issue 42                    # View issue #42
-  tia-gh issue 42 --comment "Done!"  # Comment on issue
-  tia-gh issue list                  # List open issues
-  tia-gh issue create "Bug fix"      # Create issue
+  gh-helper issue 42                    # View issue #42
+  gh-helper issue 42 --comment "Done!"  # Comment on issue
+  gh-helper issue list                  # List open issues
+  gh-helper issue create "Bug fix"      # Create issue
 
-  tia-gh pr 38                       # View PR #38
-  tia-gh pr 38 files                 # Show files changed
-  tia-gh pr 38 --merge               # Merge PR
-  tia-gh pr list                     # List open PRs
-  tia-gh pr create "Feature"         # Create PR from current branch
+  gh-helper pr 38                       # View PR #38
+  gh-helper pr 38 files                 # Show files changed
+  gh-helper pr 38 --merge               # Merge PR
+  gh-helper pr list                     # List open PRs
+  gh-helper pr create "Feature"         # Create PR from current branch
 
   # Specify repo explicitly
-  tia-gh -r scottsen/kairo issue 10
+  gh-helper -r scottsen/morphogen issue 10
 
   # Quick shortcuts
-  tia-gh i 42          # View issue
-  tia-gh p 38          # View PR
-  tia-gh p 38 m        # Merge PR
+  gh-helper i 42          # View issue
+  gh-helper p 38          # View PR
+  gh-helper p 38 m        # Merge PR
 
 FEATURES:
   Issues:  view, list, create, comment, close, reopen, label, assign
   PRs:     view, list, create, merge, comment, files, commits, diff
-  Smart:   Auto-detect repo, colored output, TIA integration
+  Smart:   Auto-detect repo, colored output
 
 EXAMPLES:
-  tia-gh issue list --state all --limit 20
-  tia-gh pr 38 --comment "LGTM" --merge
-  tia-gh issue 42 --label bug --assign scottsen
-  tia-gh pr create --title "Fix auth" --body "Details..." --base develop
+  gh-helper issue list --state all --limit 20
+  gh-helper pr 38 --comment "LGTM" --merge
+  gh-helper issue 42 --label bug --assign scottsen
+  gh-helper pr create --title "Fix auth" --body "Details..." --base develop
 """
 import sys
 import json
@@ -369,7 +369,7 @@ def main():
 
     if not args:
         print(colored("❌ No command specified", Color.RED), file=sys.stderr)
-        print("Try: tia-gh --help", file=sys.stderr)
+        print("Try: gh-helper --help", file=sys.stderr)
         sys.exit(1)
 
     command = args[0]
@@ -525,7 +525,7 @@ def main():
 
     else:
         print(colored(f"❌ Unknown command: {command}", Color.RED), file=sys.stderr)
-        print("Try: tia-gh --help", file=sys.stderr)
+        print("Try: gh-helper --help", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":

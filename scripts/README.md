@@ -67,7 +67,7 @@ python3 scripts/reveal.py --level 1 README.md
 **Installation**:
 ```bash
 # Add to PATH or use directly
-alias tia-gh='python /home/user/morphogen/scripts/gh.py'
+alias gh-helper='python /home/user/morphogen/scripts/gh.py'
 ```
 
 **Authentication**:
@@ -78,23 +78,23 @@ Requires GitHub token from:
 **Usage**:
 ```bash
 # Issues
-tia-gh issue 42                     # View issue #42
-tia-gh issue list                   # List open issues
-tia-gh issue create "Bug fix"       # Create new issue
-tia-gh issue 42 --comment "Done!"   # Comment on issue
-tia-gh issue 42 --close             # Close issue
+gh-helper issue 42                     # View issue #42
+gh-helper issue list                   # List open issues
+gh-helper issue create "Bug fix"       # Create new issue
+gh-helper issue 42 --comment "Done!"   # Comment on issue
+gh-helper issue 42 --close             # Close issue
 
 # Pull Requests
-tia-gh pr 38                        # View PR #38
-tia-gh pr list                      # List open PRs
-tia-gh pr 38 files                  # Show changed files
-tia-gh pr 38 --merge                # Merge PR
-tia-gh pr create "Feature"          # Create PR from current branch
+gh-helper pr 38                        # View PR #38
+gh-helper pr list                      # List open PRs
+gh-helper pr 38 files                  # Show changed files
+gh-helper pr 38 --merge                # Merge PR
+gh-helper pr create "Feature"          # Create PR from current branch
 
 # Shortcuts
-tia-gh i 42                         # View issue
-tia-gh p 38                         # View PR
-tia-gh p 38 m                       # Merge PR
+gh-helper i 42                         # View issue
+gh-helper p 38                         # View PR
+gh-helper p 38 m                       # Merge PR
 ```
 
 **Features**:
@@ -139,27 +139,27 @@ tia-gh p 38 m                       # Merge PR
 
 ```bash
 # List current issues
-tia-gh issue list
+gh-helper issue list
 
 # View specific issue
-tia-gh issue 123
+gh-helper issue 123
 
 # Close issue with comment
-tia-gh issue 123 --comment "Fixed in PR #125" --close
+gh-helper issue 123 --comment "Fixed in PR #125" --close
 ```
 
 ### Creating Pull Requests
 
 ```bash
 # Create PR from current branch
-tia-gh pr create --title "Add reveal tool documentation" \
+gh-helper pr create --title "Add reveal tool documentation" \
                  --body "Documents the progressive reveal CLI for codebase exploration"
 
 # Check PR status
-tia-gh pr list
+gh-helper pr list
 
 # Merge when ready
-tia-gh pr 126 --merge
+gh-helper pr 126 --merge
 ```
 
 ---

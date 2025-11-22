@@ -155,10 +155,9 @@ morphogen --version
 # Should output: morphogen 0.11.0
 ```
 
-**3.3 Update TIA Integration**
+**3.3 Update Development Environment**
 ```bash
-# If using TIA, update project path
-# Edit TIA project registry to point to new location
+# Update any project management tools or IDE configurations
 # From: /home/scottsen/src/projects/kairo
 # To:   /home/scottsen/src/projects/morphogen
 ```
@@ -244,8 +243,8 @@ git push origin v0.11.0
 - Mitigation: Comprehensive grep/replace before migration
 - Mitigation: Test all documentation links post-migration
 
-**Risk 4: TIA/external integrations break**
-- Mitigation: Update TIA project path immediately
+**Risk 4: External integrations break**
+- Mitigation: Update project paths in all development tools immediately
 - Mitigation: Symlink if needed: `ln -s morphogen kairo`
 
 ---
@@ -257,7 +256,7 @@ git push origin v0.11.0
 - [ ] Old repo archived with redirect notice
 - [ ] All tests passing in new repo
 - [ ] Documentation links verified
-- [ ] TIA integration updated
+- [ ] Development environment updated
 - [ ] Local development workflow confirmed
 
 ### Week 2
@@ -346,7 +345,7 @@ Repository = "https://github.com/scottsen/morphogen"
 ### Process Success
 - [ ] Migration completed within 1 week
 - [ ] Zero downtime for active development
-- [ ] All integrations (TIA, CI/CD) functional
+- [ ] All integrations (CI/CD) functional
 - [ ] Development velocity maintained
 
 ### Strategic Success
