@@ -109,16 +109,17 @@ class AudioOperations:
     @operator(
         domain="audio",
         category=OpCategory.CONSTRUCT,
-        signature="(freq: float, duration: float, blep: bool, sample_rate: int) -> AudioBuffer",
+        signature="(freq: float, phase: float, duration: float, blep: bool, sample_rate: int) -> AudioBuffer",
         deterministic=True,
         doc="Generate sawtooth wave oscillator"
     )
-    def saw(freq: float = 440.0, duration: float = 1.0, blep: bool = True,
+    def saw(freq: float = 440.0, phase: float = 0.0, duration: float = 1.0, blep: bool = True,
             sample_rate: int = DEFAULT_SAMPLE_RATE) -> AudioBuffer:
         """Generate sawtooth wave oscillator.
 
         Args:
             freq: Frequency in Hz
+            phase: Initial phase in radians (0 to 2π)
             duration: Duration in seconds
             blep: Enable band-limiting (PolyBLEP)
             sample_rate: Sample rate in Hz
@@ -129,15 +130,18 @@ class AudioOperations:
         num_samples = int(duration * sample_rate)
         t = np.arange(num_samples) / sample_rate
 
+        # Convert phase from radians to normalized (0-1)
+        phase_norm = phase / (2.0 * np.pi)
+
         if blep:
             # PolyBLEP sawtooth (band-limited)
-            phase = (freq * t) % 1.0
-            data = 2.0 * phase - 1.0
+            phase_t = (freq * t + phase_norm) % 1.0
+            data = 2.0 * phase_t - 1.0
 
             # Simple PolyBLEP residual
             dt = freq / sample_rate
             for i in range(num_samples):
-                t_norm = phase[i]
+                t_norm = phase_t[i]
                 if t_norm < dt:
                     t_norm = t_norm / dt
                     data[i] += t_norm + t_norm - t_norm * t_norm - 1.0
@@ -146,8 +150,8 @@ class AudioOperations:
                     data[i] += t_norm * t_norm + t_norm + t_norm + 1.0
         else:
             # Naive sawtooth (aliased)
-            phase = (freq * t) % 1.0
-            data = 2.0 * phase - 1.0
+            phase_t = (freq * t + phase_norm) % 1.0
+            data = 2.0 * phase_t - 1.0
 
         return AudioBuffer(data=data, sample_rate=sample_rate)
 
@@ -155,16 +159,17 @@ class AudioOperations:
     @operator(
         domain="audio",
         category=OpCategory.CONSTRUCT,
-        signature="(freq: float, pwm: float, duration: float, sample_rate: int) -> AudioBuffer",
+        signature="(freq: float, phase: float, pwm: float, duration: float, sample_rate: int) -> AudioBuffer",
         deterministic=True,
         doc="Generate square wave oscillator"
     )
-    def square(freq: float = 440.0, pwm: float = 0.5, duration: float = 1.0,
+    def square(freq: float = 440.0, phase: float = 0.0, pwm: float = 0.5, duration: float = 1.0,
                sample_rate: int = DEFAULT_SAMPLE_RATE) -> AudioBuffer:
         """Generate square wave oscillator.
 
         Args:
             freq: Frequency in Hz
+            phase: Initial phase in radians (0 to 2π)
             pwm: Pulse width modulation (0.0 to 1.0, 0.5 = 50% duty cycle)
             duration: Duration in seconds
             sample_rate: Sample rate in Hz
@@ -174,25 +179,29 @@ class AudioOperations:
         """
         num_samples = int(duration * sample_rate)
         t = np.arange(num_samples) / sample_rate
-        phase = (freq * t) % 1.0
 
-        data = np.where(phase < pwm, 1.0, -1.0)
+        # Convert phase from radians to normalized (0-1)
+        phase_norm = phase / (2.0 * np.pi)
+        phase_t = (freq * t + phase_norm) % 1.0
+
+        data = np.where(phase_t < pwm, 1.0, -1.0)
         return AudioBuffer(data=data, sample_rate=sample_rate)
 
     @staticmethod
     @operator(
         domain="audio",
         category=OpCategory.CONSTRUCT,
-        signature="(freq: float, duration: float, sample_rate: int) -> AudioBuffer",
+        signature="(freq: float, phase: float, duration: float, sample_rate: int) -> AudioBuffer",
         deterministic=True,
         doc="Generate triangle wave oscillator"
     )
-    def triangle(freq: float = 440.0, duration: float = 1.0,
+    def triangle(freq: float = 440.0, phase: float = 0.0, duration: float = 1.0,
                  sample_rate: int = DEFAULT_SAMPLE_RATE) -> AudioBuffer:
         """Generate triangle wave oscillator.
 
         Args:
             freq: Frequency in Hz
+            phase: Initial phase in radians (0 to 2π)
             duration: Duration in seconds
             sample_rate: Sample rate in Hz
 
@@ -201,12 +210,15 @@ class AudioOperations:
         """
         num_samples = int(duration * sample_rate)
         t = np.arange(num_samples) / sample_rate
-        phase = (freq * t) % 1.0
+
+        # Convert phase from radians to normalized (0-1)
+        phase_norm = phase / (2.0 * np.pi)
+        phase_t = (freq * t + phase_norm) % 1.0
 
         # Triangle: ramp up from -1 to 1, then down from 1 to -1
-        data = np.where(phase < 0.5,
-                       4.0 * phase - 1.0,  # Rising edge
-                       3.0 - 4.0 * phase)   # Falling edge
+        data = np.where(phase_t < 0.5,
+                       4.0 * phase_t - 1.0,  # Rising edge
+                       3.0 - 4.0 * phase_t)   # Falling edge
         return AudioBuffer(data=data, sample_rate=sample_rate)
 
     @staticmethod
