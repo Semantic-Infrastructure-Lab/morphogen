@@ -1072,6 +1072,84 @@ class AudioOperations:
     @operator(
         domain="audio",
         category=OpCategory.TRANSFORM,
+        signature="(signal: AudioBuffer, cv: AudioBuffer, curve: str) -> AudioBuffer",
+        deterministic=True,
+        doc="Voltage-controlled amplifier for amplitude control"
+    )
+    def vca(signal: AudioBuffer, cv: AudioBuffer, curve: str = "linear") -> AudioBuffer:
+        """Voltage-controlled amplifier for amplitude control.
+
+        Classic synthesizer VCA module - controls signal amplitude via
+        control voltage (CV). Typically used with envelope generators
+        to shape note dynamics.
+
+        Args:
+            signal: Input audio signal
+            cv: Control voltage (0.0 to 1.0 range, auto-normalized)
+            curve: Response curve - "linear" or "exponential" (default: "linear")
+
+        Returns:
+            Signal with CV-controlled amplitude
+
+        Example:
+            # Classic ADSR envelope shaping
+            audio_sig = audio.saw(freq=110.0, duration=2.0, sample_rate=48000)
+            envelope = audio.adsr(attack=0.1, decay=0.3, sustain=0.6, release=0.5,
+                                duration=2.0, sample_rate=1000)
+            # Scheduler will auto-resample envelope from 1kHz to 48kHz
+            shaped = audio.vca(audio_sig, envelope)
+
+            # Exponential response (more natural-sounding amplitude curves)
+            shaped_exp = audio.vca(audio_sig, envelope, curve="exponential")
+
+            # Tremolo effect with LFO
+            audio_sig = audio.sine(freq=440.0, duration=4.0)
+            lfo = audio.sine(freq=6.0, duration=4.0)  # 6 Hz tremolo
+            tremolo = audio.vca(audio_sig, lfo, curve="linear")
+        """
+        # Use the sample rate from signal (scheduler handles rate conversion)
+        sample_rate = signal.sample_rate
+
+        # Get lengths
+        signal_len = signal.num_samples
+        cv_len = cv.num_samples
+        max_len = max(signal_len, cv_len)
+
+        # Pad shorter buffer with zeros if needed
+        signal_data = signal.data
+        cv_data = cv.data
+
+        if signal_len < max_len:
+            signal_data = np.pad(signal_data, (0, max_len - signal_len))
+        elif signal_len > max_len:
+            signal_data = signal_data[:max_len]
+
+        if cv_len < max_len:
+            cv_data = np.pad(cv_data, (0, max_len - cv_len))
+        elif cv_len > max_len:
+            cv_data = cv_data[:max_len]
+
+        # Normalize CV to 0-1 range (handle bipolar CVs)
+        cv_normalized = (cv_data - cv_data.min()) / (cv_data.max() - cv_data.min() + 1e-10)
+
+        # Apply curve
+        if curve == "exponential":
+            # Exponential curve: more natural-sounding amplitude response
+            # Square root curve (inverse of quadratic) - resists changes at low values
+            # Provides smoother fade-out and more pronounced initial amplitude
+            cv_normalized = np.sqrt(cv_normalized)
+        elif curve != "linear":
+            raise ValueError(f"Invalid curve type: {curve}. Use 'linear' or 'exponential'")
+
+        # Apply CV to signal amplitude
+        result = signal_data * cv_normalized
+
+        return AudioBuffer(data=result, sample_rate=sample_rate)
+
+    @staticmethod
+    @operator(
+        domain="audio",
+        category=OpCategory.TRANSFORM,
         signature="(signal: AudioBuffer, position: float) -> AudioBuffer",
         deterministic=True,
         doc="Pan mono signal to stereo"
@@ -2655,6 +2733,7 @@ limiter = AudioOperations.limiter
 mix = AudioOperations.mix
 gain = AudioOperations.gain
 multiply = AudioOperations.multiply
+vca = AudioOperations.vca
 pan = AudioOperations.pan
 clip = AudioOperations.clip
 normalize = AudioOperations.normalize
