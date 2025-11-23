@@ -441,6 +441,71 @@ class AudioOperations:
 
         return signal
 
+    @staticmethod
+    @operator(
+        domain="audio",
+        category=OpCategory.TRANSFORM,
+        signature="(signal: AudioBuffer, cutoff: AudioBuffer, q: float) -> AudioBuffer",
+        deterministic=True,
+        doc="Voltage-controlled lowpass filter with time-varying cutoff"
+    )
+    def vcf_lowpass(signal: AudioBuffer, cutoff: AudioBuffer, q: float = 0.707) -> AudioBuffer:
+        """Apply voltage-controlled lowpass filter with modulated cutoff.
+
+        This filter accepts cutoff frequency as an AudioBuffer, enabling
+        control-rate modulation (e.g., ADSR envelope controlling filter cutoff).
+        The cutoff buffer is automatically resampled to match the signal rate
+        by the scheduler.
+
+        Args:
+            signal: Input audio buffer
+            cutoff: Cutoff frequency modulation as AudioBuffer (in Hz)
+            q: Quality factor (resonance), typically 0.5 to 10.0
+
+        Returns:
+            Filtered audio buffer
+
+        Example:
+            # Classic subtractive synth: envelope-controlled filter
+            saw = audio.sawtooth(freq=110.0, duration=2.0, sample_rate=48000)
+            env = audio.adsr(attack=0.01, decay=0.5, sustain=0.3, release=0.8,
+                           duration=2.0, sample_rate=1000)
+            # Scale envelope to cutoff range: 200Hz to 4000Hz
+            cutoff_mod = AudioBuffer(
+                data=200.0 + env.data * 3800.0,
+                sample_rate=env.sample_rate
+            )
+            filtered = audio.vcf_lowpass(saw, cutoff_mod, q=2.0)
+
+        Notes:
+            - Cutoff buffer is linearly resampled to signal rate by scheduler
+            - Filter coefficients recomputed per-sample for smooth modulation
+            - State maintained across coefficient changes for continuity
+            - Cutoff values clamped to valid range: [20Hz, nyquist/2]
+        """
+        # Ensure cutoff buffer length matches signal
+        if len(cutoff.data) != len(signal.data):
+            # Resample cutoff to match signal length
+            # (This should already be done by scheduler, but handle edge case)
+            cutoff_resampled = np.interp(
+                np.linspace(0, len(cutoff.data) - 1, len(signal.data)),
+                np.arange(len(cutoff.data)),
+                cutoff.data
+            )
+        else:
+            cutoff_resampled = cutoff.data
+
+        # Clamp cutoff to valid range
+        nyquist = signal.sample_rate / 2.0
+        cutoff_clamped = np.clip(cutoff_resampled, 20.0, nyquist * 0.95)
+
+        # Apply time-varying biquad filter
+        filtered = AudioOperations._apply_time_varying_lowpass(
+            signal.data, cutoff_clamped, q, signal.sample_rate
+        )
+
+        return AudioBuffer(data=filtered, sample_rate=signal.sample_rate)
+
     # ========================================================================
     # ENVELOPES (Section 5.3)
     # ========================================================================
@@ -1343,6 +1408,69 @@ class AudioOperations:
         a2 = 1 - alpha / A
 
         return np.array([b0, b1, b2]), np.array([a0, a1, a2])
+
+    @staticmethod
+    def _apply_time_varying_lowpass(
+        signal: np.ndarray,
+        cutoff_array: np.ndarray,
+        q: float,
+        sample_rate: int
+    ) -> np.ndarray:
+        """Apply biquad lowpass filter with time-varying cutoff.
+
+        This implements a sample-by-sample biquad filter where the cutoff
+        frequency changes over time. Filter coefficients are recomputed
+        for each sample, and the filter state is maintained for continuity.
+
+        Args:
+            signal: Input signal array
+            cutoff_array: Array of cutoff frequencies (one per sample) in Hz
+            q: Quality factor (resonance)
+            sample_rate: Sample rate in Hz
+
+        Returns:
+            Filtered signal array
+
+        Implementation notes:
+            - Uses Direct Form II for state continuity
+            - Coefficients recomputed per-sample for smooth modulation
+            - State vector preserved across coefficient changes
+            - Normalized coefficients to avoid numerical issues
+        """
+        output = np.zeros_like(signal)
+        # Biquad state (2 elements for 2nd-order filter)
+        state = np.zeros(2)
+
+        for i in range(len(signal)):
+            # Compute filter coefficients for current cutoff
+            cutoff = cutoff_array[i]
+            w0 = 2.0 * np.pi * cutoff / sample_rate
+            alpha = np.sin(w0) / (2.0 * q)
+
+            # Biquad lowpass coefficients
+            b0 = (1.0 - np.cos(w0)) / 2.0
+            b1 = 1.0 - np.cos(w0)
+            b2 = (1.0 - np.cos(w0)) / 2.0
+            a0 = 1.0 + alpha
+            a1 = -2.0 * np.cos(w0)
+            a2 = 1.0 - alpha
+
+            # Normalize by a0
+            b0, b1, b2 = b0/a0, b1/a0, b2/a0
+            a1, a2 = a1/a0, a2/a0
+
+            # Direct Form II implementation
+            # w[n] = x[n] - a1*w[n-1] - a2*w[n-2]
+            w = signal[i] - a1*state[0] - a2*state[1]
+
+            # y[n] = b0*w[n] + b1*w[n-1] + b2*w[n-2]
+            output[i] = b0*w + b1*state[0] + b2*state[1]
+
+            # Update state: shift w into state buffer
+            state[1] = state[0]
+            state[0] = w
+
+        return output
 
     # ========================================================================
     # AUDIO I/O (v0.6.0)
