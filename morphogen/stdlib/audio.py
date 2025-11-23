@@ -1010,6 +1010,68 @@ class AudioOperations:
     @operator(
         domain="audio",
         category=OpCategory.TRANSFORM,
+        signature="(signal1: AudioBuffer, signal2: AudioBuffer, gain: float) -> AudioBuffer",
+        deterministic=True,
+        doc="Multiply two audio signals (ring modulation, AM synthesis)"
+    )
+    def multiply(signal1: AudioBuffer, signal2: AudioBuffer, gain: float = 1.0) -> AudioBuffer:
+        """Multiply two audio signals element-wise.
+
+        Used for ring modulation, amplitude modulation, and other
+        modulation synthesis techniques.
+
+        Args:
+            signal1: First input signal (carrier)
+            signal2: Second input signal (modulator)
+            gain: Output gain multiplier (default 1.0)
+
+        Returns:
+            Product of the two signals with gain applied
+
+        Example:
+            # Ring modulation: multiply two oscillators
+            carrier = audio.sine(freq=440.0, duration=1.0)
+            modulator = audio.sine(freq=220.0, duration=1.0)
+            ring_mod = audio.multiply(carrier, modulator)
+
+            # Amplitude modulation with envelope
+            audio_sig = audio.saw(freq=110.0, duration=2.0, sample_rate=48000)
+            envelope = audio.adsr(attack=0.1, decay=0.3, sustain=0.6, release=0.5,
+                                duration=2.0, sample_rate=1000)
+            # Scheduler will auto-resample envelope from 1kHz to 48kHz
+            shaped = audio.multiply(audio_sig, envelope)
+        """
+        # Use the sample rate from signal1 (scheduler handles rate conversion)
+        sample_rate = signal1.sample_rate
+
+        # Get lengths
+        len1 = signal1.num_samples
+        len2 = signal2.num_samples
+        max_len = max(len1, len2)
+
+        # Pad shorter signal with zeros if needed
+        data1 = signal1.data
+        data2 = signal2.data
+
+        if len1 < max_len:
+            data1 = np.pad(data1, (0, max_len - len1))
+        elif len1 > max_len:
+            data1 = data1[:max_len]
+
+        if len2 < max_len:
+            data2 = np.pad(data2, (0, max_len - len2))
+        elif len2 > max_len:
+            data2 = data2[:max_len]
+
+        # Element-wise multiplication with gain
+        result = data1 * data2 * gain
+
+        return AudioBuffer(data=result, sample_rate=sample_rate)
+
+    @staticmethod
+    @operator(
+        domain="audio",
+        category=OpCategory.TRANSFORM,
         signature="(signal: AudioBuffer, position: float) -> AudioBuffer",
         deterministic=True,
         doc="Pan mono signal to stereo"
@@ -2592,6 +2654,7 @@ drive = AudioOperations.drive
 limiter = AudioOperations.limiter
 mix = AudioOperations.mix
 gain = AudioOperations.gain
+multiply = AudioOperations.multiply
 pan = AudioOperations.pan
 clip = AudioOperations.clip
 normalize = AudioOperations.normalize
