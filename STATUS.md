@@ -1,8 +1,31 @@
 # Morphogen — Implementation Status & v1.0 Roadmap
 
-**Last Updated:** 2025-11-21
+**Last Updated:** 2025-11-23
 **Current Version:** v0.11.0 → v1.0 (2026-Q2)
 **Status:** Production-Ready - 40 Domains Implemented ✅ | [**v1.0 Release Plan →**](docs/planning/MORPHOGEN_RELEASE_PLAN.md)
+
+---
+
+## Recent Updates (2025-11-23)
+
+### ✅ Audio Domain - Filter State Management Fix
+**Commit:** `8ab2496` - fix: Export constant operator for registry discovery
+
+**Problem:** Constant operator was implemented but missing module-level export, causing registry discovery to fail. OperatorExecutor returned zeros for the operator, breaking filter state tests.
+
+**Solution:** Added single line `constant = AudioOperations.constant` to enable operator discovery.
+
+**Impact:**
+- ✅ Operator count: 59 → 60
+- ✅ Filter state test: PASSING (< 1e-6 error)
+- ✅ All 8 tests passing (4 GraphIR state + 4 constant)
+- ✅ SimplifiedScheduler filter_state support confirmed working
+
+**Files Modified:**
+- `morphogen/stdlib/audio.py` (+1 line)
+- `docs/specifications/audio-synthesis.md` (documentation update)
+- `tests/test_audio_basic.py` (from prior session)
+- `tests/test_graphir_state_management.py` (from prior session)
 
 ---
 

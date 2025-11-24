@@ -47,6 +47,31 @@ import morphogen
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes - 2025-11-23
+
+#### Audio Domain - Filter State Management Fix
+**Commit:** `8ab2496` - fix: Export constant operator for registry discovery
+
+**Problem:** The constant operator was implemented but missing module-level export in `audio.py`, causing registry discovery to fail. This resulted in OperatorExecutor returning zeros for the constant operator, breaking filter state tests.
+
+**Solution:** Added single line: `constant = AudioOperations.constant`
+
+**Impact:**
+- ✅ Operator count: 59 → 60 (constant operator now discoverable)
+- ✅ Filter state test: PASSING (< 1e-6 error, was 0.984786 error)
+- ✅ All tests passing: 4 GraphIR state + 4 constant operator = 8/8 ✅
+- ✅ SimplifiedScheduler filter_state support confirmed working (no implementation needed!)
+
+**Key Discovery:** SimplifiedScheduler already had complete filter_state support through OperatorExecutor delegation. What appeared to be a missing feature (3-4 hour implementation) was actually a one-line bug. Systematic debugging with reveal and instrumentation found the root cause in 40 minutes.
+
+**Files Modified:**
+- `morphogen/stdlib/audio.py` (+1 line)
+- `docs/specifications/audio-synthesis.md` (documentation update)
+- `tests/test_audio_basic.py` (constant operator tests)
+- `tests/test_graphir_state_management.py` (filter state tests)
+
+---
+
 ### 🚀 Morphogen v1.0 Release Plan - 2025-11-21
 
 **Aggressive 24-week execution strategy to Morphogen v1.0 (2026-Q2)**

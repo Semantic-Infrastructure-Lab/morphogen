@@ -334,6 +334,26 @@ class CircuitOperations:
                     if n1 != 0:
                         A[n2-1, n1-1] -= g
 
+            elif comp.comp_type == ComponentType.INDUCTOR:
+                # Inductor is a short circuit in DC (treat as very small resistor)
+                g = 1e12  # Very high conductance ≈ short circuit
+
+                n1, n2 = comp.node1, comp.node2
+
+                # Skip if both nodes are ground
+                if n1 == 0 and n2 == 0:
+                    continue
+
+                if n1 != 0:
+                    A[n1-1, n1-1] += g
+                    if n2 != 0:
+                        A[n1-1, n2-1] -= g
+
+                if n2 != 0:
+                    A[n2-1, n2-1] += g
+                    if n1 != 0:
+                        A[n2-1, n1-1] -= g
+
             elif comp.comp_type == ComponentType.CURRENT_SOURCE:
                 # Current source stamp
                 n1, n2 = comp.node1, comp.node2
@@ -438,7 +458,8 @@ class CircuitOperations:
         vsource_idx = 0
         for comp in circuit.components:
             if comp.comp_type == ComponentType.VOLTAGE_SOURCE:
-                circuit.branch_currents[comp.name] = vsource_currents[vsource_idx]
+                # MNA gives current flowing into positive node; negate for conventional direction (out of +)
+                circuit.branch_currents[comp.name] = -vsource_currents[vsource_idx]
                 vsource_idx += 1
             elif comp.comp_type == ComponentType.RESISTOR:
                 v1 = node_voltages[comp.node1]
