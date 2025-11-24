@@ -177,6 +177,109 @@ class TestGraphIRAutoStateManagement:
         print(f"   💡 Phase state managed automatically across {num_chunks} executions!")
         print(f"   💡 This graph could run INFINITELY!")
 
+    def test_graphir_filter_state_continuity(self):
+        """
+        Test filter_state auto-management in GraphIR execution.
+
+        Validates that vcf_lowpass filter state is automatically managed
+        across multiple executions, maintaining biquad coefficients for
+        seamless continuity.
+        """
+        # Build graph: sawtooth -> constant cutoff -> vcf_lowpass
+        graph = GraphIR(sample_rate=48000)
+
+        # Sawtooth oscillator
+        graph.add_node(
+            id="osc1",
+            op="saw",
+            outputs=[GraphIROutputPort(name="out", type="Sig")],
+            rate="audio",
+            params={"freq": 110.0}
+        )
+
+        # Constant cutoff source (2000 Hz)
+        graph.add_node(
+            id="cutoff_source",
+            op="constant",
+            outputs=[GraphIROutputPort(name="out", type="Sig")],
+            rate="audio",
+            params={"value": 2000.0}
+        )
+
+        # VCF lowpass filter
+        graph.add_node(
+            id="filter1",
+            op="vcf_lowpass",
+            outputs=[GraphIROutputPort(name="out", type="Sig")],
+            rate="audio",
+            params={"q": 2.0}
+        )
+
+        # Connect edges: osc -> filter signal, constant -> filter cutoff
+        graph.add_edge(from_port="osc1:out", to_port="filter1:signal", type="Sig")
+        graph.add_edge(from_port="cutoff_source:out", to_port="filter1:cutoff", type="Sig")
+
+        graph.add_output("out", ["filter1:out"])
+
+        scheduler = SimplifiedScheduler(graph, sample_rate=48000)
+
+        # Execute 5 chunks with filter state continuity
+        num_chunks = 5
+        chunk_samples = 4800  # 0.1s per chunk
+        outputs_with_state = []
+
+        for i in range(num_chunks):
+            result = scheduler.execute(duration_samples=chunk_samples)
+            outputs_with_state.append(result["out"])
+
+        # Concatenate hopped output
+        hopped_signal = np.concatenate(outputs_with_state)
+
+        # Generate reference: continuous filtering (no hops)
+        from morphogen.stdlib.audio import AudioOperations as audio
+
+        # Generate full continuous signal
+        full_signal = audio.saw(freq=110.0, duration=0.5, sample_rate=48000)
+        cutoff_buf = audio.constant(value=2000.0, duration=0.5, sample_rate=48000)
+        reference = audio.vcf_lowpass(full_signal, cutoff_buf, q=2.0)
+
+        # Measure error at chunk boundaries (most critical for continuity)
+        boundary_errors = []
+        for i in range(1, num_chunks):
+            boundary_idx = i * chunk_samples
+            # Check samples around boundary
+            for offset in range(-5, 5):
+                idx = boundary_idx + offset
+                if 0 <= idx < len(hopped_signal):
+                    error = abs(hopped_signal[idx] - reference.data[idx])
+                    boundary_errors.append(error)
+
+        # Filter state continuity should eliminate discontinuities
+        max_boundary_error = max(boundary_errors)
+        avg_boundary_error = np.mean(boundary_errors)
+        overall_error = np.max(np.abs(hopped_signal - reference.data))
+
+        # Debug output
+        print(f"\n🔍 Filter State Test Results:")
+        print(f"   Max boundary error: {max_boundary_error:.6f}")
+        print(f"   Avg boundary error: {avg_boundary_error:.6f}")
+        print(f"   Overall max error: {overall_error:.6f}")
+
+        # Check if filter state is being managed
+        # If error is > 0.1, filter state is NOT being maintained
+        if max_boundary_error > 0.1:
+            print(f"   ⚠️  Large error suggests filter_state NOT being managed!")
+            print(f"   📝 SimplifiedScheduler may need filter_state support")
+            # Temporarily skip assertion to complete implementation
+            assert False, f"Filter state not maintained - max error: {max_boundary_error:.6f}"
+        else:
+            # Stricter threshold for actual filter state management
+            assert max_boundary_error < 1e-5, f"Filter discontinuity: {max_boundary_error}"
+            assert overall_error < 1e-5, f"Filter state error: {overall_error}"
+            print(f"✅ GraphIR Filter State Continuity ({num_chunks} chunks):")
+            print(f"   💡 Filter state (biquad coefficients) managed automatically!")
+            print(f"   💡 VCF filters maintain continuity across chunk boundaries!")
+
 
 class TestGraphIRStateEdgeCases:
     """Test edge cases for GraphIR state management"""
@@ -229,6 +332,7 @@ if __name__ == "__main__":
         ("Phase Continuity in GraphIR", test_suite.test_graphir_phase_continuity),
         ("Multiple Independent Oscillators", test_suite.test_graphir_multiple_oscillators),
         ("Infinite Synthesis (50 chunks)", test_suite.test_graphir_infinite_synthesis),
+        ("Filter State Continuity (VCF)", test_suite.test_graphir_filter_state_continuity),
         ("Long Execution Stability (100 chunks)", edge_suite.test_graphir_state_survives_long_execution),
     ]
 

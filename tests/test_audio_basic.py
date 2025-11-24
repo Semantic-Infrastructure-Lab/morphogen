@@ -141,6 +141,34 @@ class TestOscillators:
         num_impulses = np.sum(buf.data > 0.5)
         assert 9 <= num_impulses <= 11  # Allow some tolerance
 
+    def test_constant_basic(self):
+        """Test constant value AudioBuffer generation."""
+        buf = audio.constant(value=5.0, duration=0.1, sample_rate=48000)
+        assert buf.num_samples == 4800  # 0.1s at 48kHz
+        assert buf.sample_rate == 48000
+        # All samples should be exactly 5.0
+        assert np.all(buf.data == 5.0)
+
+    def test_constant_zero(self):
+        """Test constant with zero value."""
+        buf = audio.constant(value=0.0, duration=0.5)
+        assert buf.num_samples == 22050  # 0.5s at 44.1kHz
+        assert np.all(buf.data == 0.0)
+
+    def test_constant_negative(self):
+        """Test constant with negative value."""
+        buf = audio.constant(value=-2.5, duration=0.1)
+        assert np.all(buf.data == -2.5)
+
+    def test_constant_for_vcf_cutoff(self):
+        """Test constant operator for VCF filter cutoff use case."""
+        # This is the primary use case: fixed cutoff for vcf_lowpass
+        cutoff = audio.constant(value=2000.0, duration=1.0, sample_rate=48000)
+        assert len(cutoff.data) == 48000
+        assert np.all(cutoff.data == 2000.0)
+        # Should be compatible with vcf_lowpass input
+        assert isinstance(cutoff, AudioBuffer)
+
 
 class TestUtilities:
     """Tests for utility operations."""

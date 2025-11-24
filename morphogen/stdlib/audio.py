@@ -302,6 +302,41 @@ class AudioOperations:
 
         return AudioBuffer(data=data, sample_rate=sample_rate)
 
+    @staticmethod
+    @operator(
+        domain="audio",
+        category=OpCategory.CONSTRUCT,
+        signature="(value: float, duration: float, sample_rate: int) -> AudioBuffer",
+        deterministic=True,
+        doc="Generate constant-value AudioBuffer"
+    )
+    def constant(value: float = 0.0, duration: float = 1.0,
+                 sample_rate: int = DEFAULT_SAMPLE_RATE) -> AudioBuffer:
+        """Generate constant-value AudioBuffer.
+
+        Creates an AudioBuffer where all samples have the same value.
+        Useful for fixed cutoff frequencies, DC offsets, bias voltages,
+        and any scenario requiring a non-varying signal.
+
+        Args:
+            value: Constant value for all samples
+            duration: Duration in seconds
+            sample_rate: Sample rate in Hz
+
+        Returns:
+            AudioBuffer with constant value
+
+        Example:
+            # Fixed 2kHz cutoff for VCF filter
+            cutoff = audio.constant(value=2000.0, duration=1.0)
+
+            # DC offset
+            dc_offset = audio.constant(value=0.5, duration=2.0)
+        """
+        num_samples = int(duration * sample_rate)
+        data = np.full(num_samples, value)
+        return AudioBuffer(data=data, sample_rate=sample_rate)
+
     # ========================================================================
     # FILTERS (Section 5.2)
     # ========================================================================
@@ -3014,6 +3049,7 @@ square = AudioOperations.square
 triangle = AudioOperations.triangle
 noise = AudioOperations.noise
 impulse = AudioOperations.impulse
+constant = AudioOperations.constant
 lowpass = AudioOperations.lowpass
 highpass = AudioOperations.highpass
 bandpass = AudioOperations.bandpass
