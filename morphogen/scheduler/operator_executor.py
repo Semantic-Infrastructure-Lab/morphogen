@@ -8,13 +8,30 @@ Key features:
 - Automatic operator discovery from stdlib
 - Parameter conversion (GraphIR params → operator args)
 - AudioBuffer ↔ np.ndarray conversion
-- Stateful operator management (phase continuity, filter state, etc.)
+- Convention-based stateful operator management (phase continuity, filter state, etc.)
 """
 
 from typing import Dict, Any, Callable, Optional
 import numpy as np
 import inspect
 from morphogen.core.operator import get_operator_metadata, is_operator
+
+
+# Convention-based stateful parameter detection
+# Different state management patterns for different parameter types:
+#
+# EXECUTOR_MANAGED_STATE: Executor calculates and updates state after execution
+#   - 'phase': Oscillator phase (float) - executor computes final phase from frequency
+#
+# OPERATOR_MANAGED_STATE: Operators update state via in-place AudioBuffer modification
+#   - 'filter_state': Biquad filter state (AudioBuffer with 2 samples: [z1, z2])
+EXECUTOR_MANAGED_STATE = {
+    "phase": float,  # Oscillator phase continuity
+}
+
+OPERATOR_MANAGED_STATE = {
+    "filter_state": 2,  # Biquad filter state (2 samples: [z1, z2])
+}
 
 
 class OperatorRegistry:
@@ -93,13 +110,35 @@ class OperatorRegistry:
 
 class OperatorExecutor:
     """
-    Executes operators with proper parameter conversion and state management.
+    Executes operators with proper parameter conversion and convention-based state management.
 
     Handles:
     - np.ndarray ↔ AudioBuffer conversion
     - Parameter parsing (e.g., "440Hz" → 440.0)
-    - Stateful operators (phase continuity, filter state)
+    - Convention-based stateful operators (phase continuity, filter state, etc.)
     - Multi-output operators
+
+    State Management:
+    Automatically detects and manages stateful parameters via convention-based naming.
+    Two state management patterns:
+
+    1. EXECUTOR-MANAGED STATE:
+       - 'phase': Oscillator phase continuity (float)
+       - Executor calculates final state after execution
+       - Used when operators don't update state themselves
+
+    2. OPERATOR-MANAGED STATE:
+       - 'filter_state': Biquad filter state (AudioBuffer with 2 samples: [z1, z2])
+       - Operators update state via in-place AudioBuffer modification
+       - Used when operators handle their own state updates
+
+    State is automatically:
+    1. Created on first operator execution
+    2. Injected into operator calls
+    3. Updated (by executor or operator, depending on pattern)
+    4. Persisted across executions (per node_id)
+
+    No manual state management required!
     """
 
     def __init__(self, registry: OperatorRegistry, sample_rate: int = 48000):
@@ -158,8 +197,10 @@ class OperatorExecutor:
         op_args = {}
         sig = inspect.signature(op_func)
 
-        # Load operator state (for stateful operators like oscillators, filters)
-        node_state = self._operator_state.get(node_id, {})
+        # Initialize node state if needed
+        if node_id not in self._operator_state:
+            self._operator_state[node_id] = {}
+        node_state = self._operator_state[node_id]
 
         # Match parameters to function signature
         for param_name in sig.parameters:
@@ -175,9 +216,24 @@ class OperatorExecutor:
             elif param_name == "duration":
                 # Calculate duration from num_samples
                 op_args[param_name] = num_samples / rate_hz
-            elif param_name == "phase" and "phase" in node_state:
-                # Inject phase state for oscillators
-                op_args[param_name] = node_state["phase"]
+            elif param_name in EXECUTOR_MANAGED_STATE:
+                # Executor-managed state (e.g., phase)
+                # Executor calculates state after execution
+                if param_name not in node_state:
+                    node_state[param_name] = 0.0  # Initialize to zero
+                op_args[param_name] = node_state[param_name]
+            elif param_name in OPERATOR_MANAGED_STATE:
+                # Operator-managed state (e.g., filter_state)
+                # Operator updates state via in-place AudioBuffer modification
+                if param_name not in node_state:
+                    # Create AudioBuffer state with appropriate size
+                    state_size = OPERATOR_MANAGED_STATE[param_name]
+                    node_state[param_name] = AudioBuffer(
+                        data=np.zeros(state_size),
+                        sample_rate=int(rate_hz)
+                    )
+                # Inject state - operator will update it automatically
+                op_args[param_name] = node_state[param_name]
 
         # Execute operator
         try:
@@ -186,9 +242,10 @@ class OperatorExecutor:
             print(f"Error executing operator '{operator_name}': {e}")
             return {"out": np.zeros(num_samples)}
 
-        # Update operator state after execution (phase continuity for oscillators)
-        if "freq" in parsed_params and "phase" in sig.parameters:
-            # This is an oscillator - calculate final phase
+        # Update executor-managed state (phase continuity for oscillators)
+        # Note: Operator-managed state (filter_state) is updated automatically by operators
+        if "freq" in parsed_params and "phase" in EXECUTOR_MANAGED_STATE and "phase" in sig.parameters:
+            # Calculate final phase for phase continuity
             freq = parsed_params["freq"]
             duration = num_samples / rate_hz
             phase_advance = (2.0 * np.pi * freq * duration) % (2.0 * np.pi)
@@ -196,9 +253,7 @@ class OperatorExecutor:
             final_phase = (current_phase + phase_advance) % (2.0 * np.pi)
 
             # Save state for next execution
-            if node_id not in self._operator_state:
-                self._operator_state[node_id] = {}
-            self._operator_state[node_id]["phase"] = final_phase
+            node_state["phase"] = final_phase
 
         # Convert result to output dict
         outputs = {}
