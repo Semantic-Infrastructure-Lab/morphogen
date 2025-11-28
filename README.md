@@ -32,6 +32,27 @@ Current tools force you to:
 
 **Morphogen eliminates this fragmentation.** Model a guitar string's physics, synthesize its sound, optimize its geometry, and visualize the result — all in the same deterministic execution environment.
 
+---
+
+## Part of the Semantic Infrastructure Lab
+
+**Morphogen** is a production component of the [Semantic Infrastructure Lab (SIL)](https://github.com/semantic-infrastructure-lab/sil) — building the semantic substrate for intelligent systems.
+
+**Role in the Semantic OS:**
+- **Layer 2:** Domain Module (audio, physics, circuits, geometry)
+- **Layer 4:** Deterministic Engine (MLIR compilation, reproducible execution)
+
+**SIL Principles Applied:**
+- ✅ **Clarity** — Explicit domain semantics (audio, field, agent, geometry)
+- ✅ **Simplicity** — Four core operations unify all domains
+- ✅ **Composability** — Domains compose via typed connections
+- ✅ **Correctness** — Type system enforces units, rates, constraints
+- ✅ **Verifiability** — Deterministic execution enables reproducibility
+
+**Quick Links:** [SIL Manifesto](https://github.com/semantic-infrastructure-lab/sil/blob/main/docs/canonical/MANIFESTO.md) • [Unified Architecture](https://github.com/semantic-infrastructure-lab/sil/blob/main/docs/architecture/UNIFIED_ARCHITECTURE_GUIDE.md) • [Project Index](https://github.com/semantic-infrastructure-lab/sil/blob/main/projects/PROJECT_INDEX.md)
+
+---
+
 ## Two Surfaces, One Kernel
 
 Morphogen presents **two human-friendly faces** powered by a single semantic kernel:
