@@ -94,6 +94,7 @@ addopts = [
     "--verbose",
     "--strict-markers",
     "--tb=short",
+    "-p", "no:postgresql",  # Disable postgresql plugin (not used in this project)
     # Coverage options (uncomment when coverage is desired)
     # "--cov=morphogen",
     # "--cov-report=html",
