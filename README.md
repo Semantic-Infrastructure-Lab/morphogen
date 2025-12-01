@@ -19,6 +19,8 @@ tags:
 
 # Morphogen
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 > *Where computation becomes composition*
 
 **Morphogen** is a universal, deterministic computation platform that unifies domains that have never talked to each other before: **audio synthesis meets physics simulation meets circuit design meets geometry meets optimization** — all in one type system, one scheduler, one language.
