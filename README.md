@@ -473,7 +473,9 @@ Morphogen is building toward something transformative: a universal platform wher
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details
+Apache 2.0 - see [LICENSE](LICENSE) for details
+
+Copyright 2025 Semantic Infrastructure Lab Contributors
 
 ---
 
