@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Morphogen - Audio Synthesis Domain Frontend"
+authors:
+  - family-names: "Senkeresty"
+    given-names: "Scott"
+  - name: "Semantic Infrastructure Lab Contributors"
+repository-code: "https://github.com/scottsen/morphogen"
+url: "https://github.com/scottsen/morphogen"
+abstract: "Audio synthesis domain frontend for the Pantheon Universal Semantic IR. Demonstrates multi-level intermediate representation patterns for creative audio programming."
+keywords:
+  - audio-synthesis
+  - dsl
+  - intermediate-representation
+  - semantic-infrastructure
+  - creative-coding
+license: Apache-2.0
