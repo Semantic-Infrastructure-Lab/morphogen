@@ -36,8 +36,9 @@ class Atom:
         # Periodic table data (partial)
         periodic_table = {
             'H': (1, 1.008), 'C': (6, 12.011), 'N': (7, 14.007),
-            'O': (8, 15.999), 'F': (9, 18.998), 'P': (15, 30.974),
-            'S': (16, 32.06), 'Cl': (17, 35.45), 'Br': (35, 79.904)
+            'O': (8, 15.999), 'F': (9, 18.998), 'Na': (11, 22.990),
+            'P': (15, 30.974), 'S': (16, 32.06), 'Cl': (17, 35.45),
+            'Br': (35, 79.904)
         }
         if element not in periodic_table:
             raise ValueError(f"Unknown element: {element}")
@@ -84,6 +85,23 @@ class Molecule:
     def charges(self) -> np.ndarray:
         """Array of atomic charges (e)."""
         return np.array([atom.charge for atom in self.atoms])
+
+    # Convenience methods that wrap module-level functions
+    def num_atoms(self) -> int:
+        """Get number of atoms (alias for n_atoms property)."""
+        return self.n_atoms
+
+    def total_mass(self) -> float:
+        """Calculate total molecular mass."""
+        return molecular_weight(self)
+
+    def center_of_mass(self) -> np.ndarray:
+        """Calculate center of mass."""
+        return center_of_mass(self)
+
+    def moment_of_inertia(self) -> np.ndarray:
+        """Calculate moment of inertia tensor."""
+        return moment_of_inertia(self)
 
 
 @dataclass
@@ -468,6 +486,50 @@ def find_rings(molecule: Molecule) -> List[List[int]]:
 # ============================================================================
 # Force Field Calculations
 # ============================================================================
+
+def lennard_jones_potential(r: np.ndarray, epsilon: float, sigma: float) -> np.ndarray:
+    """Calculate Lennard-Jones potential energy.
+
+    Args:
+        r: Distance(s) between particles (Angstroms)
+        epsilon: Depth of potential well (kJ/mol)
+        sigma: Distance at which potential is zero (Angstroms)
+
+    Returns:
+        Potential energy (kJ/mol)
+    """
+    return 4.0 * epsilon * ((sigma / r)**12 - (sigma / r)**6)
+
+
+def harmonic_bond_energy(r: float, r_eq: float, k: float) -> float:
+    """Calculate harmonic bond energy.
+
+    Args:
+        r: Current bond length (Angstroms)
+        r_eq: Equilibrium bond length (Angstroms)
+        k: Force constant (kcal/mol/Angstrom^2)
+
+    Returns:
+        Bond energy (kcal/mol)
+    """
+    return 0.5 * k * (r - r_eq)**2
+
+
+def coulomb_energy(q1: float, q2: float, r: float) -> float:
+    """Calculate Coulomb electrostatic energy.
+
+    Args:
+        q1: Charge on first particle (elementary charge)
+        q2: Charge on second particle (elementary charge)
+        r: Distance between particles (Angstroms)
+
+    Returns:
+        Electrostatic energy (kcal/mol)
+    """
+    # Coulomb constant in kcal*Angstrom/(mol*e^2)
+    k_e = 332.0637
+    return k_e * q1 * q2 / r
+
 
 def compute_energy(
     molecule: Molecule,

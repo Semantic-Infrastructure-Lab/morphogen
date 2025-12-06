@@ -146,16 +146,17 @@ class TestForceFields:
 
     def test_lennard_jones_potential(self):
         """Test Lennard-Jones potential calculation."""
-        r = np.array([3.4])  # Minimum of LJ potential for typical parameters
         epsilon = 0.997  # kJ/mol
         sigma = 3.4      # Angstroms
+        r = np.array([2**(1/6) * sigma])  # Minimum of LJ potential at r = 2^(1/6)*sigma
 
         energy = molecular.lennard_jones_potential(r, epsilon, sigma)
 
         # At r = sigma, energy ≈ 0
         # At r = 2^(1/6) * sigma ≈ 3.82, energy = -epsilon
         assert len(energy) == 1
-        assert energy[0] < 0  # Attractive at this distance
+        assert energy[0] < 0  # Attractive at this distance (minimum)
+        assert np.isclose(energy[0], -epsilon, rtol=1e-5)  # Should be at minimum
 
     def test_harmonic_bond_energy(self):
         """Test harmonic bond energy calculation."""
