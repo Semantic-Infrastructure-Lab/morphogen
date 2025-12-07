@@ -197,11 +197,12 @@ morphogen run hello.kairo
 ## 🚀 Project Status & v1.0 Roadmap
 
 **Current Status (v0.11.0):**
-- ✅ 40 production-ready computational domains
-- ✅ 900+ comprehensive tests (all passing)
+- ✅ **25 active computational domains** (fully integrated with `use` statement)
+- ✅ **15 legacy domains** (implemented, migration to new system in progress)
+- ✅ **386 operators** accessible from Morphogen language
+- ✅ **1,381 tests passing** (251 MLIR tests skipped)
 - ✅ MLIR compilation pipeline complete (6 phases)
 - ✅ Python runtime with NumPy backend
-- ✅ Zero technical debt
 
 **v1.0 Release Plan (24 weeks):**
 
@@ -226,7 +227,7 @@ Morphogen is on an aggressive path to v1.0 with a three-track strategy:
    - Complete API documentation
    - Active community infrastructure
 
-**Read the full plan:** [**Morphogen v1.0 Release Plan**](docs/planning/MORPHOGEN_RELEASE_PLAN.md)
+**Read the full plan:** [**Morphogen Roadmap**](docs/ROADMAP.md)
 
 **What makes v1.0 special:**
 - 🔬 Symbolic + numeric execution (first platform to combine both)
@@ -303,29 +304,39 @@ x = dist + time                   # ERROR: m + s is invalid
 
 ---
 
-## 40+ Computational Domains
+## 25 Active Computational Domains
 
-Morphogen provides **40+ production-ready domains** spanning physics, audio, graphics, chemistry, and more. Each domain offers specialized operators optimized for its computational model.
+Morphogen provides **25 fully-integrated domains** accessible via the `use` statement, with **15 additional legacy domains** in migration. Each domain offers specialized operators optimized for its computational model.
 
-### Core Domains
+### Core Domains (Fully Integrated ✅)
 
-**Field Operations** - PDE solvers, diffusion, advection, stencils  
-**Agent Systems** - Particle simulations, flocking, N-body forces  
-**Audio Synthesis** - Oscillators, filters, effects, physical modeling  
-**RigidBody Physics** - 2D dynamics, collisions, constraints  
+**Field Operations** (19 ops) - PDE solvers, diffusion, advection, stencils
+**Agent Systems** (13 ops) - Particle simulations, flocking, N-body forces
+**Audio Synthesis** (60 ops) - Oscillators, filters, effects, physical modeling
+**RigidBody Physics** (12 ops) - 2D dynamics, collisions, constraints
 
-### Advanced Domains
+### Active Domains (Fully Integrated ✅)
 
-**Chemistry Suite** (9 domains) - Molecular dynamics, quantum chemistry, thermodynamics, kinetics  
-**Graphics Suite** (4 domains) - Procedural noise, palettes, color spaces, image processing  
-**Infrastructure** - Sparse linear algebra, integrators, I/O & storage  
-**Analysis** - Signal processing, computer vision, terrain generation, audio analysis  
+**Physics & Simulation** - field, agent, rigidbody, integrators, acoustics
+**Audio & Signal** - audio, signal, temporal
+**Graphics & Visual** - visual, color, image, noise, palette, terrain, vision
+**AI & Optimization** - neural, optimization, genetic, cellular, statemachine
+**Data & Infrastructure** - graph, sparse_linalg, io_storage, geometry
+**Circuit** - circuit (Phase 1: DC/AC/transient analysis)
+
+### Legacy Domains (Migration Pending ⏳)
+
+**Chemistry Suite** (9 domains) - molecular, qchem, thermo, kinetics, electrochem, catalysis, transport, multiphase, combustion
+**Specialized Physics** (4 domains) - thermal_ode, fluid_network, fluid_jet
+**Audio Extensions** (2 domains) - audio_analysis, instrument_model
 
 ### Complete Domain Catalog
 
-**📋 [View Full Domain Catalog](docs/DOMAINS.md)** - Detailed descriptions, code examples, and feature lists for all 40+ domains
+**📋 [View Full Domain Catalog](docs/DOMAINS.md)** - Detailed descriptions, code examples, and feature lists
 
-**Status tracking:** See [STATUS.md](STATUS.md) for implementation status and test coverage by domain
+**Status Analysis:** See [DOMAIN_STATUS_ANALYSIS.md](docs/meta/DOMAIN_STATUS_ANALYSIS.md) for detailed breakdown of active vs. legacy domains
+
+**Migration Plan:** Legacy domains will be integrated in v0.12.0 - see [Migration Guide](docs/guides/DOMAIN_MIGRATION_GUIDE.md)
 
 ---
 
@@ -489,4 +500,4 @@ Copyright 2025 Semantic Infrastructure Lab Contributors
 
 **Status:** v0.11.0 → v1.0 Release Plan Active | **Current Version:** 0.11.0 | **Target:** v1.0 (2026-Q2) | **Last Updated:** 2025-11-21
 
-**🚀 [View v1.0 Release Plan](docs/planning/MORPHOGEN_RELEASE_PLAN.md)** - 24-week roadmap to production release
+**🚀 [View Roadmap](docs/ROADMAP.md)** - Unified roadmap to v1.0 (Q2 2026)

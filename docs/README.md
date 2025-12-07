@@ -37,26 +37,30 @@ Welcome to the Morphogen documentation! This guide will help you navigate the do
 - **New to Morphogen?** Start with [Getting Started](getting-started.md) for installation and your first program
 - **Understand the architecture?** Read [Architecture Overview](architecture/overview.md)
 - **See the full ecosystem?** Check [ECOSYSTEM_MAP.md](../ECOSYSTEM_MAP.md) for all domains and roadmap
+- **Explore cross-domain transforms?** ⭐ **NEW:** [CROSS_DOMAIN_MESH_CATALOG.md](CROSS_DOMAIN_MESH_CATALOG.md) — Complete transformation mesh (40 domains, 18 transforms, multi-hop chains)
+- **Use cross-domain transforms?** See [CROSS_DOMAIN_API.md](CROSS_DOMAIN_API.md) — API reference for domain-to-domain composition
 - **Browse all documentation?** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) ⭐ — Complete map with reveal tool usage
 - **Explore efficiently?** Use the [reveal tool](../scripts/README.md) (`./scripts/reveal.sh`) for incremental documentation exploration
 - **Need help?** Check [Troubleshooting](troubleshooting.md)
 
 ---
 
-## 🚀 **v1.0 Release Plan Active**
+## 🚀 **v1.0 Roadmap Active**
 
-**Morphogen is on an aggressive 24-week path to v1.0!**
+**Morphogen is on a focused path to v1.0!**
 
-📋 **[Read the Complete Release Plan](planning/MORPHOGEN_RELEASE_PLAN.md)** ⭐
+📋 **[Read the Unified Roadmap](ROADMAP.md)** ⭐
+
+**Key Milestones:**
+- **v0.12.0** (Q1 2026): Domain Migration - bring 15 legacy domains into modern registry
+- **v1.0** (Q2 2026): Production release - 40+ domains, PyPI, community infrastructure
 
 **Three-track strategy:**
-- **Track 1:** Language evolution (symbolic execution, category theory optimization)
-- **Track 2:** Critical domains (Circuit, Fluid, 50+ domains total)
-- **Track 3:** Adoption (PyPI, examples, community)
+- **Track 1:** Language evolution (type inference, error messages, performance)
+- **Track 2:** Domain completion (migrate legacy, polish active domains)
+- **Track 3:** Adoption & Polish (PyPI, docs, tutorials, community)
 
-**Timeline:** v0.11.0 → v1.0 (2026-Q2)
-
-See [Planning](planning/) for detailed week-by-week execution plan.
+See [ROADMAP.md](ROADMAP.md) for complete details and implementation tracking.
 
 ---
 
@@ -139,23 +143,17 @@ Specific real-world applications
 - [Universal Domain Frameworks](reference/universal-domain-frameworks.md) ⭐ - Mathematical foundations (28K)
 - [Mathematical Transformation Metaphors](reference/math-transformation-metaphors.md) - Intuitive understanding (25K)
 
-### 🗺️ [Roadmap](roadmap/)
-Planning and progress tracking
-- **[Language Features Roadmap](roadmap/language-features.md)** ⭐ **NEW** — Clear path to language 1.0, finalized vs planned features
-- [MVP Roadmap](roadmap/mvp.md)
-- [Morphogen Core v0.1 Roadmap](roadmap/v0.1.md)
-- [Implementation Progress](roadmap/implementation-progress.md)
-- [Testing Strategy](roadmap/testing-strategy.md)
+### 🗺️ Roadmap & Planning
 
-### 📊 [Planning](planning/)
+**Primary**: **[ROADMAP.md](ROADMAP.md)** ⭐ — Unified development roadmap (v0.12.0 → v1.0)
 
-> 📁 **Note:** This directory contains internal development planning documents. External contributors may want to start with [Architecture](#-architecture) and [Specifications](#-specifications) instead.
+**Feature-Specific**: [roadmap/](roadmap/)
+- [Language Features](roadmap/language-features.md) — Language evolution roadmap
+- [Testing Strategy](roadmap/testing-strategy.md) — Testing approach
 
-Strategic planning documents and execution plans
-- [Q4 2025 Execution Plan](planning/EXECUTION_PLAN_Q4_2025.md)
-- [Project Review and Next Steps](planning/PROJECT_REVIEW_AND_NEXT_STEPS.md)
-- [Next Steps Action Plan](planning/NEXT_STEPS_ACTION_PLAN.md)
-- [Showcase Output Strategy](planning/SHOWCASE_OUTPUT_STRATEGY.md)
+**Strategic Planning**: [planning/](planning/)
+- [KAIRO_2.0_STRATEGIC_ANALYSIS.md](planning/KAIRO_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
+- [archive/planning/](archive/planning/) — Historical planning documents (consolidated 2025-12-07)
 
 ### 🔬 [Analysis](analysis/)
 
