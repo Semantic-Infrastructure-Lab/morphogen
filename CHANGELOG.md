@@ -76,6 +76,129 @@ import morphogen
 
 ---
 
+## [0.12.0] - 2025-12-12
+
+### 🎉 MAJOR: Domain Migration Complete
+
+**All Legacy Domains Migrated**: The 3-phase migration plan is complete. All 39 computational domains are now fully integrated into the modern operator registry system.
+
+**Achievement:**
+- ✅ **39 production domains** (up from 25 in v0.11.0)
+- ✅ **606 operators** accessible via `use` statement (up from 386)
+- ✅ **1,705 comprehensive tests** (1,454 passing, 251 MLIR skipped)
+- ✅ All legacy domains migrated to modern `@operator` decorator pattern
+- ✅ Complete `use` statement coverage across all domains
+
+### Migration Summary
+
+**Phase 1: High-Value Chemistry ✅**
+- Migrated: molecular, thermal_ode, fluid_network
+- Added 40+ operators to registry
+- Full test coverage created
+
+**Phase 2: Chemistry Suite ✅**
+- Migrated: qchem, thermo, kinetics, electrochem, catalysis, transport
+- Added 70+ operators to registry
+- Unified chemistry domain stack operational
+- 9 chemistry domains now production-ready
+
+**Phase 3: Specialized Physics ✅**
+- Migrated: multiphase, combustion, fluid_jet, audio_analysis, instrument_model
+- Added 40+ operators to registry
+- Created 25 new tests (17 comprehensive for fluid_jet, 8 smoke tests for audio domains)
+- All specialized physics domains now accessible
+
+### New Domains Available (v0.12.0)
+
+**Chemistry (9 domains)**:
+- `molecular` (33 ops) - Molecular dynamics and force fields
+- `qchem` (13 ops) - Quantum chemistry calculations
+- `thermo` (12 ops) - Thermodynamic properties
+- `kinetics` (11 ops) - Chemical reaction kinetics
+- `electrochem` (13 ops) - Electrochemical systems
+- `catalysis` (11 ops) - Catalysis modeling
+- `transport` (17 ops) - Transport properties
+- `thermal_ode` (4 ops) - Thermal dynamics
+- `combustion` (8 ops) - Combustion modeling
+
+**Fluid Dynamics (2 domains)**:
+- `fluid_network` (4 ops) - Network flow modeling
+- `fluid_jet` (7 ops) - Jet dynamics and entrainment
+- `multiphase` (8 ops) - Multiphase flow systems
+
+**Audio & Synthesis (2 domains)**:
+- `audio_analysis` (9 ops) - Spectral analysis and deconvolution
+- `instrument_model` (12 ops) - Physical modeling synthesis
+
+### Testing
+
+**New test files**:
+- `tests/test_fluid_jet.py` - 17 comprehensive tests covering all 7 operators
+- `tests/test_audio_analysis.py` - 5 smoke tests for domain validation
+- `tests/test_instrument_model.py` - 3 smoke tests for domain validation
+
+**Test Results**:
+- Total: 1,705 tests (1,454 passed, 251 skipped)
+- All 39 domains have test coverage
+- 100% pass rate on active tests
+
+### Documentation
+
+**Updated**:
+- `README.md` - Accurate domain counts (39 domains, 606 operators, 1,705 tests)
+- `docs/ROADMAP.md` - v0.12.0 marked complete, priorities updated
+- Removed legacy migration warnings
+
+### Breaking Changes
+
+None. All changes are additive - new domains and operators are now accessible.
+
+### Migration Guide
+
+All 39 domains are now accessible via the `use` statement:
+
+```python
+from morphogen.runtime import Runtime
+
+rt = Runtime()
+
+# Chemistry domains
+rt.execute("use molecular")
+rt.execute("use qchem")
+rt.execute("use thermo")
+
+# Fluid dynamics
+rt.execute("use fluid_jet")
+rt.execute("use fluid_network")
+
+# Audio synthesis
+rt.execute("use audio_analysis")
+rt.execute("use instrument_model")
+```
+
+### Known Gaps
+
+**Integration Examples**:
+- Phase 3 domains (fluid_jet, audio_analysis, instrument_model) need usage examples
+- Cross-domain chemistry examples needed
+- Tutorial content for specialized physics
+
+**Test Coverage**:
+- audio_analysis: Smoke tests only (functional tests needed)
+- instrument_model: Smoke tests only (functional tests needed)
+- Target: 30+ tests per domain based on real use cases
+
+### Next Steps → v1.0
+
+With domain migration complete, focus shifts to:
+1. Integration examples for all domains
+2. Expanded test coverage (functional tests)
+3. Performance benchmarking
+4. Documentation polish
+5. Community preparation
+
+---
+
 ## [Unreleased]
 
 ### 🐛 Bug Fixes - 2025-11-23

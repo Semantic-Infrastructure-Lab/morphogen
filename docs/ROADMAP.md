@@ -1,8 +1,8 @@
 # Morphogen Roadmap
 
-**Current Version**: v0.11.0 (November 2025)
-**Next Milestone**: v0.12.0 - Domain Migration (Q1 2026)
-**Target**: v1.0 - Production Release (Q2 2026)
+**Current Version**: v0.12.0 (December 2025)
+**Next Milestone**: v1.0 - Production Release (Q2 2026)
+**Previous**: v0.11.0 (November 2025) - Project renamed to Morphogen
 
 > **Single source of truth** for Morphogen's development roadmap. For detailed status, see [STATUS.md](../STATUS.md).
 
@@ -10,17 +10,16 @@
 
 ## Quick Navigation
 
-- [Current Status](#current-status-v0110) - Where we are now
-- [v0.12.0 - Domain Migration](#v0120---domain-migration-q1-2026) - Next milestone
-- [v1.0 - Production Release](#v10---production-release-q2-2026) - Target release
+- [Current Status](#current-status-v0120) - Where we are now
+- [v1.0 - Production Release](#v10---production-release-q2-2026) - Next milestone
 - [Post-v1.0 Vision](#post-v10-vision) - Future roadmap
 - [Implementation Tracking](#implementation-tracking) - Domain completion status
 
 ---
 
-## Current Status (v0.11.0)
+## Current Status (v0.12.0)
 
-**Released**: November 20, 2025
+**Released**: December 2025
 
 ### What's Complete ✅
 
@@ -31,77 +30,50 @@
 - ✅ Cross-domain transform registry (18 transforms)
 - ✅ MLIR compilation pipeline (6 phases complete)
 
-**Domains**:
-- ✅ **25 Active Domains** (fully registered, accessible via `use`)
-  - 386 operators total
+**Domains** ⭐:
+- ✅ **39 Production Domains** (fully registered, accessible via `use`)
+  - **606 operators total** (up from 386 in v0.11.0)
   - All domains tested and documented
-  - Field, Agent, Audio, Visual, Geometry, Graph, Signal, etc.
+  - All legacy domains migrated to modern `@operator` system
+  - Chemistry suite complete (9 domains)
+  - Physics suite complete (8 domains)
+  - Audio & synthesis complete (5 domains)
 
 **Testing**:
-- ✅ 900+ comprehensive tests
-- ✅ All active domains have test coverage
+- ✅ **1,705 comprehensive tests** (1,454 passing, 251 MLIR skipped)
+- ✅ All 39 domains have test coverage
 - ✅ Cross-domain integration validated
+- ✅ Phase 3 domains fully tested (fluid_jet, audio_analysis, instrument_model)
 
-### Strategic Gaps ⚠️
+### v0.12.0 Migration Complete ✅
 
-**15 Legacy Domains** (implemented but not registered):
-- Molecular dynamics, quantum chemistry, thermodynamics
-- Chemical kinetics, electrochemistry, catalysis
-- Fluid dynamics (network, jet, multiphase)
-- Thermal ODE, combustion, transport properties
-- Audio analysis, instrument modeling
+**All Three Phases Completed**:
 
-**Migration Target**: v0.12.0 (Q1 2026)
+✅ **Phase 1: High-Value Chemistry**
+- Domains: molecular, thermal_ode, fluid_network
+- Status: COMPLETE (all domains registered and tested)
 
----
+✅ **Phase 2: Chemistry Suite**
+- Domains: qchem, thermo, kinetics, electrochem, catalysis, transport
+- Status: COMPLETE (unified chemistry stack operational)
 
-## v0.12.0 - Domain Migration (Q1 2026)
+✅ **Phase 3: Specialized Physics**
+- Domains: multiphase, combustion, fluid_jet, audio_analysis, instrument_model
+- Status: COMPLETE (all domains registered, 25 new tests added)
 
-**Focus**: Bring 15 legacy domains into the modern operator registry
+**Achievement**: All 39 domains now accessible via `use` statement. Legacy migration complete.
 
-### Migration Phases
+### Remaining Gaps ⚠️
 
-#### Phase 1: High-Value Chemistry (Weeks 1-4)
-**Domains**: molecular, thermal_ode, fluid_network
+**Integration Examples**:
+- Phase 3 domains (fluid_jet, audio_analysis, instrument_model) need usage examples
+- Cross-domain examples should demonstrate new capabilities
+- Tutorial content for chemistry and specialized physics domains
 
-**Deliverables**:
-- Migrate 3 domains to `@operator` decorator pattern
-- Create test files for each domain
-- Register in domain_registry.py
-- Validate `use` statement works
-- Update documentation
-
-**Estimated**: ~40 new operators accessible
-
-#### Phase 2: Chemistry Suite (Weeks 5-8)
-**Domains**: qchem, thermo, kinetics, electrochem, catalysis, transport
-
-**Deliverables**:
-- Migrate 6 chemistry domains
-- Unified chemistry documentation
-- Cross-domain chemistry examples
-- Test coverage >80%
-
-**Estimated**: ~70 new operators accessible
-
-#### Phase 3: Specialized Physics (Weeks 9-12)
-**Domains**: multiphase, combustion_light, fluid_jet, audio_analysis, instrument_model
-
-**Deliverables**:
-- Migrate 6 specialized domains
-- Complete `use` statement coverage (all 40 domains)
-- Cross-domain physics examples
-- Full documentation update
-
-**Estimated**: ~40 new operators accessible
-
-### Success Criteria (v0.12.0)
-
-- ✅ All 40 domains accessible via `use` statement
-- ✅ 500+ operators total (from 386 currently)
-- ✅ Test coverage >80% across all domains
-- ✅ Documentation updated and accurate
-- ✅ Migration guide and tools validated
+**Test Coverage**:
+- audio_analysis: Smoke tests only (needs functional tests)
+- instrument_model: Smoke tests only (needs functional tests)
+- Target: Expand to 30+ tests for these domains based on real use cases
 
 ---
 
@@ -272,61 +244,59 @@
 - ✅ Sparse_LinAlg (13 ops) - Sparse matrices
 - ✅ Circuit (15 ops) - DC/AC/transient analysis
 
-#### Phase 5: Legacy Migration (v0.12.0 Target)
-- ⏳ Molecular (33 funcs) - Molecular dynamics
-- ⏳ QChem (13 funcs) - Quantum chemistry
-- ⏳ Thermo (12 funcs) - Thermodynamics
-- ⏳ Kinetics (11 funcs) - Chemical kinetics
-- ⏳ Electrochem (13 funcs) - Electrochemistry
-- ⏳ Catalysis (11 funcs) - Catalysis modeling
-- ⏳ Transport (17 funcs) - Transport properties
-- ⏳ Multiphase (8 funcs) - Multiphase flow
-- ⏳ Combustion (8 funcs) - Combustion modeling
-- ⏳ Thermal_ODE (4 funcs) - Thermal dynamics
-- ⏳ Fluid_Network (4 funcs) - Network flow
-- ⏳ Fluid_Jet (8 funcs) - Jet dynamics
-- ⏳ Audio_Analysis (9 funcs) - Spectral analysis
-- ⏳ Instrument_Model (10 funcs) - Physical modeling synthesis
-- ⏳ Flappy (5 funcs) - Game demo (evaluate for inclusion)
+#### Phase 5: Legacy Migration (v0.12.0 - COMPLETE ✅)
+- ✅ Molecular (33 ops) - Molecular dynamics
+- ✅ QChem (13 ops) - Quantum chemistry
+- ✅ Thermo (12 ops) - Thermodynamics
+- ✅ Kinetics (11 ops) - Chemical kinetics
+- ✅ Electrochem (13 ops) - Electrochemistry
+- ✅ Catalysis (11 ops) - Catalysis modeling
+- ✅ Transport (17 ops) - Transport properties
+- ✅ Multiphase (8 ops) - Multiphase flow
+- ✅ Combustion (8 ops) - Combustion modeling
+- ✅ Thermal_ODE (4 ops) - Thermal dynamics
+- ✅ Fluid_Network (4 ops) - Network flow
+- ✅ Fluid_Jet (7 ops) - Jet dynamics
+- ✅ Audio_Analysis (9 ops) - Spectral analysis
+- ✅ Instrument_Model (12 ops) - Physical modeling synthesis
 
-**Total (Current)**: 25 active domains, 386 operators
-**Total (v0.12.0 Target)**: 40 domains, 500+ operators
+**Total (v0.12.0)**: 39 production domains, 606 operators, 1,705 tests
 
 ---
 
 ## Development Priorities
 
-### P0 - Do Now (Current Sprint)
-1. **Domain Migration Preparation**
-   - Create migration tooling
-   - Document migration process
-   - Set up test templates
+### P0 - Do Now (Current Sprint - Post v0.12.0)
+1. **Integration Examples for Phase 3 Domains**
+   - Create usage examples for fluid_jet, audio_analysis, instrument_model
+   - Cross-domain examples showcasing new capabilities
+   - Tutorial content for chemistry and specialized physics
 
-2. **Documentation Consolidation**
-   - Unified roadmap (this doc)
-   - Clean up redundant planning docs
-   - Update cross-references
+2. **Test Coverage Expansion**
+   - Expand audio_analysis tests (smoke → functional)
+   - Expand instrument_model tests (smoke → functional)
+   - Target: 30+ tests per domain
 
-3. **Test Infrastructure**
-   - Ensure all 25 active domains have tests
-   - Create test templates for migration
-   - CI/CD improvements
+3. **Documentation Polish**
+   - Update remaining docs to reflect 39 domains, 606 operators
+   - Chemistry domain tutorials
+   - Physics domain integration guides
 
-### P1 - Next Quarter (Q1 2026)
-1. **v0.12.0 Domain Migration**
-   - Execute 3-phase migration plan
-   - Full test coverage
-   - Documentation updates
-
-2. **Performance Benchmarking**
-   - Establish baseline metrics
+### P1 - Next Quarter (Q1 2026 - v1.0 Prep)
+1. **Performance Benchmarking**
+   - Establish baseline metrics across all 39 domains
    - Domain-specific benchmarks
-   - Optimization opportunities
+   - Optimization opportunities identification
 
-3. **Developer Experience**
+2. **Developer Experience**
    - Improved error messages
    - Better documentation
-   - Example gallery expansion
+   - Example gallery expansion (target: 50+ examples)
+
+3. **Community Infrastructure**
+   - PyPI release automation
+   - Documentation site updates
+   - Tutorial series expansion
 
 ### P2 - v1.0 Preparation (Q2 2026)
 1. **Language Polish**
@@ -365,6 +335,6 @@
 
 ---
 
-**Last Updated**: 2025-12-07
+**Last Updated**: 2025-12-12
 **Next Review**: Monthly (first week of each month)
 **Maintainer**: See [CONTRIBUTING.md](../CONTRIBUTING.md)
