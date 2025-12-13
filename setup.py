@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="morphogen",
-    version="0.11.0",
+    version="0.12.0",
     author="Scott Sen",
     description="A language of creative determinism for simulation, sound, and visual form",
     long_description=long_description,

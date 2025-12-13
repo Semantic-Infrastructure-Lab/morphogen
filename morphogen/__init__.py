@@ -8,7 +8,7 @@ Named after Alan Turing's morphogenesis: simple continuous-time primitives
 composing into emergent complexity.
 """
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
 
 # Core components will be imported here as they are implemented
 # from .parser import parse
