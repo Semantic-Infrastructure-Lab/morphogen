@@ -288,7 +288,7 @@ def demo_cosine_gradient():
 def main():
     """Run all demos."""
     print("=" * 50)
-    print("KAIRO PROCEDURAL GRAPHICS DOMAINS DEMO")
+    print("MORPHOGEN PROCEDURAL GRAPHICS DOMAINS DEMO")
     print("=" * 50)
     print()
 

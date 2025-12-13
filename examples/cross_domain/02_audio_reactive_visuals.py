@@ -7,7 +7,7 @@ Demonstrates Audio → Visual transform with real-time-style processing:
 - Waveform oscilloscope
 - Energy-driven color shifts
 
-This showcases Kairo's unique ability to couple audio analysis
+This showcases Morphogen's unique ability to couple audio analysis
 with visual generation in a deterministic, reproducible way.
 """
 

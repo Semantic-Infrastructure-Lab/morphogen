@@ -1,5 +1,5 @@
 """
-Cross-Domain Integration for Kairo
+Cross-Domain Integration for Morphogen
 
 This module provides the infrastructure for composing operators across different
 computational domains (Field, Agent, Audio, Physics, Geometry, etc.).

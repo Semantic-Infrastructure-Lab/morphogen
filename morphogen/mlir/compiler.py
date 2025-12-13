@@ -1,7 +1,7 @@
-"""MLIR Compiler for Kairo v0.3.1
+"""MLIR Compiler for Morphogen v0.3.1
 
 This module implements the core MLIR compilation pipeline, transforming
-Kairo AST nodes into MLIR IR for native code generation.
+Morphogen AST nodes into MLIR IR for native code generation.
 """
 
 from typing import Dict, List, Optional, Any, Union
@@ -19,9 +19,9 @@ from ..ast.nodes import (
 
 
 class MLIRCompiler:
-    """Compiles Kairo AST to MLIR IR.
+    """Compiles Morphogen AST to MLIR IR.
 
-    This compiler transforms Kairo programs into MLIR's multi-level intermediate
+    This compiler transforms Morphogen programs into MLIR's multi-level intermediate
     representation, enabling progressive lowering to native machine code.
 
     Compilation Strategy:
@@ -53,10 +53,10 @@ class MLIRCompiler:
         self.lambda_counter = 0
 
     def compile_program(self, program: Program) -> IRModule:
-        """Compile a Kairo program to MLIR module.
+        """Compile a Morphogen program to MLIR module.
 
         Args:
-            program: Kairo Program AST node
+            program: Morphogen Program AST node
 
         Returns:
             MLIR Module ready for lowering and execution
@@ -182,11 +182,11 @@ class MLIRCompiler:
     # Type System
     # =========================================================================
 
-    def lower_type(self, kairo_type: Optional[TypeAnnotation]) -> IRType:
-        """Convert Kairo type to MLIR type.
+    def lower_type(self, morphogen_type: Optional[TypeAnnotation]) -> IRType:
+        """Convert Morphogen type to MLIR type.
 
         Args:
-            kairo_type: Kairo type annotation (may be None)
+            morphogen_type: Morphogen type annotation (may be None)
 
         Returns:
             MLIR type
@@ -197,14 +197,14 @@ class MLIRCompiler:
             i32 → IntegerType(32)
             bool → IntegerType(1)
         """
-        if kairo_type is None:
+        if morphogen_type is None:
             # Default to f32 for untyped expressions
             return IRType.F32
 
         # Extract base type (strip physical units)
-        base_type = kairo_type.base_type.lower()
+        base_type = morphogen_type.base_type.lower()
 
-        # Map Kairo base types to MLIR types
+        # Map Morphogen base types to MLIR types
         if base_type == 'f32':
             return IRType.F32
         elif base_type == 'f64':

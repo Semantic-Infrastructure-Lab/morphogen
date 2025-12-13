@@ -1,7 +1,7 @@
 """
 Domain registration and lookup system.
 
-This module provides the central registry for all Kairo domains,
+This module provides the central registry for all Morphogen domains,
 enabling runtime discovery of operators and type information.
 """
 
@@ -43,7 +43,7 @@ class DomainDescriptor:
 
 
 class DomainRegistry:
-    """Central registry for all Kairo domains."""
+    """Central registry for all Morphogen domains."""
 
     _domains: Dict[str, DomainDescriptor] = {}
     _initialized: bool = False

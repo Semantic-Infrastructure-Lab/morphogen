@@ -1,4 +1,4 @@
-"""SCF-to-LLVM Lowering Pass for Kairo v0.7.4 Phase 6
+"""SCF-to-LLVM Lowering Pass for Morphogen v0.7.4 Phase 6
 
 This module implements the lowering pass that transforms SCF/Arith/Func dialects
 into LLVM IR dialect, enabling JIT/AOT compilation to native code.
@@ -72,7 +72,7 @@ class SCFToLLVMPass:
         """Initialize SCF-to-LLVM pass.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
 
         Raises:
             RuntimeError: If MLIR is not available
@@ -157,7 +157,7 @@ def create_scf_to_llvm_pass(context: MorphogenMLIRContext) -> SCFToLLVMPass:
     """Create SCF-to-LLVM lowering pass.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
         SCFToLLVMPass instance
@@ -177,7 +177,7 @@ def lower_to_llvm(module: Any, context: MorphogenMLIRContext, opt_level: int = 2
 
     Args:
         module: MLIR module to lower
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
         opt_level: Optimization level (0-3)
 
     Example:

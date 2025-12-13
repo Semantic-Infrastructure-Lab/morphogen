@@ -2,7 +2,7 @@
 
 This module provides 2D rigid body physics simulation with collision detection,
 response, and constraint solving. Designed for deterministic, reproducible physics
-simulations in Kairo.
+simulations in Morphogen.
 
 Features:
 - 2D rigid bodies with position, rotation, velocity, angular velocity

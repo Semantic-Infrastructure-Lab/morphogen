@@ -1,6 +1,6 @@
 """Phase 2 Example: Field Operations with MLIR
 
-This example demonstrates the Kairo Field Dialect (Phase 2) capabilities:
+This example demonstrates the Morphogen Field Dialect (Phase 2) capabilities:
 - Field creation
 - Gradient computation
 - Laplacian computation
@@ -19,10 +19,10 @@ Usage:
 import sys
 from pathlib import Path
 
-# Add kairo to path
+# Add morphogen to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from morphogen.mlir.context import is_mlir_available, KairoMLIRContext
+from morphogen.mlir.context import is_mlir_available, MorphogenMLIRContext
 from morphogen.mlir.compiler_v2 import MLIRCompilerV2
 
 
@@ -37,7 +37,7 @@ def example_field_creation():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -49,7 +49,7 @@ def example_field_creation():
 
         module = compiler.compile_field_program(operations, "field_creation")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  field = field.alloc((256, 256), fill_value=0.0)")
 
         print("\nGenerated MLIR (after lowering):")
@@ -76,7 +76,7 @@ def example_gradient():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -92,7 +92,7 @@ def example_gradient():
 
         module = compiler.compile_field_program(operations, "gradient_example")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  field = field.alloc((128, 128), fill_value=1.0)")
         print("  grad = field.gradient(field)")
 
@@ -124,7 +124,7 @@ def example_laplacian():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -140,7 +140,7 @@ def example_laplacian():
 
         module = compiler.compile_field_program(operations, "laplacian_example")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  field = field.alloc((64, 64), fill_value=0.5)")
         print("  lapl = field.laplacian(field)")
 
@@ -170,7 +170,7 @@ def example_diffusion():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -191,7 +191,7 @@ def example_diffusion():
 
         module = compiler.compile_field_program(operations, "diffusion_example")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  field = field.alloc((32, 32), fill_value=1.0)")
         print("  diffused = field.diffuse(field, rate=0.1, dt=0.01, iterations=5)")
 
@@ -223,7 +223,7 @@ def example_combined():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -252,7 +252,7 @@ def example_combined():
 
         module = compiler.compile_field_program(operations, "combined_example")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  field = field.alloc((64, 64), fill_value=0.0)")
         print("  grad = field.gradient(field)")
         print("  lapl = field.laplacian(field)")
@@ -265,7 +265,7 @@ def example_combined():
 
         print("\n✅ Successfully compiled combined operations!")
         print("\nThis demonstrates the full Phase 2 pipeline:")
-        print("  1. High-level field operations (kairo.field.*)")
+        print("  1. High-level field operations (morphogen.field.*)")
         print("  2. Lowering to SCF loops + memref operations")
         print("  3. Ready for Phase 4: LLVM lowering + JIT execution")
 
@@ -278,7 +278,7 @@ def example_combined():
 def main():
     """Run all Phase 2 examples."""
     print("\n" + "=" * 70)
-    print("Kairo v0.7.0 Phase 2: Field Operations Dialect")
+    print("Morphogen v0.7.0 Phase 2: Field Operations Dialect")
     print("=" * 70)
 
     if not is_mlir_available():
@@ -311,7 +311,7 @@ def main():
     print("\nNext steps (Phase 3):")
     print("  - Temporal flow blocks (time iteration)")
     print("  - State management via memref")
-    print("  - Full Kairo AST compilation")
+    print("  - Full Morphogen AST compilation")
     print("\nPhase 4 (JIT Execution):")
     print("  - LLVM lowering")
     print("  - ExecutionEngine integration")

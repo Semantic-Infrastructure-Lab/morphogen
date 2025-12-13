@@ -2,7 +2,7 @@
 Neural Network Domain
 =====================
 
-Simple feedforward neural network (MLP) implementation for Kairo simulations.
+Simple feedforward neural network (MLP) implementation for Morphogen simulations.
 Designed for fast batched inference in evolutionary/genetic algorithm contexts.
 
 This domain provides:
@@ -77,7 +77,7 @@ class NeuralOperations:
     """
     Namespace for neural network operations.
 
-    Follows Kairo's 4-layer operator hierarchy:
+    Follows Morphogen's 4-layer operator hierarchy:
     - Layer 1: Atomic (linear, activations)
     - Layer 2: Composite (dense layer, forward pass)
     - Layer 3: Constructs (MLP, parameter ops)

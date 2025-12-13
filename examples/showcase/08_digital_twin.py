@@ -1,6 +1,6 @@
 """Digital Twin Example - Cross-Domain Showcase
 
-This example demonstrates the power of combining multiple Kairo domains
+This example demonstrates the power of combining multiple Morphogen domains
 to create a digital twin - a virtual representation of a physical system
 that simulates real-world behavior.
 

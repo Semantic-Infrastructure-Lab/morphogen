@@ -778,7 +778,7 @@ morphogen run examples/heat_diffusion.morph
 **🎉 MAJOR: Project Renamed to Morphogen**
 - Named after Alan Turing's morphogenesis (1952)
 - Aligns with architecture: simple primitives → emergent complexity
-- Package: `kairo` → `morphogen`, CLI: `kairo` → `morphogen`
+- Package: `morphogen` → `morphogen`, CLI: `morphogen` → `morphogen`
 - Sister project "Philbrick" (analog hardware) established
 - See ADR-011 for full rationale
 

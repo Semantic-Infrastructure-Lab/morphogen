@@ -10,7 +10,7 @@ from morphogen.mlir import MLIRCompiler
 
 
 def parse(code: str):
-    """Helper to parse Kairo code."""
+    """Helper to parse Morphogen code."""
     lexer = Lexer(code)
     tokens = lexer.tokenize()
     parser = Parser(tokens)

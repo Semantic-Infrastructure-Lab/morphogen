@@ -1,6 +1,6 @@
 """Physical Modeling Instrument - Cross-Domain Showcase
 
-This example demonstrates the power of combining multiple Kairo domains:
+This example demonstrates the power of combining multiple Morphogen domains:
 - Audio synthesis for sound generation
 - Acoustics for physical waveguide modeling
 - Field operations for vibration analysis

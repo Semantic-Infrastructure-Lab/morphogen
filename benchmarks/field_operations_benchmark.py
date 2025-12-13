@@ -1,7 +1,7 @@
-"""Benchmark Suite for Kairo Field Operations (Phase 2)
+"""Benchmark Suite for Morphogen Field Operations (Phase 2)
 
 This benchmark measures:
-1. Compilation time: Kairo AST → MLIR IR → Lowered IR
+1. Compilation time: Morphogen AST → MLIR IR → Lowered IR
 2. IR generation size and complexity
 3. Correctness verification (Phase 2 only compiles, doesn't execute yet)
 
@@ -19,10 +19,10 @@ import time
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-# Add kairo to path
+# Add morphogen to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from morphogen.mlir.context import is_mlir_available, KairoMLIRContext
+from morphogen.mlir.context import is_mlir_available, MorphogenMLIRContext
 from morphogen.mlir.compiler_v2 import MLIRCompilerV2
 
 
@@ -47,7 +47,7 @@ class FieldOperationsBenchmark:
         print("=" * 70)
 
         for width, height in sizes:
-            ctx = KairoMLIRContext()
+            ctx = MorphogenMLIRContext()
             compiler = MLIRCompilerV2(ctx)
 
             operations = [
@@ -90,7 +90,7 @@ class FieldOperationsBenchmark:
         print("=" * 70)
 
         for width, height in sizes:
-            ctx = KairoMLIRContext()
+            ctx = MorphogenMLIRContext()
             compiler = MLIRCompilerV2(ctx)
 
             operations = [
@@ -132,7 +132,7 @@ class FieldOperationsBenchmark:
         print("=" * 70)
 
         for width, height in sizes:
-            ctx = KairoMLIRContext()
+            ctx = MorphogenMLIRContext()
             compiler = MLIRCompilerV2(ctx)
 
             operations = [
@@ -183,7 +183,7 @@ class FieldOperationsBenchmark:
             height = config["height"]
             iterations = config["iterations"]
 
-            ctx = KairoMLIRContext()
+            ctx = MorphogenMLIRContext()
             compiler = MLIRCompilerV2(ctx)
 
             operations = [
@@ -259,7 +259,7 @@ class FieldOperationsBenchmark:
     def run_all(self) -> None:
         """Run all benchmarks."""
         print("\n" + "=" * 70)
-        print("Kairo v0.7.0 Phase 2: Field Operations Benchmark Suite")
+        print("Morphogen v0.7.0 Phase 2: Field Operations Benchmark Suite")
         print("=" * 70)
 
         # Test sizes (small to medium for Phase 2 compilation benchmarks)

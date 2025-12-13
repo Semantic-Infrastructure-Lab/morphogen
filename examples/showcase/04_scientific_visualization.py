@@ -449,7 +449,7 @@ def pde_comparison_suite():
 def main():
     """Run all scientific visualization demos."""
     print("=" * 60)
-    print("KAIRO SCIENTIFIC VISUALIZATION SUITE")
+    print("MORPHOGEN SCIENTIFIC VISUALIZATION SUITE")
     print("=" * 60)
     print()
     print("Demonstrating integration of:")

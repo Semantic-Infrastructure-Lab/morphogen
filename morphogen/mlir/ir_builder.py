@@ -1,4 +1,4 @@
-"""Simplified MLIR-like IR Builder for Kairo
+"""Simplified MLIR-like IR Builder for Morphogen
 
 This module provides a simplified intermediate representation that mimics
 MLIR's structure and semantics, allowing us to develop and test the compilation

@@ -27,7 +27,7 @@ from pathlib import Path
 
 # Try to import MLIR components
 try:
-    from morphogen.mlir.context import KairoMLIRContext
+    from morphogen.mlir.context import MorphogenMLIRContext
     from morphogen.mlir.codegen import (
         create_jit,
         create_aot,
@@ -74,7 +74,7 @@ def example1_basic_jit():
 
     try:
         # Create context
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create simple add function
         with ctx.ctx:
@@ -123,7 +123,7 @@ def example2_jit_caching():
     try:
         import tempfile
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create module
         with ctx.ctx:
@@ -180,7 +180,7 @@ def example3_aot_shared_library():
     try:
         import tempfile
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create module with multiple functions
         with ctx.ctx:
@@ -248,7 +248,7 @@ def example4_aot_executable():
     try:
         import tempfile
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create module with main function
         with ctx.ctx:
@@ -318,7 +318,7 @@ def example5_execution_engine():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create module
         with ctx.ctx:
@@ -367,7 +367,7 @@ def example6_field_jit():
     """Example 6: JIT compile field operations.
 
     Demonstrates:
-    - Compiling Kairo field operations
+    - Compiling Morphogen field operations
     - Multi-dialect lowering
     - Field → SCF → LLVM pipeline
     """
@@ -381,13 +381,13 @@ def example6_field_jit():
         from morphogen.mlir.compiler_v2 import MLIRCompilerV2
         from morphogen.mlir.lowering import FieldToSCFPass
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Note: This would compile field operations if they were defined
         # For now, demonstrate the compilation pipeline structure
 
         print("Field Operations JIT Compilation Pipeline:")
-        print("  1. Parse Kairo field program")
+        print("  1. Parse Morphogen field program")
         print("  2. Compile to Field dialect")
         print("  3. Lower Field → SCF (FieldToSCFPass)")
         print("  4. Lower SCF → LLVM (SCFToLLVMPass)")
@@ -459,7 +459,7 @@ def example8_performance_benchmark():
     try:
         import time
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Create compute-intensive function
         with ctx.ctx:
@@ -517,7 +517,7 @@ def example8_performance_benchmark():
 def run_all_examples():
     """Run all Phase 6 examples."""
     print("\n" + "=" * 70)
-    print("  Kairo v0.7.4 Phase 6: JIT/AOT Compilation Examples")
+    print("  Morphogen v0.7.4 Phase 6: JIT/AOT Compilation Examples")
     print("=" * 70)
 
     examples = [
@@ -545,9 +545,9 @@ def run_all_examples():
     print("  ✓ Caching reduces recompilation overhead")
     print("  ✓ ExecutionEngine provides unified JIT/AOT API")
     print("  ✓ LLVM optimization levels control performance/compilation time")
-    print("  ✓ Full compilation pipeline: Kairo → Field/Audio → SCF → LLVM")
+    print("  ✓ Full compilation pipeline: Morphogen → Field/Audio → SCF → LLVM")
     print("\nNext Steps:")
-    print("  - Integrate JIT with existing Kairo dialects")
+    print("  - Integrate JIT with existing Morphogen dialects")
     print("  - Add vectorization and loop optimization")
     print("  - Implement GPU compilation pipeline")
     print("  - Create runtime performance profiler")

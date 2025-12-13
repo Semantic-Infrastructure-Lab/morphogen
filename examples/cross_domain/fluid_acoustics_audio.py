@@ -23,9 +23,9 @@ WHY THIS IS IMPOSSIBLE ELSEWHERE:
 - Traditional audio engines: No physics simulation
 - CFD software: No audio synthesis
 - Game engines: Separate physics and audio with manual coupling
-- KAIRO: Native cross-domain composition with bidirectional data flow!
+- MORPHOGEN: Native cross-domain composition with bidirectional data flow!
 
-This is the showcase that proves Kairo's unique value proposition.
+This is the showcase that proves Morphogen's unique value proposition.
 """
 
 import sys
@@ -563,13 +563,13 @@ def main():
     print("║" + " " * 58 + "║")
     print("╚" + "═" * 58 + "╝")
     print()
-    print("This is THE demonstration that proves Kairo's unique value:")
+    print("This is THE demonstration that proves Morphogen's unique value:")
     print()
     print("A COMPLETE 3-DOMAIN PIPELINE that is IMPOSSIBLE elsewhere:")
     print("  • Traditional audio engines: No physics")
     print("  • CFD software: No audio")
     print("  • Game engines: Manual coupling, separate systems")
-    print("  • KAIRO: Native cross-domain composition! ✨")
+    print("  • MORPHOGEN: Native cross-domain composition! ✨")
     print()
     print("Pipeline:")
     print("  [Fluid Dynamics] → [Acoustic Waves] → [Audio Signal]")
@@ -604,12 +604,12 @@ def main():
     print()
     print("💡 KEY INSIGHT:")
     print("   Traditional approaches require separate tools and")
-    print("   manual data transfer. Kairo's cross-domain operators")
+    print("   manual data transfer. Morphogen's cross-domain operators")
     print("   enable NATIVE composition - the future of computational")
     print("   creativity!")
     print()
     print("This is impossible to replicate in any other framework.")
-    print("This is the power of Kairo. 🚀")
+    print("This is the power of Morphogen. 🚀")
 
 
 if __name__ == "__main__":

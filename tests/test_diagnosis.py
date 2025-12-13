@@ -1,11 +1,11 @@
-"""Diagnostic test to check if Kairo operations are working correctly."""
+"""Diagnostic test to check if Morphogen operations are working correctly."""
 
 import numpy as np
 from morphogen.stdlib.field import field, Field2D
 from morphogen.stdlib.visual import visual
 
 print("=" * 60)
-print("Kairo Diagnostic Test")
+print("Morphogen Diagnostic Test")
 print("=" * 60)
 print()
 

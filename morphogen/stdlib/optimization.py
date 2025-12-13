@@ -2,7 +2,7 @@
 Optimization Domain
 ===================
 
-Comprehensive optimization algorithms for Kairo simulations.
+Comprehensive optimization algorithms for Morphogen simulations.
 Implements evolutionary algorithms, swarm intelligence, and numerical optimization
 for parameter tuning, design discovery, and multi-objective optimization.
 

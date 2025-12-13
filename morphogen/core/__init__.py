@@ -1,5 +1,5 @@
 """
-Kairo Core - Domain registry and operator system.
+Morphogen Core - Domain registry and operator system.
 
 This module provides the core infrastructure for domain registration,
 operator metadata, and language integration.

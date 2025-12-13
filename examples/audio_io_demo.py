@@ -1,9 +1,9 @@
-"""Kairo v0.6.0 Audio I/O Demo
+"""Morphogen v0.6.0 Audio I/O Demo
 
 Demonstrates real-time audio playback, file export, and recording capabilities.
 
 Requirements:
-    pip install kairo[io]  # Installs sounddevice, soundfile, scipy, imageio
+    pip install morphogen[io]  # Installs sounddevice, soundfile, scipy, imageio
 """
 
 import sys
@@ -55,7 +55,7 @@ def demo_wav_export():
     final = audio.reverb(enveloped, mix=0.2, size=0.8)
 
     # Export to WAV
-    output_path = "/tmp/kairo_chord.wav"
+    output_path = "/tmp/morphogen_chord.wav"
     audio.save(final, output_path)
     print(f"✅ Saved to: {output_path}")
 
@@ -104,7 +104,7 @@ def demo_flac_export():
     reverbed = audio.reverb(filtered, mix=0.15)
 
     # Export to FLAC (lossless)
-    output_path = "/tmp/kairo_melody.flac"
+    output_path = "/tmp/morphogen_melody.flac"
     audio.save(reverbed, output_path, format="flac")
     print(f"✅ Saved FLAC to: {output_path}")
 
@@ -123,7 +123,7 @@ def demo_format_conversion():
     filtered = audio.lowpass(original, cutoff=2000.0)
 
     # Save as WAV
-    wav_path = "/tmp/kairo_test.wav"
+    wav_path = "/tmp/morphogen_test.wav"
     audio.save(filtered, wav_path)
     print(f"✅ Saved WAV: {wav_path}")
 
@@ -132,7 +132,7 @@ def demo_format_conversion():
         import soundfile
 
         loaded = audio.load(wav_path)
-        flac_path = "/tmp/kairo_test.flac"
+        flac_path = "/tmp/morphogen_test.flac"
         audio.save(loaded, flac_path, format="flac")
         print(f"✅ Converted to FLAC: {flac_path}")
 
@@ -179,7 +179,7 @@ def demo_effects_chain():
     print("  6. Normalize")
 
     # Export
-    output_path = "/tmp/kairo_guitar.wav"
+    output_path = "/tmp/morphogen_guitar.wav"
     audio.save(final, output_path)
     print(f"\n✅ Effects chain complete: {output_path}")
     print(f"   Duration: {final.duration:.2f}s")
@@ -202,7 +202,7 @@ def demo_stereo_export():
     stereo = audio.mix(left_panned, right_panned)
 
     # Export
-    output_path = "/tmp/kairo_stereo.wav"
+    output_path = "/tmp/morphogen_stereo.wav"
     audio.save(stereo, output_path)
     print(f"✅ Saved stereo audio: {output_path}")
 
@@ -215,7 +215,7 @@ def demo_stereo_export():
 def main():
     """Run all audio I/O demos."""
     print("=" * 60)
-    print("Kairo v0.6.0 - Audio I/O Demonstrations")
+    print("Morphogen v0.6.0 - Audio I/O Demonstrations")
     print("=" * 60)
 
     # Run demos
@@ -229,12 +229,12 @@ def main():
     print("\n" + "=" * 60)
     print("All demos complete!")
     print("\nGenerated files:")
-    print("  /tmp/kairo_chord.wav    - C major chord with reverb")
-    print("  /tmp/kairo_melody.flac  - Melodic sequence (lossless)")
-    print("  /tmp/kairo_test.wav     - Filtered sawtooth")
-    print("  /tmp/kairo_test.flac    - FLAC conversion")
-    print("  /tmp/kairo_guitar.wav   - Plucked string with effects")
-    print("  /tmp/kairo_stereo.wav   - Stereo panning demo")
+    print("  /tmp/morphogen_chord.wav    - C major chord with reverb")
+    print("  /tmp/morphogen_melody.flac  - Melodic sequence (lossless)")
+    print("  /tmp/morphogen_test.wav     - Filtered sawtooth")
+    print("  /tmp/morphogen_test.flac    - FLAC conversion")
+    print("  /tmp/morphogen_guitar.wav   - Plucked string with effects")
+    print("  /tmp/morphogen_stereo.wav   - Stereo panning demo")
     print("=" * 60)
 
 

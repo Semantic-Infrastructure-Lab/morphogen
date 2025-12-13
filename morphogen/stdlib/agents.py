@@ -111,7 +111,7 @@ class Agents:
         return self
 
     def update(self, property_name: str, values: np.ndarray) -> 'Agents':
-        """Update property for alive agents (alias for set, matches Kairo syntax).
+        """Update property for alive agents (alias for set, matches Morphogen syntax).
 
         Args:
             property_name: Name of property to update

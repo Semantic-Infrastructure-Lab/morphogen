@@ -1,14 +1,14 @@
-"""Agent-to-SCF Lowering Pass for Kairo v0.7.0 Phase 4
+"""Agent-to-SCF Lowering Pass for Morphogen v0.7.0 Phase 4
 
-This module implements the lowering pass that transforms Kairo agent operations
+This module implements the lowering pass that transforms Morphogen agent operations
 into Structured Control Flow (SCF) loops with memref-based agent storage.
 
 Transformation:
-    kairo.agent.* ops → scf.for loops + memref.load/store + arith ops
+    morphogen.agent.* ops → scf.for loops + memref.load/store + arith ops
 
 Example:
     Input (High-level):
-        %agents = kairo.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state
+        %agents = morphogen.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state
 
     Output (Low-level):
         %agents = memref.alloc(%count, %c5) : memref<?x5xf32>
@@ -56,10 +56,10 @@ class AgentToSCFPass:
         - [4] state
 
     Operations Lowered:
-        - kairo.agent.spawn → memref.alloc + initialization loop
-        - kairo.agent.update → memref.store
-        - kairo.agent.query → memref.load
-        - kairo.agent.behavior → scf.for loop with property updates
+        - morphogen.agent.spawn → memref.alloc + initialization loop
+        - morphogen.agent.update → memref.store
+        - morphogen.agent.query → memref.load
+        - morphogen.agent.behavior → scf.for loop with property updates
 
     Usage:
         >>> pass_obj = AgentToSCFPass(context)
@@ -70,7 +70,7 @@ class AgentToSCFPass:
         """Initialize agent-to-SCF pass.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -117,10 +117,10 @@ class AgentToSCFPass:
                         self._process_operation(nested_op)
 
     def _lower_agent_spawn(self, op: Any) -> None:
-        """Lower kairo.agent.spawn to memref.alloc + initialization loop.
+        """Lower morphogen.agent.spawn to memref.alloc + initialization loop.
 
         Input:
-            %agents = kairo.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state
+            %agents = morphogen.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state
 
         Output:
             %agents = memref.alloc(%count, %c5) : memref<?x5xf32>
@@ -193,10 +193,10 @@ class AgentToSCFPass:
             op.operation.erase()
 
     def _lower_agent_update(self, op: Any) -> None:
-        """Lower kairo.agent.update to memref.store.
+        """Lower morphogen.agent.update to memref.store.
 
         Input:
-            %agents_new = kairo.agent.update %agents, %index, %property, %value
+            %agents_new = morphogen.agent.update %agents, %index, %property, %value
 
         Output:
             memref.store %value, %agents[%index, %property]
@@ -225,10 +225,10 @@ class AgentToSCFPass:
             op.operation.erase()
 
     def _lower_agent_query(self, op: Any) -> None:
-        """Lower kairo.agent.query to memref.load.
+        """Lower morphogen.agent.query to memref.load.
 
         Input:
-            %value = kairo.agent.query %agents, %index, %property
+            %value = morphogen.agent.query %agents, %index, %property
 
         Output:
             %value = memref.load %agents[%index, %property]
@@ -254,10 +254,10 @@ class AgentToSCFPass:
             op.operation.erase()
 
     def _lower_agent_behavior(self, op: Any) -> None:
-        """Lower kairo.agent.behavior to scf.for loop with behavior logic.
+        """Lower morphogen.agent.behavior to scf.for loop with behavior logic.
 
         Input:
-            %agents_new = kairo.agent.behavior %agents, [params...]
+            %agents_new = morphogen.agent.behavior %agents, [params...]
 
         Output:
             %count = memref.dim %agents, %c0
@@ -407,7 +407,7 @@ def create_agent_to_scf_pass(context: MorphogenMLIRContext) -> AgentToSCFPass:
     """Factory function to create agent-to-SCF lowering pass.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
         Configured AgentToSCFPass instance

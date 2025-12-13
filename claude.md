@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Morphogen** (formerly Kairo) is a universal, deterministic computation platform that unifies multiple computational domains: audio synthesis, physics simulation, circuit design, geometry, and optimization—all in one type system, scheduler, and language.
+**Morphogen** (formerly Morphogen) is a universal, deterministic computation platform that unifies multiple computational domains: audio synthesis, physics simulation, circuit design, geometry, and optimization—all in one type system, scheduler, and language.
 
 - **Version**: 0.11.0
 - **Status**: Production-Ready (40 computational domains)

@@ -1,4 +1,4 @@
-"""Examples: Kairo v0.7.0 Phase 4 - Agent Operations
+"""Examples: Morphogen v0.7.0 Phase 4 - Agent Operations
 
 This module demonstrates the agent dialect operations for agent-based simulations.
 
@@ -17,7 +17,7 @@ Examples:
 5. Combined field + temporal + agent workflows
 """
 
-from morphogen.mlir.context import KairoMLIRContext, MLIR_AVAILABLE
+from morphogen.mlir.context import MorphogenMLIRContext, MLIR_AVAILABLE
 
 if not MLIR_AVAILABLE:
     print("MLIR Python bindings not available. Skipping examples.")
@@ -41,7 +41,7 @@ def example1_basic_agent_spawn():
     print("Example 1: Basic Agent Spawn")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     # Define agent spawn operation
@@ -88,7 +88,7 @@ def example2_agent_movement():
     print("Example 2: Agent Movement")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     # Define agent movement workflow
@@ -134,7 +134,7 @@ def example3_multi_agent_behaviors():
     print("Example 3: Multi-Agent Behaviors")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     with ctx.ctx, ir.Location.unknown():
         module = ctx.create_module("multi_agent_behaviors")
 
@@ -209,7 +209,7 @@ def example4_agent_property_updates():
     print("Example 4: Agent Property Updates")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     # Define workflow with updates
@@ -286,7 +286,7 @@ def example5_bounce_behavior():
     print("Example 5: Bounce Behavior")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     with ctx.ctx, ir.Location.unknown():
         module = ctx.create_module("bounce_behavior")
 
@@ -349,7 +349,7 @@ def example6_agent_field_integration():
     print("Example 6: Agent-Field Integration (Conceptual)")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     with ctx.ctx, ir.Location.unknown():
         module = ctx.create_module("agent_field_integration")
 
@@ -424,7 +424,7 @@ def example7_temporal_agent_evolution():
     print("Example 7: Temporal Agent Evolution")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     with ctx.ctx, ir.Location.unknown():
         module = ctx.create_module("temporal_agent_evolution")
 
@@ -490,7 +490,7 @@ def example8_large_scale_simulation():
     print("Example 8: Large-Scale Agent Simulation")
     print("="*70)
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     # Define large-scale simulation
@@ -528,7 +528,7 @@ def example8_large_scale_simulation():
 def main():
     """Run all agent operation examples."""
     print("\n" + "="*70)
-    print("Kairo v0.7.0 Phase 4: Agent Operations Examples")
+    print("Morphogen v0.7.0 Phase 4: Agent Operations Examples")
     print("="*70)
     print("\nThese examples demonstrate the agent dialect for agent-based simulations.")
     print("Agent operations include:")

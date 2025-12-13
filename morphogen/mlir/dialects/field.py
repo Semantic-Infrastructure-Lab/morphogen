@@ -1,18 +1,18 @@
-"""Kairo Field Dialect (v0.7.0 Phase 2)
+"""Morphogen Field Dialect (v0.7.0 Phase 2)
 
-This module defines the Kairo Field dialect for MLIR, providing high-level
+This module defines the Morphogen Field dialect for MLIR, providing high-level
 operations for spatial field computations that lower to SCF loops and memref operations.
 
 Status: Phase 2 Implementation (Months 4-6)
 
 Operations:
-- kairo.field.create: Allocate a new field
-- kairo.field.gradient: Compute spatial gradient (central difference)
-- kairo.field.laplacian: Compute 5-point stencil Laplacian
-- kairo.field.diffuse: Apply Jacobi diffusion solver
+- morphogen.field.create: Allocate a new field
+- morphogen.field.gradient: Compute spatial gradient (central difference)
+- morphogen.field.laplacian: Compute 5-point stencil Laplacian
+- morphogen.field.diffuse: Apply Jacobi diffusion solver
 
 Type System:
-- !kairo.field<T>: Generic field type (opaque for Phase 2)
+- !morphogen.field<T>: Generic field type (opaque for Phase 2)
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ except ImportError:
 
 
 class FieldType:
-    """Wrapper for !kairo.field<T> type.
+    """Wrapper for !morphogen.field<T> type.
 
     In Phase 2, we use OpaqueType to represent custom field types.
     In Phase 3+, this will be replaced with proper IRDL dialect definition.
@@ -43,7 +43,7 @@ class FieldType:
     Example:
         >>> ctx = MorphogenMLIRContext()
         >>> field_type = FieldType.get(ir.F32Type.get(), ctx.ctx)
-        >>> print(field_type)  # !kairo.field<f32>
+        >>> print(field_type)  # !morphogen.field<f32>
     """
 
     @staticmethod
@@ -55,24 +55,24 @@ class FieldType:
             context: MLIR context
 
         Returns:
-            Opaque field type !kairo.field<T>
+            Opaque field type !morphogen.field<T>
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
 
         # Use OpaqueType for custom types in Phase 2
-        # Format: !kairo.field<element_type>
+        # Format: !morphogen.field<element_type>
         element_str = str(element_type)
         return ir.OpaqueType.get("morphogen", f"field<{element_str}>", context=context)
 
 
 class FieldCreateOp:
-    """Operation: kairo.field.create
+    """Operation: morphogen.field.create
 
     Creates a new field with specified dimensions and initial value.
 
     Syntax:
-        %field = kairo.field.create %width, %height, %fill : !kairo.field<f32>
+        %field = morphogen.field.create %width, %height, %fill : !morphogen.field<f32>
 
     Attributes:
         - width: Field width (index type)
@@ -80,7 +80,7 @@ class FieldCreateOp:
         - fill_value: Initial fill value (element type)
 
     Results:
-        - Field of type !kairo.field<element_type>
+        - Field of type !morphogen.field<element_type>
 
     Lowering:
         Lowers to memref.alloc + initialization loops
@@ -141,12 +141,12 @@ class FieldCreateOp:
 
 
 class FieldGradientOp:
-    """Operation: kairo.field.gradient
+    """Operation: morphogen.field.gradient
 
     Computes spatial gradient using central differences.
 
     Syntax:
-        %grad = kairo.field.gradient %field : !kairo.field<f32> -> !kairo.field<vector<2xf32>>
+        %grad = morphogen.field.gradient %field : !morphogen.field<f32> -> !morphogen.field<vector<2xf32>>
 
     Arguments:
         - field: Input field
@@ -206,12 +206,12 @@ class FieldGradientOp:
 
 
 class FieldLaplacianOp:
-    """Operation: kairo.field.laplacian
+    """Operation: morphogen.field.laplacian
 
     Computes 5-point stencil Laplacian: ∇²f.
 
     Syntax:
-        %lapl = kairo.field.laplacian %field : !kairo.field<f32>
+        %lapl = morphogen.field.laplacian %field : !morphogen.field<f32>
 
     Arguments:
         - field: Input field
@@ -265,12 +265,12 @@ class FieldLaplacianOp:
 
 
 class FieldDiffuseOp:
-    """Operation: kairo.field.diffuse
+    """Operation: morphogen.field.diffuse
 
     Applies Jacobi diffusion solver for heat equation.
 
     Syntax:
-        %diffused = kairo.field.diffuse %field, %rate, %dt, %iters : !kairo.field<f32>
+        %diffused = morphogen.field.diffuse %field, %rate, %dt, %iters : !morphogen.field<f32>
 
     Arguments:
         - field: Input field

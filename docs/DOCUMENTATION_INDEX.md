@@ -367,7 +367,7 @@ Located in `docs/adr/`:
 | 008 | Procedural Generation | Noise/terrain domain design |
 | 009 | Ambient Music & Generative | Generative music framework |
 | 010 | Ecosystem Branding | Morphogen/Philbrick naming |
-| 011 | Project Renaming | Kairo → Morphogen transition |
+| 011 | Project Renaming | Morphogen → Morphogen transition |
 | 012 | Universal Domain Translation | Cross-domain translation patterns |
 
 **Explore**: `scripts/reveal.sh 1 docs/adr/001-unified-reference-model.md`
@@ -396,7 +396,7 @@ Located in `docs/adr/`:
 - **README.md**: Roadmap directory guide
 
 ### docs/planning/
-- **KAIRO_2.0_STRATEGIC_ANALYSIS.md**: v2.0+ language strategy
+- **MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md**: v2.0+ language strategy
 - **README.md**: Planning directory guide
 
 ### docs/archive/planning/ (Historical)
@@ -413,7 +413,7 @@ Located in `docs/adr/`:
 
 ### docs/analysis/
 - **DOMAIN_VALIDATION_REPORT.md**: Implementation vs documentation alignment
-- **KAIRO_RENAME_ANALYSIS.md**: Rename impact analysis (5,344 occurrences across 356 files)
+- **MORPHOGEN_RENAME_ANALYSIS.md**: Rename impact analysis (5,344 occurrences across 356 files)
 - **AGENTS_DOMAIN_ANALYSIS.md**: Agent domain technical analysis
 - **CROSS_DOMAIN_IMPLEMENTATION_SUMMARY.md**: Cross-domain integration summary
 - **CIRCUIT_DOMAIN_IMPLEMENTATION.md**: Circuit domain status and completion tracking

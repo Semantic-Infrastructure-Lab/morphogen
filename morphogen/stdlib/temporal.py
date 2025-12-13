@@ -8,7 +8,7 @@ Provides temporal reasoning, timing, and scheduling operations:
 - Sequence analysis (pattern matching, temporal correlation)
 - Synchronization (barriers, triggers, gates)
 
-Follows Kairo's immutability pattern: all operations return new instances.
+Follows Morphogen's immutability pattern: all operations return new instances.
 
 Version: v0.10.0
 """

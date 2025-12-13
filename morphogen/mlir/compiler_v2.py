@@ -1,12 +1,12 @@
-"""MLIR Compiler v2 for Kairo (v0.7.0)
+"""MLIR Compiler v2 for Morphogen (v0.7.0)
 
-This module implements the new MLIR-based compiler for Kairo, replacing
+This module implements the new MLIR-based compiler for Morphogen, replacing
 the text-based IR generation from v0.6.0 with real MLIR Python bindings.
 
 Status: Phase 2 - Field Operations Dialect (Months 4-6)
 
 Architecture:
-    Kairo AST → MLIR IR (real bindings) → Lowering Passes → LLVM → Native Code
+    Morphogen AST → MLIR IR (real bindings) → Lowering Passes → LLVM → Native Code
 
 This is a complete rewrite of morphogen/mlir/compiler.py to use actual MLIR
 instead of string templates.
@@ -14,7 +14,7 @@ instead of string templates.
 Phase 2 Additions:
 - Field operations compilation
 - FieldToSCF lowering pass integration
-- Support for kairo.field.* operations
+- Support for morphogen.field.* operations
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ class MLIRCompilerV2:
         """Initialize MLIR compiler v2.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
 
         Raises:
             RuntimeError: If MLIR bindings are not available
@@ -73,10 +73,10 @@ class MLIRCompilerV2:
         self.symbols: Dict[str, Any] = {}  # Will be Dict[str, ir.Value] when MLIR is available
 
     def compile_program(self, program: Program) -> Any:
-        """Compile a Kairo program to MLIR module.
+        """Compile a Morphogen program to MLIR module.
 
         Args:
-            program: Kairo Program AST node
+            program: Morphogen Program AST node
 
         Returns:
             MLIR Module
@@ -177,7 +177,7 @@ class MLIRCompilerV2:
 
         Example:
             field.alloc((256, 256), fill_value=0.0)
-            → %field = kairo.field.create %c256, %c256, %c0_f32 : !kairo.field<f32>
+            → %field = morphogen.field.create %c256, %c256, %c0_f32 : !morphogen.field<f32>
         """
         from .dialects.field import FieldDialect
         return FieldDialect.create(width, height, fill_value, element_type, loc, ip)
@@ -200,7 +200,7 @@ class MLIRCompilerV2:
 
         Example:
             field.gradient(field)
-            → %grad = kairo.field.gradient %field : !kairo.field<f32>
+            → %grad = morphogen.field.gradient %field : !morphogen.field<f32>
         """
         from .dialects.field import FieldDialect
         return FieldDialect.gradient(field, loc, ip)
@@ -223,7 +223,7 @@ class MLIRCompilerV2:
 
         Example:
             field.laplacian(field)
-            → %lapl = kairo.field.laplacian %field : !kairo.field<f32>
+            → %lapl = morphogen.field.laplacian %field : !morphogen.field<f32>
         """
         from .dialects.field import FieldDialect
         return FieldDialect.laplacian(field, loc, ip)
@@ -252,7 +252,7 @@ class MLIRCompilerV2:
 
         Example:
             field.diffuse(field, rate=0.1, dt=0.01, iterations=10)
-            → %diffused = kairo.field.diffuse %field, %rate, %dt, %iters
+            → %diffused = morphogen.field.diffuse %field, %rate, %dt, %iters
         """
         from .dialects.field import FieldDialect
         return FieldDialect.diffuse(field, rate, dt, iterations, loc, ip)
@@ -406,7 +406,7 @@ class MLIRCompilerV2:
 
         Example:
             flow_create(dt=0.1, steps=10)
-            → %flow = kairo.temporal.flow.create %dt, %steps : !kairo.flow<f32>
+            → %flow = morphogen.temporal.flow.create %dt, %steps : !morphogen.flow<f32>
         """
         from .dialects.temporal import TemporalDialect
         return TemporalDialect.flow_create(dt, steps, element_type, loc, ip)
@@ -431,7 +431,7 @@ class MLIRCompilerV2:
 
         Example:
             flow_run(flow, initial_state)
-            → %final = kairo.temporal.flow.run %flow, %initial_state
+            → %final = morphogen.temporal.flow.run %flow, %initial_state
         """
         from .dialects.temporal import TemporalDialect
         return TemporalDialect.flow_run(flow, initial_state, None, loc, ip)
@@ -458,7 +458,7 @@ class MLIRCompilerV2:
 
         Example:
             state_create(size=100, initial_value=0.0)
-            → %state = kairo.temporal.state.create %size, %init_val : !kairo.state<f32>
+            → %state = morphogen.temporal.state.create %size, %init_val : !morphogen.state<f32>
         """
         from .dialects.temporal import TemporalDialect
         return TemporalDialect.state_create(size, initial_value, element_type, loc, ip)
@@ -485,7 +485,7 @@ class MLIRCompilerV2:
 
         Example:
             state_update(state, index=5, value=1.5)
-            → %new_state = kairo.temporal.state.update %state, %idx, %val
+            → %new_state = morphogen.temporal.state.update %state, %idx, %val
         """
         from .dialects.temporal import TemporalDialect
         return TemporalDialect.state_update(state, index, value, loc, ip)
@@ -512,7 +512,7 @@ class MLIRCompilerV2:
 
         Example:
             state_query(state, index=5)
-            → %value = kairo.temporal.state.query %state, %idx : f32
+            → %value = morphogen.temporal.state.query %state, %idx : f32
         """
         from .dialects.temporal import TemporalDialect
         return TemporalDialect.state_query(state, index, element_type, loc, ip)
@@ -567,7 +567,7 @@ class MLIRCompilerV2:
 
         Example:
             agent_spawn(count=100, pos_x=0.0, pos_y=0.0, vel_x=0.1, vel_y=0.0, state=0.0)
-            → %agents = kairo.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state : !kairo.agent<f32>
+            → %agents = morphogen.agent.spawn %count, %pos_x, %pos_y, %vel_x, %vel_y, %state : !morphogen.agent<f32>
         """
         from .dialects.agent import AgentDialect
         return AgentDialect.spawn(count, position_x, position_y, velocity_x, velocity_y, state, element_type, loc, ip)
@@ -596,7 +596,7 @@ class MLIRCompilerV2:
 
         Example:
             agent_update(agents, index=0, property=0, value=1.5)
-            → %agents_new = kairo.agent.update %agents, %idx, %prop, %val
+            → %agents_new = morphogen.agent.update %agents, %idx, %prop, %val
         """
         from .dialects.agent import AgentDialect
         return AgentDialect.update(agents, index, property_index, value, loc, ip)
@@ -625,7 +625,7 @@ class MLIRCompilerV2:
 
         Example:
             agent_query(agents, index=0, property=0)
-            → %value = kairo.agent.query %agents, %idx, %prop : f32
+            → %value = morphogen.agent.query %agents, %idx, %prop : f32
         """
         from .dialects.agent import AgentDialect
         return AgentDialect.query(agents, index, property_index, element_type, loc, ip)
@@ -652,7 +652,7 @@ class MLIRCompilerV2:
 
         Example:
             agent_behavior(agents, "move", [])
-            → %agents_new = kairo.agent.behavior %agents : !kairo.agent<f32>
+            → %agents_new = morphogen.agent.behavior %agents : !morphogen.agent<f32>
         """
         from .dialects.agent import AgentDialect
         return AgentDialect.behavior(agents, behavior_type, params, loc, ip)
@@ -961,7 +961,7 @@ class MLIRCompilerV2:
 
         Example:
             audio_buffer_create(sample_rate=44100, channels=1, duration=1.0)
-            → %buf = kairo.audio.buffer.create %sr, %ch, %dur : !kairo.audio<44100, 1>
+            → %buf = morphogen.audio.buffer.create %sr, %ch, %dur : !morphogen.audio<44100, 1>
         """
         from .dialects.audio import AudioDialect
         return AudioDialect.buffer_create(sample_rate, channels, duration, loc, ip)
@@ -990,7 +990,7 @@ class MLIRCompilerV2:
 
         Example:
             audio_oscillator(buffer, waveform=0, freq=440.0, phase=0.0)
-            → %osc = kairo.audio.oscillator %buf, %wf, %freq, %phase
+            → %osc = morphogen.audio.oscillator %buf, %wf, %freq, %phase
         """
         from .dialects.audio import AudioDialect
         return AudioDialect.oscillator(buffer, waveform, frequency, phase, loc, ip)
@@ -1021,7 +1021,7 @@ class MLIRCompilerV2:
 
         Example:
             audio_envelope(buffer, attack=0.01, decay=0.1, sustain=0.7, release=0.2)
-            → %env = kairo.audio.envelope %buf, %a, %d, %s, %r
+            → %env = morphogen.audio.envelope %buf, %a, %d, %s, %r
         """
         from .dialects.audio import AudioDialect
         return AudioDialect.envelope(buffer, attack, decay, sustain, release, loc, ip)
@@ -1050,7 +1050,7 @@ class MLIRCompilerV2:
 
         Example:
             audio_filter(buffer, filter_type=0, cutoff=1000.0, resonance=1.0)
-            → %filt = kairo.audio.filter %buf, %type, %cutoff, %Q
+            → %filt = morphogen.audio.filter %buf, %type, %cutoff, %Q
         """
         from .dialects.audio import AudioDialect
         return AudioDialect.filter(buffer, filter_type, cutoff, resonance, loc, ip)
@@ -1075,7 +1075,7 @@ class MLIRCompilerV2:
 
         Example:
             audio_mix([buf1, buf2], [0.5, 0.5])
-            → %mix = kairo.audio.mix %buf1, %buf2, %g1, %g2
+            → %mix = morphogen.audio.mix %buf1, %buf2, %g1, %g2
         """
         from .dialects.audio import AudioDialect
         return AudioDialect.mix(buffers, gains, loc, ip)

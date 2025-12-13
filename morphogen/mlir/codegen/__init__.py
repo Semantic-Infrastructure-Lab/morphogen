@@ -1,6 +1,6 @@
-"""Code Generation for Kairo (v0.7.4 Phase 6)
+"""Code Generation for Morphogen (v0.7.4 Phase 6)
 
-This package provides JIT and AOT compilation capabilities for Kairo programs
+This package provides JIT and AOT compilation capabilities for Morphogen programs
 using MLIR's ExecutionEngine with LLVM backend.
 
 Components:
@@ -18,18 +18,18 @@ Features (Phase 6):
 - Cross-compilation support
 """
 
-from .jit import KairoJIT, CompilationCache, create_jit, MLIR_AVAILABLE
-from .aot import KairoAOT, OutputFormat, create_aot
+from .jit import MorphogenJIT, CompilationCache, create_jit, MLIR_AVAILABLE
+from .aot import MorphogenAOT, OutputFormat, create_aot
 from .executor import ExecutionEngine, ExecutionMode, MemoryBuffer, create_execution_engine
 
 __all__ = [
     # JIT compilation
-    "KairoJIT",
+    "MorphogenJIT",
     "CompilationCache",
     "create_jit",
 
     # AOT compilation
-    "KairoAOT",
+    "MorphogenAOT",
     "OutputFormat",
     "create_aot",
 

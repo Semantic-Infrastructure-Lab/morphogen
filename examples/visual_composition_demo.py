@@ -1,9 +1,9 @@
-"""Kairo v0.6.0 Visual Composition Demo
+"""Morphogen v0.6.0 Visual Composition Demo
 
 Demonstrates agent visualization, layer composition, and video export.
 
 Requirements:
-    pip install kairo[io]  # Installs imageio, imageio-ffmpeg
+    pip install morphogen[io]  # Installs imageio, imageio-ffmpeg
 """
 
 import sys
@@ -34,8 +34,8 @@ def demo_agent_visualization():
 
     # Basic visualization
     vis1 = visual.agents(particles, width=256, height=256, size=3.0, color=(1, 1, 1))
-    visual.output(vis1, "/tmp/kairo_particles_basic.png")
-    print("✅ Basic particle visualization: /tmp/kairo_particles_basic.png")
+    visual.output(vis1, "/tmp/morphogen_particles_basic.png")
+    print("✅ Basic particle visualization: /tmp/morphogen_particles_basic.png")
 
     # Color by velocity magnitude
     vis2 = visual.agents(
@@ -46,8 +46,8 @@ def demo_agent_visualization():
         palette='viridis',
         size=4.0
     )
-    visual.output(vis2, "/tmp/kairo_particles_colored.png")
-    print("✅ Velocity-colored particles: /tmp/kairo_particles_colored.png")
+    visual.output(vis2, "/tmp/morphogen_particles_colored.png")
+    print("✅ Velocity-colored particles: /tmp/morphogen_particles_colored.png")
 
     # Variable size by velocity
     vis3 = visual.agents(
@@ -59,8 +59,8 @@ def demo_agent_visualization():
         palette='fire',
         size=5.0
     )
-    visual.output(vis3, "/tmp/kairo_particles_sized.png")
-    print("✅ Variable-size particles: /tmp/kairo_particles_sized.png")
+    visual.output(vis3, "/tmp/morphogen_particles_sized.png")
+    print("✅ Variable-size particles: /tmp/morphogen_particles_sized.png")
 
 
 def demo_layer_composition():
@@ -86,8 +86,8 @@ def demo_layer_composition():
 
     # Composite with additive blending
     result = visual.composite(background, layer1, layer2, mode="add")
-    visual.output(result, "/tmp/kairo_composite_add.png")
-    print("✅ Additive composition: /tmp/kairo_composite_add.png")
+    visual.output(result, "/tmp/morphogen_composite_add.png")
+    print("✅ Additive composition: /tmp/morphogen_composite_add.png")
 
     # Composite with different opacities
     result2 = visual.composite(
@@ -95,13 +95,13 @@ def demo_layer_composition():
         mode="over",
         opacity=[1.0, 0.8, 0.6]
     )
-    visual.output(result2, "/tmp/kairo_composite_opacity.png")
-    print("✅ Opacity composition: /tmp/kairo_composite_opacity.png")
+    visual.output(result2, "/tmp/morphogen_composite_opacity.png")
+    print("✅ Opacity composition: /tmp/morphogen_composite_opacity.png")
 
     # Multiply blending for darker effect
     result3 = visual.composite(background, layer1, mode="multiply")
-    visual.output(result3, "/tmp/kairo_composite_multiply.png")
-    print("✅ Multiply composition: /tmp/kairo_composite_multiply.png")
+    visual.output(result3, "/tmp/morphogen_composite_multiply.png")
+    print("✅ Multiply composition: /tmp/morphogen_composite_multiply.png")
 
 
 def demo_video_export_gif():
@@ -128,7 +128,7 @@ def demo_video_export_gif():
         frames.append(vis)
 
     # Export as GIF
-    output_path = "/tmp/kairo_diffusion.gif"
+    output_path = "/tmp/morphogen_diffusion.gif"
     visual.video(frames, output_path, fps=10)
     print(f"✅ GIF animation: {output_path}")
     print(f"   {len(frames)} frames @ 10 FPS")
@@ -176,7 +176,7 @@ def demo_video_export_mp4():
         frames.append(frame)
 
     # Export as MP4
-    output_path = "/tmp/kairo_particles.mp4"
+    output_path = "/tmp/morphogen_particles.mp4"
     visual.video(frames, output_path, fps=30)
     print(f"✅ MP4 animation: {output_path}")
     print(f"   {len(frames)} frames @ 30 FPS")
@@ -232,7 +232,7 @@ def demo_complex_composition():
         frames.append(composite)
 
     # Export
-    output_path = "/tmp/kairo_complex.mp4"
+    output_path = "/tmp/morphogen_complex.mp4"
     visual.video(frames, output_path, fps=20)
     print(f"✅ Complex composition: {output_path}")
     print(f"   Field + 2 agent layers, {len(frames)} frames @ 20 FPS")
@@ -268,7 +268,7 @@ def demo_generator_export():
             yield vis
 
     # Export using generator (memory efficient!)
-    output_path = "/tmp/kairo_generator.gif"
+    output_path = "/tmp/morphogen_generator.gif"
     visual.video(frame_generator, output_path, fps=10, max_frames=50)
     print(f"✅ Generator export: {output_path}")
     print("   Memory-efficient: frames generated on-the-fly")
@@ -286,7 +286,7 @@ def demo_blending_modes():
 
     for mode in modes:
         result = visual.composite(layer1, layer2, mode=mode, opacity=[1.0, 0.7])
-        output_path = f"/tmp/kairo_blend_{mode}.png"
+        output_path = f"/tmp/morphogen_blend_{mode}.png"
         visual.output(result, output_path)
         print(f"  ✅ {mode:10s} mode: {output_path}")
 
@@ -294,7 +294,7 @@ def demo_blending_modes():
 def main():
     """Run all visual composition demos."""
     print("=" * 60)
-    print("Kairo v0.6.0 - Visual Composition Demonstrations")
+    print("Morphogen v0.6.0 - Visual Composition Demonstrations")
     print("=" * 60)
 
     # Run demos
@@ -310,14 +310,14 @@ def main():
     print("All demos complete!")
     print("\nGenerated files:")
     print("\nStatic Images:")
-    print("  /tmp/kairo_particles_*.png   - Agent visualizations")
-    print("  /tmp/kairo_composite_*.png   - Layer compositions")
-    print("  /tmp/kairo_blend_*.png       - Blending modes")
+    print("  /tmp/morphogen_particles_*.png   - Agent visualizations")
+    print("  /tmp/morphogen_composite_*.png   - Layer compositions")
+    print("  /tmp/morphogen_blend_*.png       - Blending modes")
     print("\nAnimations:")
-    print("  /tmp/kairo_diffusion.gif     - Field diffusion (GIF)")
-    print("  /tmp/kairo_particles.mp4     - Particle system (MP4)")
-    print("  /tmp/kairo_complex.mp4       - Multi-layer composition")
-    print("  /tmp/kairo_generator.gif     - Generator-based export")
+    print("  /tmp/morphogen_diffusion.gif     - Field diffusion (GIF)")
+    print("  /tmp/morphogen_particles.mp4     - Particle system (MP4)")
+    print("  /tmp/morphogen_complex.mp4       - Multi-layer composition")
+    print("  /tmp/morphogen_generator.gif     - Generator-based export")
     print("=" * 60)
 
 

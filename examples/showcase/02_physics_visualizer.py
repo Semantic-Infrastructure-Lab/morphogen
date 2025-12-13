@@ -439,7 +439,7 @@ def nbody_visualization():
 def main():
     """Run all physics visualization demos."""
     print("=" * 60)
-    print("KAIRO PHYSICS VISUALIZER - CROSS-DOMAIN SHOWCASE")
+    print("MORPHOGEN PHYSICS VISUALIZER - CROSS-DOMAIN SHOWCASE")
     print("=" * 60)
     print()
     print("Demonstrating integration of:")

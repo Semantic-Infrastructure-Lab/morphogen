@@ -152,7 +152,7 @@ Specific real-world applications
 - [Testing Strategy](roadmap/testing-strategy.md) — Testing approach
 
 **Strategic Planning**: [planning/](planning/)
-- [KAIRO_2.0_STRATEGIC_ANALYSIS.md](planning/KAIRO_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
+- [MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md](planning/MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
 - [archive/planning/](archive/planning/) — Historical planning documents (consolidated 2025-12-07)
 
 ### 🔬 [Analysis](analysis/)
@@ -161,7 +161,7 @@ Specific real-world applications
 
 Technical analysis and integration guides
 - [Domain Validation Report](analysis/DOMAIN_VALIDATION_REPORT.md) — Implementation vs documentation alignment
-- [Kairo Rename Analysis](analysis/KAIRO_RENAME_ANALYSIS.md) — Comprehensive rename impact analysis
+- [Morphogen Rename Analysis](analysis/MORPHOGEN_RENAME_ANALYSIS.md) — Comprehensive rename impact analysis
 - [Agents Domain Analysis](analysis/AGENTS_DOMAIN_ANALYSIS.md)
 - [Agents-VFX Integration Guide](analysis/AGENTS_VFX_INTEGRATION_GUIDE.md)
 - [Cross-Domain Implementation Summary](analysis/CROSS_DOMAIN_IMPLEMENTATION_SUMMARY.md)
@@ -206,7 +206,7 @@ Deprecated CCDSL v0.2.2 documentation (for historical reference)
 
 **2025-11-21: Major Documentation Reorganization & Language Roadmap**
 - ✅ **Documentation Organization** - Consolidated and clarified documentation structure:
-  - Moved analysis docs from root to `docs/analysis/` (DOMAIN_VALIDATION_REPORT, KAIRO_RENAME_ANALYSIS)
+  - Moved analysis docs from root to `docs/analysis/` (DOMAIN_VALIDATION_REPORT, MORPHOGEN_RENAME_ANALYSIS)
   - Moved type system spec to `docs/specifications/level-3-type-system.md`
   - Consolidated archives: moved `archive/historical/` and `archive/root-level-docs/` to `docs/archive/`
   - All documentation now properly organized in `docs/` subdirectories
@@ -220,7 +220,7 @@ Deprecated CCDSL v0.2.2 documentation (for historical reference)
   - Links to newly organized documents
   - Language roadmap in prominent position
   - Cross-domain type system specification
-- ✅ **Version Consistency** - Updated STATUS.md header to clarify "Kairo (Morphogen)"
+- ✅ **Version Consistency** - Updated STATUS.md header to clarify "Morphogen (Morphogen)"
 
 **2025-11-21: Documentation Improvements & Clarifications** (earlier today)
 - ✅ **Enhanced Reference Section** - Created comprehensive [Reference README](reference/README.md) with:

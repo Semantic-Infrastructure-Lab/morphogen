@@ -1,4 +1,4 @@
-"""Unit tests for Kairo Field Dialect (Phase 2)
+"""Unit tests for Morphogen Field Dialect (Phase 2)
 
 Tests the field dialect operations and type system.
 These tests require MLIR Python bindings to be installed.
@@ -275,7 +275,7 @@ class TestFieldDialect:
                     if hasattr(op, 'attributes') and 'op_name' in op.attributes:
                         assert FieldDialect.is_field_op(op)
                         op_name = FieldDialect.get_field_op_name(op)
-                        assert "kairo.field." in op_name
+                        assert "morphogen.field." in op_name
 
     def test_dialect_namespace(self):
         """Test that FieldDialect provides all operations."""

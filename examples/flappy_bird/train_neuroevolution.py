@@ -3,7 +3,7 @@
 Flappy Bird Neuroevolution Training
 ====================================
 
-This example demonstrates Kairo's multi-domain capabilities by training
+This example demonstrates Morphogen's multi-domain capabilities by training
 neural network controllers for Flappy Bird using genetic algorithms.
 
 Showcases:
@@ -13,7 +13,7 @@ Showcases:
 - Parallel batch simulation
 - Real-time visualization and telemetry
 
-This is the "hello world" of multi-domain AI simulation in Kairo.
+This is the "hello world" of multi-domain AI simulation in Morphogen.
 """
 
 import sys
@@ -21,7 +21,7 @@ import numpy as np
 from typing import List
 import time
 
-# Kairo domains
+# Morphogen domains
 from morphogen.stdlib.flappy import flappy, GameState
 from morphogen.stdlib.neural import neural, MLP
 from morphogen.stdlib.genetic import genetic, Population
@@ -204,7 +204,7 @@ def train():
     Main training loop: evolve neural network controllers using genetic algorithm.
     """
     print("=" * 60)
-    print("Kairo Flappy Bird Neuroevolution")
+    print("Morphogen Flappy Bird Neuroevolution")
     print("=" * 60)
     print()
     print(f"Population size: {Config.POPULATION_SIZE}")

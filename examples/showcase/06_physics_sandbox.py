@@ -1,6 +1,6 @@
 """Interactive Physics Sandbox - Cross-Domain Showcase
 
-This example demonstrates the power of combining multiple Kairo domains:
+This example demonstrates the power of combining multiple Morphogen domains:
 - Rigidbody physics for realistic collisions and dynamics
 - Field operations for force fields and environmental effects
 - Visual rendering for beautiful simulations

@@ -7,7 +7,7 @@ import numpy as np
 import sys
 from pathlib import Path
 
-# Add kairo to path
+# Add morphogen to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from morphogen.stdlib import io_storage as io
 

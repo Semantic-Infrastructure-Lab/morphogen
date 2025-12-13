@@ -1,4 +1,4 @@
-"""Unit tests for kairo.mlir.context (v0.7.0)
+"""Unit tests for morphogen.mlir.context (v0.7.0)
 
 Tests for the real MLIR context management using Python bindings.
 These tests will be skipped if MLIR is not installed.

@@ -1,6 +1,6 @@
 """Tests for MLIR Phase 3: Flow Blocks (Temporal Execution).
 
-This module tests the compilation of Kairo flow blocks to MLIR scf.for loops
+This module tests the compilation of Morphogen flow blocks to MLIR scf.for loops
 with proper state management through iteration arguments.
 """
 
@@ -11,7 +11,7 @@ from morphogen.mlir import MLIRCompiler
 
 
 def parse(code: str):
-    """Helper to parse Kairo code."""
+    """Helper to parse Morphogen code."""
     lexer = Lexer(code)
     tokens = lexer.tokenize()
     parser = Parser(tokens)

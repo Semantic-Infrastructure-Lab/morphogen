@@ -1,6 +1,6 @@
-"""Kairo Custom MLIR Dialects
+"""Morphogen Custom MLIR Dialects
 
-This package contains custom MLIR dialect definitions for Kairo's
+This package contains custom MLIR dialect definitions for Morphogen's
 domain-specific operations.
 
 Dialects:
@@ -26,7 +26,7 @@ from .agent import AgentDialect, AgentType
 from .audio import AudioDialect, AudioType
 
 # TODO: Future phases
-# from .visual import KairoVisualDialect
+# from .visual import MorphogenVisualDialect
 
 __all__ = [
     "FieldDialect",

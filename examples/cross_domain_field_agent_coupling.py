@@ -10,7 +10,7 @@ a flow field with particle agents. This shows:
 
 Use case: Particles in a flow field (e.g., smoke, debris in wind, plankton in ocean currents)
 
-This example showcases Kairo's unique ability to compose Field and Agent domains
+This example showcases Morphogen's unique ability to compose Field and Agent domains
 bidirectionally in real-time - something impossible in traditional frameworks.
 """
 
@@ -23,7 +23,7 @@ from typing import List, Optional, Tuple, Dict, Any
 from morphogen.cross_domain.interface import FieldToAgentInterface, AgentToFieldInterface
 from morphogen.cross_domain.registry import CrossDomainRegistry
 
-# Import Kairo visualization
+# Import Morphogen visualization
 from morphogen.stdlib import visual, Visual
 from morphogen.stdlib.field import Field2D
 
@@ -131,7 +131,7 @@ class FlowFieldAgentSimulation:
 
     def render_frame(self, width=512, height=512) -> Visual:
         """
-        Render current simulation state as a Visual using Kairo stdlib.
+        Render current simulation state as a Visual using Morphogen stdlib.
 
         Returns a composite visualization showing:
         - Background: Flow field (velocity magnitude)

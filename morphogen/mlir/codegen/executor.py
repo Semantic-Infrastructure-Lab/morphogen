@@ -1,4 +1,4 @@
-"""Execution Engine API for Kairo v0.7.4 Phase 6
+"""Execution Engine API for Morphogen v0.7.4 Phase 6
 
 This module provides a high-level ExecutionEngine API that unifies
 JIT and AOT compilation with memory management and resource cleanup.
@@ -82,7 +82,7 @@ class MemoryBuffer:
 
 
 class ExecutionEngine:
-    """High-level execution engine for Kairo programs.
+    """High-level execution engine for Morphogen programs.
 
     Provides unified API for both JIT and AOT compilation with
     automatic memory management and resource cleanup.
@@ -111,7 +111,7 @@ class ExecutionEngine:
         """Initialize execution engine.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
             module: MLIR module to execute
             mode: Execution mode ('jit' or 'aot')
             opt_level: Optimization level (0-3)
@@ -355,7 +355,7 @@ def create_execution_engine(
     """Create execution engine instance.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
         module: MLIR module to execute
         mode: Execution mode ('jit' or 'aot')
         opt_level: Optimization level (0-3)

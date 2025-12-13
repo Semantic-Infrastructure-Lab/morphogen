@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🎉 MAJOR: Project Renamed to Morphogen
 
-**Breaking Change:** The project has been renamed from "Kairo" to "Morphogen" to better reflect its essence as an emergence-focused continuous-time computation platform.
+**Breaking Change:** The project has been renamed from "Morphogen" to "Morphogen" to better reflect its essence as an emergence-focused continuous-time computation platform.
 
 **Why "Morphogen"?**
 - Named after Alan Turing's morphogenesis (1952): simple continuous-time differential equations creating complex emergent patterns
@@ -21,18 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - See ADR-011 for full rationale
 
 **What Changed:**
-- Package name: `kairo` → `morphogen`
-- CLI command: `kairo` → `morphogen`
-- All imports: `from kairo.*` → `from morphogen.*`
-- MLIR dialects: `kairo.*` → `morphogen.*`
-- Class names: `KairoMLIRContext` → `MorphogenMLIRContext`
+- Package name: `morphogen` → `morphogen`
+- CLI command: `morphogen` → `morphogen`
+- All imports: `from morphogen.*` → `from morphogen.*`
+- MLIR dialects: `morphogen.*` → `morphogen.*`
+- Class names: `MorphogenMLIRContext` → `MorphogenMLIRContext`
 - All documentation updated
 
 **Migration Guide:**
 ```python
 # Before (v0.10.x)
-from kairo.stdlib import field, audio
-import kairo
+from morphogen.stdlib import field, audio
+import morphogen
 
 # After (v0.11.0+)
 from morphogen.stdlib import field, audio
@@ -1762,7 +1762,7 @@ Phase 6 of Morphogen v0.7.4 implements the complete JIT/AOT compilation infrastr
 
 #### JIT Compilation Engine
 - **`morphogen.mlir.codegen.jit`** - JIT compilation with caching (392 lines):
-  - `KairoJIT`: Full-featured JIT compiler
+  - `MorphogenJIT`: Full-featured JIT compiler
   - `CompilationCache`: In-memory and persistent disk caching
   - Thread-safe execution with locks
   - Automatic argument marshalling (scalars, NumPy arrays)
@@ -1774,7 +1774,7 @@ Phase 6 of Morphogen v0.7.4 implements the complete JIT/AOT compilation infrastr
 
 #### AOT Compilation Engine
 - **`morphogen.mlir.codegen.aot`** - AOT compilation to native binaries (626 lines):
-  - `KairoAOT`: Complete AOT compiler
+  - `MorphogenAOT`: Complete AOT compiler
   - `OutputFormat` enum: 7 output formats
     - `EXECUTABLE`: Native executables (.exe, no extension)
     - `SHARED_LIB`: Shared libraries (.so, .dylib, .dll)
@@ -2596,7 +2596,7 @@ Morphogen v0.7.0 represents a fundamental transformation from text-based MLIR IR
 - **Added**: scipy >= 1.7.0 (WAV fallback)
 - **Added**: imageio >= 2.9.0 (video export)
 - **Added**: imageio-ffmpeg >= 0.4.0 (MP4 codec)
-- Optional dependency group: `kairo[io]` installs all I/O dependencies
+- Optional dependency group: `morphogen[io]` installs all I/O dependencies
 
 #### Testing
 - **64+ new I/O integration tests**:
@@ -3000,7 +3000,7 @@ Morphogen v0.7.0 represents a fundamental transformation from text-based MLIR IR
 
 ### Project Structure
 - **Package setup**: `setup.py` and `pyproject.toml`
-- **CLI framework**: `kairo` command with subcommands
+- **CLI framework**: `morphogen` command with subcommands
 - **Directory organization**: `morphogen/lexer/`, `morphogen/parser/`, `morphogen/ast/`
 - **Test infrastructure**: `tests/` with pytest configuration
 

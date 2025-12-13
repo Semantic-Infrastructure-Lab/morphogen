@@ -1,6 +1,6 @@
 """Audio Visualizer - Advanced Cross-Domain Showcase
 
-This example demonstrates the power of combining multiple Kairo domains:
+This example demonstrates the power of combining multiple Morphogen domains:
 - Audio synthesis and processing
 - FFT spectral analysis
 - Field operations for audio-reactive effects

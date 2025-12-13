@@ -1,19 +1,19 @@
-"""Kairo Agent Dialect (v0.7.0 Phase 4)
+"""Morphogen Agent Dialect (v0.7.0 Phase 4)
 
-This module defines the Kairo Agent dialect for MLIR, providing high-level
+This module defines the Morphogen Agent dialect for MLIR, providing high-level
 operations for agent-based simulations with spawning, behavior trees, and
 property management that lower to SCF loops and memref operations.
 
 Status: Phase 4 Implementation (Months 10-12)
 
 Operations:
-- kairo.agent.spawn: Create agents at positions with initial properties
-- kairo.agent.update: Update agent properties (position, velocity, state)
-- kairo.agent.query: Read agent properties at specific indices
-- kairo.agent.behavior: Define behavior trees/rules for agents
+- morphogen.agent.spawn: Create agents at positions with initial properties
+- morphogen.agent.update: Update agent properties (position, velocity, state)
+- morphogen.agent.query: Read agent properties at specific indices
+- morphogen.agent.behavior: Define behavior trees/rules for agents
 
 Type System:
-- !kairo.agent<T>: Generic agent type (opaque for Phase 4)
+- !morphogen.agent<T>: Generic agent type (opaque for Phase 4)
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ except ImportError:
 
 
 class AgentType:
-    """Wrapper for !kairo.agent<T> type.
+    """Wrapper for !morphogen.agent<T> type.
 
     In Phase 4, we use OpaqueType to represent custom agent types.
     In Phase 5+, this will be replaced with proper IRDL dialect definition.
@@ -50,7 +50,7 @@ class AgentType:
     Example:
         >>> ctx = MorphogenMLIRContext()
         >>> agent_type = AgentType.get(ir.F32Type.get(), ctx.ctx)
-        >>> print(agent_type)  # !kairo.agent<f32>
+        >>> print(agent_type)  # !morphogen.agent<f32>
     """
 
     @staticmethod
@@ -62,24 +62,24 @@ class AgentType:
             context: MLIR context
 
         Returns:
-            Opaque agent type !kairo.agent<T>
+            Opaque agent type !morphogen.agent<T>
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
 
         # Use OpaqueType for custom types in Phase 4
-        # Format: !kairo.agent<element_type>
+        # Format: !morphogen.agent<element_type>
         element_str = str(element_type)
         return ir.OpaqueType.get("morphogen", f"agent<{element_str}>", context=context)
 
 
 class AgentSpawnOp:
-    """Operation: kairo.agent.spawn
+    """Operation: morphogen.agent.spawn
 
     Creates agents at specified positions with initial properties.
 
     Syntax:
-        %agents = kairo.agent.spawn %count, %positions, %properties : !kairo.agent<f32>
+        %agents = morphogen.agent.spawn %count, %positions, %properties : !morphogen.agent<f32>
 
     Attributes:
         - count: Number of agents to spawn (index type)
@@ -87,7 +87,7 @@ class AgentSpawnOp:
         - properties: Initial property values (velocity, state, etc.)
 
     Results:
-        - Agent collection of type !kairo.agent<element_type>
+        - Agent collection of type !morphogen.agent<element_type>
 
     Lowering:
         Lowers to memref.alloc + initialization loops:
@@ -163,12 +163,12 @@ class AgentSpawnOp:
 
 
 class AgentUpdateOp:
-    """Operation: kairo.agent.update
+    """Operation: morphogen.agent.update
 
     Updates agent properties at specified indices.
 
     Syntax:
-        %agents_new = kairo.agent.update %agents, %index, %property, %value : !kairo.agent<f32>
+        %agents_new = morphogen.agent.update %agents, %index, %property, %value : !morphogen.agent<f32>
 
     Arguments:
         - agents: Agent collection
@@ -232,12 +232,12 @@ class AgentUpdateOp:
 
 
 class AgentQueryOp:
-    """Operation: kairo.agent.query
+    """Operation: morphogen.agent.query
 
     Reads agent property values at specified indices.
 
     Syntax:
-        %value = kairo.agent.query %agents, %index, %property : f32
+        %value = morphogen.agent.query %agents, %index, %property : f32
 
     Arguments:
         - agents: Agent collection
@@ -297,13 +297,13 @@ class AgentQueryOp:
 
 
 class AgentBehaviorOp:
-    """Operation: kairo.agent.behavior
+    """Operation: morphogen.agent.behavior
 
     Defines behavior trees/rules for agents. This is a simplified implementation
     for Phase 4 that applies a function to all agents.
 
     Syntax:
-        %agents_new = kairo.agent.behavior %agents, %behavior_fn : !kairo.agent<f32>
+        %agents_new = morphogen.agent.behavior %agents, %behavior_fn : !morphogen.agent<f32>
 
     Arguments:
         - agents: Agent collection

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Kairo Showcase Output Generator
+Morphogen Showcase Output Generator
 
-A comprehensive utility for generating high-quality outputs from Kairo examples
+A comprehensive utility for generating high-quality outputs from Morphogen examples
 in multiple formats with various quality presets.
 
 Features:
@@ -32,10 +32,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 try:
     import numpy as np
     from morphogen.stdlib import field, visual, audio
-    KAIRO_AVAILABLE = True
+    MORPHOGEN_AVAILABLE = True
 except ImportError:
-    KAIRO_AVAILABLE = False
-    print("Warning: Kairo not available. Running in documentation mode only.")
+    MORPHOGEN_AVAILABLE = False
+    print("Warning: Morphogen not available. Running in documentation mode only.")
 
 
 # Quality Presets
@@ -72,7 +72,7 @@ QUALITY_PRESETS = {
 
 
 class OutputGenerator:
-    """Manages output generation for Kairo examples."""
+    """Manages output generation for Morphogen examples."""
 
     def __init__(self, output_dir: Path = None, preset: str = 'web'):
         """
@@ -209,7 +209,7 @@ class OutputGenerator:
 
 
 # Example Generators
-# These are placeholder functions that would call actual Kairo examples
+# These are placeholder functions that would call actual Morphogen examples
 
 def generate_reaction_diffusion(
     generator: OutputGenerator,
@@ -570,7 +570,7 @@ def main():
     """Main entry point."""
 
     parser = argparse.ArgumentParser(
-        description='Generate high-quality outputs from Kairo examples',
+        description='Generate high-quality outputs from Morphogen examples',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -647,8 +647,8 @@ Available presets:
             print(f"  - {name:10} : {res[0]}x{res[1]}, {config['fps']}fps, {config['max_duration']}s max - {config['description']}")
         return
 
-    if not KAIRO_AVAILABLE:
-        print("Error: Kairo is not available. Please install Kairo first.")
+    if not MORPHOGEN_AVAILABLE:
+        print("Error: Morphogen is not available. Please install Morphogen first.")
         return 1
 
     # Parse formats

@@ -274,7 +274,7 @@ def demonstrate_realistic_application():
 def main():
     """Run all demonstrations."""
     print("\n" + "=" * 70)
-    print("  Kairo Optimization Domain - Phase 1 Demonstration")
+    print("  Morphogen Optimization Domain - Phase 1 Demonstration")
     print("  Evolutionary Algorithms for Design Discovery")
     print("=" * 70)
 

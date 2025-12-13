@@ -1,6 +1,6 @@
-"""JIT Compilation Engine for Kairo v0.7.4 Phase 6
+"""JIT Compilation Engine for Morphogen v0.7.4 Phase 6
 
-This module implements Just-In-Time compilation of Kairo programs using
+This module implements Just-In-Time compilation of Morphogen programs using
 MLIR's ExecutionEngine with caching support for improved performance.
 
 Features:
@@ -14,7 +14,7 @@ Features:
 Example usage:
     >>> from morphogen.mlir.context import MorphogenMLIRContext
     >>> ctx = MorphogenMLIRContext()
-    >>> jit = KairoJIT(ctx)
+    >>> jit = MorphogenJIT(ctx)
     >>> jit.compile(module, opt_level=2)
     >>> result = jit.invoke("add", 3.0, 4.0)
     >>> print(result)  # 7.0
@@ -124,10 +124,10 @@ class CompilationCache:
                     cache_file.unlink()
 
 
-class KairoJIT:
-    """JIT compiler for Kairo programs.
+class MorphogenJIT:
+    """JIT compiler for Morphogen programs.
 
-    This class manages the compilation and execution of Kairo programs
+    This class manages the compilation and execution of Morphogen programs
     via MLIR's JIT compilation infrastructure with caching support.
 
     Features:
@@ -139,7 +139,7 @@ class KairoJIT:
 
     Example:
         >>> ctx = MorphogenMLIRContext()
-        >>> jit = KairoJIT(ctx)
+        >>> jit = MorphogenJIT(ctx)
         >>> jit.compile(module, opt_level=2)
         >>> result = jit.invoke("my_function", 1.0, 2.0, 3.0)
     """
@@ -153,7 +153,7 @@ class KairoJIT:
         """Initialize JIT compiler.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
             enable_cache: Enable compilation caching
             cache_dir: Directory for persistent cache (None = memory only)
 
@@ -372,20 +372,20 @@ def create_jit(
     context: MorphogenMLIRContext,
     enable_cache: bool = True,
     cache_dir: Optional[Path] = None
-) -> KairoJIT:
+) -> MorphogenJIT:
     """Create JIT compiler instance.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
         enable_cache: Enable compilation caching
         cache_dir: Directory for persistent cache
 
     Returns:
-        KairoJIT instance
+        MorphogenJIT instance
 
     Example:
         >>> from morphogen.mlir.context import MorphogenMLIRContext
         >>> ctx = MorphogenMLIRContext()
         >>> jit = create_jit(ctx, enable_cache=True)
     """
-    return KairoJIT(context, enable_cache, cache_dir)
+    return MorphogenJIT(context, enable_cache, cache_dir)

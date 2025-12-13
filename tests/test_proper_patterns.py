@@ -5,7 +5,7 @@ from morphogen.stdlib.field import field, Field2D
 from morphogen.stdlib.visual import visual
 
 print("=" * 60)
-print("Testing Kairo with Proper Physics Patterns")
+print("Testing Morphogen with Proper Physics Patterns")
 print("=" * 60)
 print()
 

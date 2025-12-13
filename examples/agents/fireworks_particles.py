@@ -4,7 +4,7 @@ Showcases particle emission, lifetime management, trails, and visual effects,
 enhanced with cross-domain physics → audio mapping. Each firework burst
 generates synchronized percussion sounds based on particle physics.
 
-This demonstrates Kairo's ability to compose Visual + Audio domains with
+This demonstrates Morphogen's ability to compose Visual + Audio domains with
 shared timing - particles driving both visual effects and sound synthesis.
 """
 

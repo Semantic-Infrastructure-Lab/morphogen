@@ -9,9 +9,9 @@
 
 ## Executive Summary
 
-This document outlines a comprehensive vision for Kairo as a **domain reasoning language** — a DSL that treats **domains**, **operators**, and **domain translations** as first-class citizens. It consolidates theoretical foundations from category theory with practical requirements for a powerful, extensible, and intuitive programming language.
+This document outlines a comprehensive vision for Morphogen as a **domain reasoning language** — a DSL that treats **domains**, **operators**, and **domain translations** as first-class citizens. It consolidates theoretical foundations from category theory with practical requirements for a powerful, extensible, and intuitive programming language.
 
-**Core Philosophy:** Most programming languages make objects and functions first-class, but domains and cross-domain translations are ad-hoc. Kairo fixes this by elevating domain reasoning to a fundamental language construct.
+**Core Philosophy:** Most programming languages make objects and functions first-class, but domains and cross-domain translations are ad-hoc. Morphogen fixes this by elevating domain reasoning to a fundamental language construct.
 
 ### 📖 Document Purpose & Scope
 
@@ -93,7 +93,7 @@ This is the critical insight most existing languages miss:
 ### 1.2 What the Language Must Express Easily
 
 **🔹 A domain:**
-```kairo
+```morphogen
 domain Time {
     entity signal(t: Real): Real
     operator shift(t: Real): Time
@@ -102,7 +102,7 @@ domain Time {
 ```
 
 **🔹 A translation (functor):**
-```kairo
+```morphogen
 translation FFT from Time to Frequency {
     // Object mapping
     map signal(t) -> sum_k X[k] * exp(i*k*t)
@@ -118,13 +118,13 @@ translation FFT from Time to Frequency {
 ```
 
 **🔹 A composed translation:**
-```kairo
+```morphogen
 let Wavelet = ScaleTransform ∘ FFT
 let CWT = Wavelet ∘ TimeShift
 ```
 
 **🔹 A universal operator:**
-```kairo
+```morphogen
 operator differentiate {
     in Time: finite_difference(h=dt)
     in Frequency: multiply(i*omega)
@@ -133,7 +133,7 @@ operator differentiate {
 ```
 
 **🔹 Declarative invariants:**
-```kairo
+```morphogen
 invariant EnergyPreserved {
     forall signal in Time:
         norm(signal) == norm(FFT(signal))
@@ -147,7 +147,7 @@ invariant Linearity {
 
 ### 1.3 Power Through First-Class Abstractions
 
-| Concept | Current Languages | Kairo Vision |
+| Concept | Current Languages | Morphogen Vision |
 |---------|------------------|--------------|
 | Domains | Implied, ad-hoc | Explicit, first-class |
 | Operators | Methods on objects | Bound to domains |
@@ -160,7 +160,7 @@ invariant Linearity {
 
 ## 2. Current State Analysis
 
-### 2.1 What Kairo/Morphogen Already Has ✅
+### 2.1 What Morphogen/Morphogen Already Has ✅
 
 **Strong Type System:**
 - `Stream<T, Domain, Rate>` with dependent types
@@ -192,8 +192,8 @@ invariant Linearity {
 
 **Declarative Domain Definition:**
 - No `domain` keyword in language
-- Domains defined in Python, not Kairo
-- Users cannot extend domains from within Kairo
+- Domains defined in Python, not Morphogen
+- Users cannot extend domains from within Morphogen
 
 **First-Class Translations:**
 - `transform.to(...)` exists but is procedural
@@ -266,8 +266,8 @@ class AudioDomain:
 ```
 
 **Desired:**
-```kairo
-// In Kairo source
+```morphogen
+// In Morphogen source
 domain Audio {
     entity signal: Stream<f32, audio, 48kHz>
 
@@ -283,13 +283,13 @@ domain Audio {
 #### Gap 2: First-Class Translations
 
 **Current:**
-```kairo
+```morphogen
 // Procedural
 let spec = transform.to(signal, domain="frequency", method="fft")
 ```
 
 **Desired:**
-```kairo
+```morphogen
 // Declarative translation definition
 translation Fourier from Time to Frequency {
     type: bijective
@@ -321,14 +321,14 @@ let back = Fourier.inverse(spec)
 #### Gap 3: Translation Composition
 
 **Current:**
-```kairo
+```morphogen
 // Manual chaining
 let spec = transform.to(signal, domain="frequency", method="fft")
 let mel = transform.reparam(spec, mapping=mel_scale(128))
 ```
 
 **Desired:**
-```kairo
+```morphogen
 // Algebraic composition
 let MelSpectrum = MelScale ∘ Fourier
 
@@ -355,7 +355,7 @@ def test_fft_preserves_energy():
 ```
 
 **Desired:**
-```kairo
+```morphogen
 translation Fourier from Time to Frequency {
     ...
 
@@ -383,7 +383,7 @@ translation Fourier from Time to Frequency {
 ```
 
 **Desired:**
-```kairo
+```morphogen
 domain VectorSpace {
     entity vector: Vec<N, T>
     operator add(a: vector, b: vector): vector
@@ -408,7 +408,7 @@ domain HilbertSpace extends InnerProductSpace {
 
 ### 4.1 Domain Definition Syntax
 
-```kairo
+```morphogen
 domain <Name> [extends <Parent>] {
     // Type declarations
     entity <name>: <type>
@@ -425,7 +425,7 @@ domain <Name> [extends <Parent>] {
 ```
 
 **Example:**
-```kairo
+```morphogen
 domain Time {
     entity signal: Stream<f32, time, R>
 
@@ -438,7 +438,7 @@ domain Time {
 
 ### 4.2 Translation Definition Syntax
 
-```kairo
+```morphogen
 translation <Name> from <SourceDomain> to <TargetDomain> {
     type: bijective | surjective | injective
 
@@ -456,7 +456,7 @@ translation <Name> from <SourceDomain> to <TargetDomain> {
 ```
 
 **Example:**
-```kairo
+```morphogen
 translation Fourier from Time to Frequency {
     type: bijective
 
@@ -477,7 +477,7 @@ translation Fourier from Time to Frequency {
 
 ### 4.3 Composition Operator
 
-```kairo
+```morphogen
 // Composition operator: ∘
 let composed = Translation2 ∘ Translation1
 
@@ -491,7 +491,7 @@ let composed(x) = Translation2(Translation1(x))
 
 ### 4.4 Invariant Syntax
 
-```kairo
+```morphogen
 invariant <Name> {
     forall <bindings>
     [where <constraints>]
@@ -500,7 +500,7 @@ invariant <Name> {
 ```
 
 **Example:**
-```kairo
+```morphogen
 invariant FourierEnergyPreservation {
     forall signal: Time.signal
     => abs(norm(signal) - norm(Fourier(signal))) < epsilon
@@ -514,7 +514,7 @@ invariant ConvolutionTheorem {
 
 ### 4.5 Multi-Domain Operators
 
-```kairo
+```morphogen
 operator <name> {
     in <Domain1>: <implementation1>
     in <Domain2>: <implementation2>
@@ -524,7 +524,7 @@ operator <name> {
 ```
 
 **Example:**
-```kairo
+```morphogen
 operator differentiate {
     in Time: finite_difference(h=dt)
     in Frequency: multiply(i * omega)
@@ -546,9 +546,9 @@ operator differentiate {
 - [ ] Extend AST with DomainDeclaration node
 - [ ] Implement domain type checking
 - [ ] Allow users to define domains in .morph files
-- [ ] Generate Python domain classes from Kairo domains
+- [ ] Generate Python domain classes from Morphogen domains
 
-**Deliverable:** Users can write `domain MyDomain { ... }` in Kairo
+**Deliverable:** Users can write `domain MyDomain { ... }` in Morphogen
 
 ---
 
@@ -624,7 +624,7 @@ class CustomDomain:
 ```
 
 **Future (v0.12.0+):**
-```kairo
+```morphogen
 // In examples/custom_domain.morph
 domain Custom {
     entity signal: Stream<f32, custom, 1kHz>
@@ -653,7 +653,7 @@ flow(dt=0.001, steps=1000) {
 ### Example 2: Domain Translation
 
 **Current (v0.11.0):**
-```kairo
+```morphogen
 use audio, transform
 
 flow(dt=1.0/48000.0, steps=48000) {
@@ -668,7 +668,7 @@ flow(dt=1.0/48000.0, steps=48000) {
 ```
 
 **Future (v0.13.0+):**
-```kairo
+```morphogen
 use audio
 
 // Define translation
@@ -706,7 +706,7 @@ flow(dt=1.0/48000.0, steps=48000) {
 ### Example 3: Composed Translations
 
 **Current (v0.11.0):**
-```kairo
+```morphogen
 // Manual composition
 let signal = audio.sine(440Hz, duration=1s)
 let spec = transform.to(signal, domain="frequency", method="fft")
@@ -715,7 +715,7 @@ let log_mel = log(abs(mel) + 1e-8)
 ```
 
 **Future (v0.14.0+):**
-```kairo
+```morphogen
 // Define atomic translations
 translation Fourier from Time to Frequency { ... }
 translation MelScale from Frequency to MelFrequency { ... }
@@ -751,7 +751,7 @@ def test_fft_linearity():
 ```
 
 **Future (v0.15.0+):**
-```kairo
+```morphogen
 translation Fourier from Time to Frequency {
     ...
 
@@ -782,7 +782,7 @@ translation Fourier from Time to Frequency {
 
 ### 7.1 Category Theory
 
-**Morphogen/Kairo as a Category:**
+**Morphogen/Morphogen as a Category:**
 - **Objects:** `Stream<T, Domain, Rate>`
 - **Morphisms:** Operators `op: Stream → Stream`
 - **Composition:** Data flow / operator chaining
@@ -803,20 +803,20 @@ translation Fourier from Time to Frequency {
 ### 7.2 Type Theory
 
 **Dependent Types:**
-```kairo
+```morphogen
 Stream<T, Domain, Rate>
 ```
 - `Rate` depends on `Domain`
 - `T` depends on `Domain`
 
 **Refinement Types:**
-```kairo
+```morphogen
 Length<m> = {x: f64 | unit = meters}
 Time<s> = {t: f64 | unit = seconds}
 ```
 
 **Curry-Howard-Lambek Correspondence:**
-| Logic | Kairo | Category |
+| Logic | Morphogen | Category |
 |-------|-------|----------|
 | Proposition P | Type `Stream<T,D,R>` | Object A |
 | Proof of P | Value of type | Morphism |
@@ -862,7 +862,7 @@ Time<s> = {t: f64 | unit = seconds}
 
 ### Why It Matters 🎯
 
-This transformation will make Kairo the first language where:
+This transformation will make Morphogen the first language where:
 - Domains are not implicit but **explicit and first-class**
 - Cross-domain reasoning is not ad-hoc but **algebraic and composable**
 - Structure preservation is not manual but **compiler-verified**
@@ -889,4 +889,4 @@ This transformation will make Kairo the first language where:
 
 ---
 
-*This document bridges the gap between our current implementation and our ultimate vision for Kairo as a universal domain reasoning language.*
+*This document bridges the gap between our current implementation and our ultimate vision for Morphogen as a universal domain reasoning language.*

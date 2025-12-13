@@ -1,21 +1,21 @@
-"""Kairo Temporal Dialect (v0.7.0 Phase 3)
+"""Morphogen Temporal Dialect (v0.7.0 Phase 3)
 
-This module defines the Kairo Temporal dialect for MLIR, providing high-level
+This module defines the Morphogen Temporal dialect for MLIR, providing high-level
 operations for time-evolving simulations with flow blocks and state management.
 
 Status: Phase 3 Implementation (Months 7-9)
 
 Operations:
-- kairo.temporal.flow.create: Define a flow block with timestep parameters
-- kairo.temporal.flow.step: Execute single timestep within a flow
-- kairo.temporal.flow.run: Execute complete flow for N timesteps
-- kairo.temporal.state.create: Allocate persistent state container
-- kairo.temporal.state.update: Update state values
-- kairo.temporal.state.query: Read current state values
+- morphogen.temporal.flow.create: Define a flow block with timestep parameters
+- morphogen.temporal.flow.step: Execute single timestep within a flow
+- morphogen.temporal.flow.run: Execute complete flow for N timesteps
+- morphogen.temporal.state.create: Allocate persistent state container
+- morphogen.temporal.state.update: Update state values
+- morphogen.temporal.state.query: Read current state values
 
 Type System:
-- !kairo.flow<T>: Flow type (opaque for Phase 3)
-- !kairo.state<T>: State type (opaque for Phase 3)
+- !morphogen.flow<T>: Flow type (opaque for Phase 3)
+- !morphogen.state<T>: State type (opaque for Phase 3)
 """
 
 from __future__ import annotations
@@ -38,14 +38,14 @@ except ImportError:
 
 
 class FlowType:
-    """Wrapper for !kairo.flow<T> type.
+    """Wrapper for !morphogen.flow<T> type.
 
     Represents a temporal flow block that executes operations over time.
 
     Example:
         >>> ctx = MorphogenMLIRContext()
         >>> flow_type = FlowType.get(ir.F32Type.get(), ctx.ctx)
-        >>> print(flow_type)  # !kairo.flow<f32>
+        >>> print(flow_type)  # !morphogen.flow<f32>
     """
 
     @staticmethod
@@ -57,7 +57,7 @@ class FlowType:
             context: MLIR context
 
         Returns:
-            Opaque flow type !kairo.flow<T>
+            Opaque flow type !morphogen.flow<T>
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -67,14 +67,14 @@ class FlowType:
 
 
 class StateType:
-    """Wrapper for !kairo.state<T> type.
+    """Wrapper for !morphogen.state<T> type.
 
     Represents persistent state storage for temporal simulations.
 
     Example:
         >>> ctx = MorphogenMLIRContext()
         >>> state_type = StateType.get(ir.F32Type.get(), ctx.ctx)
-        >>> print(state_type)  # !kairo.state<f32>
+        >>> print(state_type)  # !morphogen.state<f32>
     """
 
     @staticmethod
@@ -86,7 +86,7 @@ class StateType:
             context: MLIR context
 
         Returns:
-            Opaque state type !kairo.state<T>
+            Opaque state type !morphogen.state<T>
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -96,19 +96,19 @@ class StateType:
 
 
 class FlowCreateOp:
-    """Operation: kairo.temporal.flow.create
+    """Operation: morphogen.temporal.flow.create
 
     Creates a flow block with temporal parameters.
 
     Syntax:
-        %flow = kairo.temporal.flow.create %dt, %steps : !kairo.flow<f32>
+        %flow = morphogen.temporal.flow.create %dt, %steps : !morphogen.flow<f32>
 
     Arguments:
         - dt: Time step size (f32)
         - steps: Number of timesteps (index type)
 
     Results:
-        - Flow handle of type !kairo.flow<element_type>
+        - Flow handle of type !morphogen.flow<element_type>
 
     Lowering:
         Flow metadata is used to configure scf.for loop bounds
@@ -156,12 +156,12 @@ class FlowCreateOp:
 
 
 class FlowStepOp:
-    """Operation: kairo.temporal.flow.step
+    """Operation: morphogen.temporal.flow.step
 
     Executes a single timestep within a flow, applying operations to state.
 
     Syntax:
-        %new_state = kairo.temporal.flow.step %flow, %state, %operations : !kairo.state<f32>
+        %new_state = morphogen.temporal.flow.step %flow, %state, %operations : !morphogen.state<f32>
 
     Arguments:
         - flow: Flow handle
@@ -218,12 +218,12 @@ class FlowStepOp:
 
 
 class FlowRunOp:
-    """Operation: kairo.temporal.flow.run
+    """Operation: morphogen.temporal.flow.run
 
     Executes a complete flow for all timesteps.
 
     Syntax:
-        %final_state = kairo.temporal.flow.run %flow, %initial_state : !kairo.state<f32>
+        %final_state = morphogen.temporal.flow.run %flow, %initial_state : !morphogen.state<f32>
 
     Arguments:
         - flow: Flow handle with dt and steps
@@ -290,19 +290,19 @@ class FlowRunOp:
 
 
 class StateCreateOp:
-    """Operation: kairo.temporal.state.create
+    """Operation: morphogen.temporal.state.create
 
     Allocates a persistent state container.
 
     Syntax:
-        %state = kairo.temporal.state.create %size, %initial_value : !kairo.state<f32>
+        %state = morphogen.temporal.state.create %size, %initial_value : !morphogen.state<f32>
 
     Arguments:
         - size: Size of state container (index type)
         - initial_value: Initial value for all elements
 
     Results:
-        - State container of type !kairo.state<element_type>
+        - State container of type !morphogen.state<element_type>
 
     Lowering:
         Lowers to memref.alloc + initialization loop:
@@ -355,12 +355,12 @@ class StateCreateOp:
 
 
 class StateUpdateOp:
-    """Operation: kairo.temporal.state.update
+    """Operation: morphogen.temporal.state.update
 
     Updates state values at specified indices.
 
     Syntax:
-        %new_state = kairo.temporal.state.update %state, %index, %value : !kairo.state<f32>
+        %new_state = morphogen.temporal.state.update %state, %index, %value : !morphogen.state<f32>
 
     Arguments:
         - state: State container
@@ -418,12 +418,12 @@ class StateUpdateOp:
 
 
 class StateQueryOp:
-    """Operation: kairo.temporal.state.query
+    """Operation: morphogen.temporal.state.query
 
     Reads current state values at specified indices.
 
     Syntax:
-        %value = kairo.temporal.state.query %state, %index : f32
+        %value = morphogen.temporal.state.query %state, %index : f32
 
     Arguments:
         - state: State container

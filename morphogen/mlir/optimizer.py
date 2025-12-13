@@ -1,6 +1,6 @@
-"""MLIR Optimization Passes for Kairo (Phase 5)
+"""MLIR Optimization Passes for Morphogen (Phase 5)
 
-This module implements optimization passes for Kairo's MLIR IR,
+This module implements optimization passes for Morphogen's MLIR IR,
 improving code quality and performance through transformations.
 
 Optimization passes operate on the IRModule and transform it while
@@ -250,7 +250,7 @@ class DeadCodeEliminationPass(OptimizationPass):
             "func.call", "func.return",
             "scf.yield", "scf.for",
             "memref.load", "memref.store",
-            "visual.output",  # Kairo-specific
+            "visual.output",  # Morphogen-specific
         }
 
         return op.opcode in side_effect_opcodes or "call" in op.opcode
@@ -409,7 +409,7 @@ class OptimizationPipeline:
 
 
 def create_default_pipeline() -> OptimizationPipeline:
-    """Create default optimization pipeline for Kairo.
+    """Create default optimization pipeline for Morphogen.
 
     Returns:
         Optimization pipeline with standard passes

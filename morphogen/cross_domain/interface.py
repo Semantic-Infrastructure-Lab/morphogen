@@ -1,7 +1,7 @@
 """
 Domain Interface Base Classes
 
-Provides the foundational abstractions for cross-domain data flows in Kairo.
+Provides the foundational abstractions for cross-domain data flows in Morphogen.
 Based on ADR-002: Cross-Domain Architectural Patterns.
 """
 

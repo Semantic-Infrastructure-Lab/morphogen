@@ -86,7 +86,7 @@ Morphogen is committed to being a **unified multi-domain platform** with:
 **Status:** Syntax exists, enforcement not implemented
 **Impact:** HIGH — Essential for safety in scientific/engineering domains
 
-```kairo
+```morphogen
 // Currently allowed but shouldn't be:
 let dist : f32 [m] = 10.0
 let time : f32 [s] = 2.0
@@ -105,7 +105,7 @@ let wrong = dist + time  // ERROR: incompatible units
 **Status:** Partial implementation, needs enforcement
 **Impact:** HIGH — Enables safe cross-domain composition
 
-```kairo
+```morphogen
 use field, audio
 
 @state temp : Field2D<f32 [K]> = zeros((256, 256))
@@ -124,7 +124,7 @@ let sound = temp.to_audio()  // Field → Audio coupling
 **Status:** Basic imports work, need namespacing
 **Impact:** MEDIUM — Better code organization
 
-```kairo
+```morphogen
 // Current: flat namespace
 use field, audio
 
@@ -189,7 +189,7 @@ These features are **not finalized** and may change based on community feedback:
 **Status:** 🤔 Under consideration
 **Question:** Should I/O operations be tracked in the type system?
 
-```kairo
+```morphogen
 // Pure function (no I/O)
 fn compute(x: f32) -> f32 { x * 2.0 }
 
@@ -204,7 +204,7 @@ fn save_result(x: f32) -> Result<(), Error> io {
 
 ### 3. **Ownership/Borrow Checking**
 **Status:** 🤔 Under consideration
-**Question:** Should Kairo adopt Rust-style ownership semantics?
+**Question:** Should Morphogen adopt Rust-style ownership semantics?
 
 **Current:** Python-style reference semantics (GC)
 **Proposed:** Rust-style ownership for zero-copy performance
@@ -215,7 +215,7 @@ fn save_result(x: f32) -> Result<(), Error> io {
 **Status:** 🤔 Likely addition
 **Syntax TBD:**
 
-```kairo
+```morphogen
 // Option 1: Rust-style
 match shape {
     Circle(r) => area_circle(r),
@@ -236,7 +236,7 @@ case shape of
 ### Current Documentation Structure
 
 **Root Level:**
-- `/README.md` — Project overview (Kairo/Morphogen)
+- `/README.md` — Project overview (Morphogen/Morphogen)
 - `/SPECIFICATION.md` — Language specification v0.10.0
 - `/STATUS.md` — Implementation status
 - `/CHANGELOG.md` — Version history
@@ -265,7 +265,7 @@ case shape of
 - [ ] Complete API reference for all 40 domains
 - [ ] Write migration guide from v0.10 → v1.0
 - [ ] Create video tutorials for core features
-- [ ] Write "Kairo for X" guides (X = MATLAB users, audio engineers, game devs, etc.)
+- [ ] Write "Morphogen for X" guides (X = MATLAB users, audio engineers, game devs, etc.)
 
 ---
 

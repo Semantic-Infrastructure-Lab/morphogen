@@ -1,4 +1,4 @@
-"""Unit tests for Kairo Agent Dialect (Phase 4)
+"""Unit tests for Morphogen Agent Dialect (Phase 4)
 
 Tests the agent dialect operations, type system, and lowering passes.
 These tests require MLIR Python bindings to be installed.
@@ -623,7 +623,7 @@ class TestAgentDialect:
                 for op in module.body.operations:
                     op_name = AgentDialect.get_agent_op_name(op)
                     if op_name:
-                        assert "kairo.agent." in op_name
+                        assert "morphogen.agent." in op_name
 
 
 @pytest.mark.skipif(not MLIR_AVAILABLE, reason="MLIR Python bindings not installed")

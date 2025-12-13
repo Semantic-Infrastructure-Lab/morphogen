@@ -2,7 +2,7 @@
 Flappy Bird Game Domain
 =======================
 
-A simple 2D platformer physics domain for demonstrating Kairo's multi-domain
+A simple 2D platformer physics domain for demonstrating Morphogen's multi-domain
 capabilities through a classic Flappy Bird game with neural network controllers
 and genetic algorithm training.
 
@@ -111,7 +111,7 @@ class FlappyOperations:
     """
     Namespace for Flappy Bird game operations.
 
-    Follows Kairo's 4-layer operator hierarchy:
+    Follows Morphogen's 4-layer operator hierarchy:
     - Layer 1: Atomic (gravity, flap, collision)
     - Layer 2: Composite (step, reset)
     - Layer 3: Constructs (game loop, episode)

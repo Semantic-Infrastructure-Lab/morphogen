@@ -1,4 +1,4 @@
-"""Physical unit system with dimensional analysis for Kairo DSL.
+"""Physical unit system with dimensional analysis for Morphogen DSL.
 
 This module provides a comprehensive unit system that supports:
 - Seven SI base dimensions (mass, length, time, current, temperature, amount, luminosity)

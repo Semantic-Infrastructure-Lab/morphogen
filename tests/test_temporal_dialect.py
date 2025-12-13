@@ -1,4 +1,4 @@
-"""Unit tests for Kairo Temporal Dialect (Phase 3)
+"""Unit tests for Morphogen Temporal Dialect (Phase 3)
 
 Tests the temporal dialect operations and type system.
 These tests require MLIR Python bindings to be installed.
@@ -409,7 +409,7 @@ class TestTemporalDialect:
                 for op in module.body.operations:
                     op_name = TemporalDialect.get_temporal_op_name(op)
                     if op_name and "state.create" in op_name:
-                        assert "kairo.temporal.state.create" == op_name
+                        assert "morphogen.temporal.state.create" == op_name
                         break
 
 

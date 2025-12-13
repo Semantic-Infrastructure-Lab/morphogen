@@ -316,7 +316,7 @@ def demo_radiation_impedance():
 
 if __name__ == "__main__":
     print("\n" + "=" * 70)
-    print("KAIRO ACOUSTICS DOMAIN - Phase 1 Demonstration")
+    print("MORPHOGEN ACOUSTICS DOMAIN - Phase 1 Demonstration")
     print("1D Waveguide Acoustics")
     print("=" * 70)
 

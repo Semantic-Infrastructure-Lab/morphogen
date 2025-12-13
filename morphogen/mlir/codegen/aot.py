@@ -1,6 +1,6 @@
-"""AOT (Ahead-of-Time) Compilation for Kairo v0.7.4 Phase 6
+"""AOT (Ahead-of-Time) Compilation for Morphogen v0.7.4 Phase 6
 
-This module implements Ahead-of-Time compilation of Kairo programs to
+This module implements Ahead-of-Time compilation of Morphogen programs to
 native binaries, shared libraries, and object files using LLVM.
 
 Features:
@@ -16,8 +16,8 @@ Features:
 Example usage:
     >>> from morphogen.mlir.context import MorphogenMLIRContext
     >>> ctx = MorphogenMLIRContext()
-    >>> aot = KairoAOT(ctx)
-    >>> aot.compile_to_shared_library(module, "libkairo.so", opt_level=3)
+    >>> aot = MorphogenAOT(ctx)
+    >>> aot.compile_to_shared_library(module, "libmorphogen.so", opt_level=3)
     >>> aot.compile_to_executable(module, "myprogram", entry_point="main")
 """
 
@@ -55,10 +55,10 @@ class OutputFormat(Enum):
     ASSEMBLY = "assembly"          # Assembly (.s)
 
 
-class KairoAOT:
-    """AOT compiler for Kairo programs.
+class MorphogenAOT:
+    """AOT compiler for Morphogen programs.
 
-    This class manages ahead-of-time compilation of Kairo programs
+    This class manages ahead-of-time compilation of Morphogen programs
     to native binaries, shared libraries, and other formats.
 
     Features:
@@ -70,7 +70,7 @@ class KairoAOT:
 
     Example:
         >>> ctx = MorphogenMLIRContext()
-        >>> aot = KairoAOT(ctx)
+        >>> aot = MorphogenAOT(ctx)
         >>> aot.compile_to_shared_library(module, "libfoo.so", opt_level=3)
     """
 
@@ -78,7 +78,7 @@ class KairoAOT:
         """Initialize AOT compiler.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
 
         Raises:
             RuntimeError: If MLIR is not available
@@ -503,14 +503,14 @@ class KairoAOT:
                 ll_path.unlink()
 
 
-def create_aot(context: MorphogenMLIRContext) -> KairoAOT:
+def create_aot(context: MorphogenMLIRContext) -> MorphogenAOT:
     """Create AOT compiler instance.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
-        KairoAOT instance
+        MorphogenAOT instance
 
     Example:
         >>> from morphogen.mlir.context import MorphogenMLIRContext
@@ -518,4 +518,4 @@ def create_aot(context: MorphogenMLIRContext) -> KairoAOT:
         >>> aot = create_aot(ctx)
         >>> aot.compile_to_shared_library(module, "libfoo.so")
     """
-    return KairoAOT(context)
+    return MorphogenAOT(context)

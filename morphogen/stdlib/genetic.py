@@ -2,7 +2,7 @@
 Genetic Algorithm Domain
 ========================
 
-Evolutionary computation domain for Kairo simulations.
+Evolutionary computation domain for Morphogen simulations.
 Implements genetic algorithms for parameter optimization, neural network evolution,
 and general black-box optimization.
 
@@ -92,7 +92,7 @@ class GeneticOperations:
     """
     Namespace for genetic algorithm operations.
 
-    Follows Kairo's 4-layer operator hierarchy:
+    Follows Morphogen's 4-layer operator hierarchy:
     - Layer 1: Atomic (selection, crossover, mutation)
     - Layer 2: Composite (breed, evolve_generation)
     - Layer 3: Constructs (GA loop, island models)

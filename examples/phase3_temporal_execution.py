@@ -1,6 +1,6 @@
 """Phase 3 Example: Temporal Execution with MLIR
 
-This example demonstrates the Kairo Temporal Dialect (Phase 3) capabilities:
+This example demonstrates the Morphogen Temporal Dialect (Phase 3) capabilities:
 - State container creation and management
 - Flow block definition with temporal parameters
 - Flow execution over multiple timesteps
@@ -19,10 +19,10 @@ Usage:
 import sys
 from pathlib import Path
 
-# Add kairo to path
+# Add morphogen to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from morphogen.mlir.context import is_mlir_available, KairoMLIRContext
+from morphogen.mlir.context import is_mlir_available, MorphogenMLIRContext
 from morphogen.mlir.compiler_v2 import MLIRCompilerV2
 
 
@@ -37,7 +37,7 @@ def example_state_creation():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -49,7 +49,7 @@ def example_state_creation():
 
         module = compiler.compile_temporal_program(operations, "state_creation")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  @state x: Array[100] = 0.0")
 
         print("\nGenerated MLIR (after lowering):")
@@ -78,7 +78,7 @@ def example_flow_execution():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -98,7 +98,7 @@ def example_flow_execution():
 
         module = compiler.compile_temporal_program(operations, "flow_execution")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  @state x: Array[100] = 0.0")
         print("  ")
         print("  flow(dt=0.1, steps=10) {")
@@ -132,7 +132,7 @@ def example_state_update_and_query():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         operations = [
@@ -152,7 +152,7 @@ def example_state_update_and_query():
 
         module = compiler.compile_temporal_program(operations, "state_operations")
 
-        print("\nKairo Code (conceptual):")
+        print("\nMorphogen Code (conceptual):")
         print("  @state x: Array[100] = 0.0")
         print("  x[5] = 1.5")
         print("  value = x[5]")
@@ -186,7 +186,7 @@ def example_combined_field_and_temporal():
         from mlir import ir
         from mlir.dialects import func
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         compiler = MLIRCompilerV2(ctx)
 
         # First, create a field and apply diffusion
@@ -208,7 +208,7 @@ def example_combined_field_and_temporal():
 
         field_module = compiler.compile_field_program(field_ops, "field_diffusion")
 
-        print("\nKairo Code (conceptual) - Field Evolution:")
+        print("\nMorphogen Code (conceptual) - Field Evolution:")
         print("  @field temperature: Field[64, 64] = 0.0")
         print("  ")
         print("  flow(dt=0.01, steps=100) {")
@@ -257,7 +257,7 @@ def example_combined_field_and_temporal():
 def main():
     """Run all Phase 3 temporal execution examples."""
     print("╔" + "=" * 68 + "╗")
-    print("║  Kairo v0.7.0 Phase 3: Temporal Execution Examples              ║")
+    print("║  Morphogen v0.7.0 Phase 3: Temporal Execution Examples              ║")
     print("╚" + "=" * 68 + "╝")
 
     if not is_mlir_available():
@@ -286,10 +286,10 @@ def main():
     print("  4. Integration with Phase 2 field operations")
     print("")
     print("MLIR Lowering:")
-    print("  - kairo.temporal.state.create → memref.alloc + initialization")
-    print("  - kairo.temporal.flow.run → scf.for with iter_args")
-    print("  - kairo.temporal.state.update → memref.store")
-    print("  - kairo.temporal.state.query → memref.load")
+    print("  - morphogen.temporal.state.create → memref.alloc + initialization")
+    print("  - morphogen.temporal.flow.run → scf.for with iter_args")
+    print("  - morphogen.temporal.state.update → memref.store")
+    print("  - morphogen.temporal.state.query → memref.load")
     print("")
     print("Next Steps:")
     print("  - Phase 4: Agent Operations (spawning, behavior trees)")

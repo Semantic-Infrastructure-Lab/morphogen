@@ -6,7 +6,7 @@ Flappy Bird Visualization
 Render Flappy Bird game state using matplotlib.
 Can replay saved genomes or visualize training in real-time.
 
-This demonstrates integration with Kairo's visual domain.
+This demonstrates integration with Morphogen's visual domain.
 """
 
 import numpy as np
@@ -37,7 +37,7 @@ class FlappyBirdRenderer:
         self.ax.set_xlim(-0.1, 1.1)
         self.ax.set_ylim(-0.1, 1.1)
         self.ax.set_aspect('equal')
-        self.ax.set_title('Kairo Flappy Bird', fontsize=16, fontweight='bold')
+        self.ax.set_title('Morphogen Flappy Bird', fontsize=16, fontweight='bold')
 
         # Visual elements
         self.bird_artists = []

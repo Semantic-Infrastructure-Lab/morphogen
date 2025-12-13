@@ -1,7 +1,7 @@
 """Real-Time Audio Visualizer - Cross-Domain Showcase
 
 This example demonstrates real-time audio visualization patterns using
-multiple Kairo domains working together:
+multiple Morphogen domains working together:
 
 - Audio: Synthesis and signal processing
 - Field: Diffusion and field-based effects

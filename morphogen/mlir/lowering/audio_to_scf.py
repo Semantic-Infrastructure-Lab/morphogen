@@ -1,18 +1,18 @@
-"""Audio-to-SCF Lowering Pass for Kairo v0.7.0 Phase 5
+"""Audio-to-SCF Lowering Pass for Morphogen v0.7.0 Phase 5
 
-This module implements the lowering pass that transforms Kairo audio operations
+This module implements the lowering pass that transforms Morphogen audio operations
 into Structured Control Flow (SCF) loops with memref operations.
 
 Transformation:
-    kairo.audio.* ops → scf.for loops + memref.load/store + arith/math ops
+    morphogen.audio.* ops → scf.for loops + memref.load/store + arith/math ops
 
 Examples:
     1. Buffer Creation:
-        Input:  %buf = kairo.audio.buffer.create %sr, %ch, %dur
+        Input:  %buf = morphogen.audio.buffer.create %sr, %ch, %dur
         Output: %mem = memref.alloc(%num_samples) : memref<?xf32>
 
     2. Oscillator (sine):
-        Input:  %osc = kairo.audio.oscillator %buf, %waveform=0, %freq, %phase
+        Input:  %osc = morphogen.audio.oscillator %buf, %waveform=0, %freq, %phase
         Output: scf.for %i = %c0 to %num_samples step %c1 {
                   %t = ... // i / sample_rate
                   %sample = math.sin(2π * freq * t + phase)
@@ -20,15 +20,15 @@ Examples:
                 }
 
     3. ADSR Envelope:
-        Input:  %env = kairo.audio.envelope %buf, %a, %d, %s, %r
+        Input:  %env = morphogen.audio.envelope %buf, %a, %d, %s, %r
         Output: scf.for with state machine for attack/decay/sustain/release
 
     4. Filter (biquad):
-        Input:  %filt = kairo.audio.filter %buf, %type, %cutoff, %Q
+        Input:  %filt = morphogen.audio.filter %buf, %type, %cutoff, %Q
         Output: scf.for with IIR biquad filter state (x[n-1], x[n-2], y[n-1], y[n-2])
 
     5. Mix:
-        Input:  %mix = kairo.audio.mix %buf1, %buf2, %gain1, %gain2
+        Input:  %mix = morphogen.audio.mix %buf1, %buf2, %gain1, %gain2
         Output: scf.for summing scaled samples
 """
 
@@ -59,11 +59,11 @@ class AudioToSCFPass:
     with nested scf.for loops operating on memref storage.
 
     Operations Lowered:
-        - kairo.audio.buffer.create → memref.alloc
-        - kairo.audio.oscillator → scf.for with waveform generation
-        - kairo.audio.envelope → scf.for with ADSR state machine
-        - kairo.audio.filter → scf.for with biquad IIR filter
-        - kairo.audio.mix → scf.for with summation
+        - morphogen.audio.buffer.create → memref.alloc
+        - morphogen.audio.oscillator → scf.for with waveform generation
+        - morphogen.audio.envelope → scf.for with ADSR state machine
+        - morphogen.audio.filter → scf.for with biquad IIR filter
+        - morphogen.audio.mix → scf.for with summation
 
     Usage:
         >>> pass_obj = AudioToSCFPass(context)
@@ -74,7 +74,7 @@ class AudioToSCFPass:
         """Initialize audio-to-SCF pass.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -123,10 +123,10 @@ class AudioToSCFPass:
                         self._process_operation(nested_op)
 
     def _lower_buffer_create(self, op: Any) -> None:
-        """Lower kairo.audio.buffer.create to memref.alloc.
+        """Lower morphogen.audio.buffer.create to memref.alloc.
 
         Input:
-            %buf = kairo.audio.buffer.create %sample_rate, %channels, %duration
+            %buf = morphogen.audio.buffer.create %sample_rate, %channels, %duration
 
         Output:
             %num_samples = sample_rate * duration * channels  // computed
@@ -179,10 +179,10 @@ class AudioToSCFPass:
             op.operation.erase()
 
     def _lower_oscillator(self, op: Any) -> None:
-        """Lower kairo.audio.oscillator to waveform generation loop.
+        """Lower morphogen.audio.oscillator to waveform generation loop.
 
         Input:
-            %osc = kairo.audio.oscillator %buffer, %waveform, %freq, %phase
+            %osc = morphogen.audio.oscillator %buffer, %waveform, %freq, %phase
 
         Output (sine wave example, waveform=0):
             %num_samples = memref.dim %buffer, %c0
@@ -258,10 +258,10 @@ class AudioToSCFPass:
             op.operation.erase()
 
     def _lower_envelope(self, op: Any) -> None:
-        """Lower kairo.audio.envelope to ADSR state machine loop.
+        """Lower morphogen.audio.envelope to ADSR state machine loop.
 
         Input:
-            %env = kairo.audio.envelope %buffer, %attack, %decay, %sustain, %release
+            %env = morphogen.audio.envelope %buffer, %attack, %decay, %sustain, %release
 
         Output:
             %num_samples = memref.dim %buffer, %c0
@@ -381,10 +381,10 @@ class AudioToSCFPass:
             op.operation.erase()
 
     def _lower_filter(self, op: Any) -> None:
-        """Lower kairo.audio.filter to biquad IIR filter loop.
+        """Lower morphogen.audio.filter to biquad IIR filter loop.
 
         Input:
-            %filt = kairo.audio.filter %buffer, %filter_type, %cutoff, %resonance
+            %filt = morphogen.audio.filter %buffer, %filter_type, %cutoff, %resonance
 
         Output:
             // Allocate state variables for IIR filter
@@ -500,10 +500,10 @@ class AudioToSCFPass:
             op.operation.erase()
 
     def _lower_mix(self, op: Any) -> None:
-        """Lower kairo.audio.mix to summation loop.
+        """Lower morphogen.audio.mix to summation loop.
 
         Input:
-            %mix = kairo.audio.mix %buf1, %buf2, %gain1, %gain2
+            %mix = morphogen.audio.mix %buf1, %buf2, %gain1, %gain2
 
         Output:
             %num_samples = memref.dim %buf1, %c0
@@ -578,7 +578,7 @@ def create_audio_to_scf_pass(context: MorphogenMLIRContext) -> AudioToSCFPass:
     """Factory function to create audio-to-SCF pass.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
         AudioToSCFPass instance

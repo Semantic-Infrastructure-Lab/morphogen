@@ -1,7 +1,7 @@
 """Geometry Domain for 2D/3D geometric primitives and spatial operations.
 
 This module provides geometric primitives, coordinate transformations,
-spatial queries, and advanced computational geometry algorithms for Kairo.
+spatial queries, and advanced computational geometry algorithms for Morphogen.
 
 Features:
 - 2D/3D geometric primitives (point, line, circle, rectangle, polygon, box, sphere, mesh)

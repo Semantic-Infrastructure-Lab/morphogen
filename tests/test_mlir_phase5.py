@@ -58,7 +58,7 @@ class TestPhase5EndToEndOptimization(unittest.TestCase):
     """Tests for end-to-end compilation with optimization."""
 
     def compile_and_optimize(self, code: str):
-        """Helper to compile and optimize Kairo code."""
+        """Helper to compile and optimize Morphogen code."""
         program = parse(code)
         compiler = MLIRCompiler()
         module = compiler.compile_program(program)

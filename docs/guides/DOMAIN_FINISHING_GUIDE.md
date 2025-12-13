@@ -144,7 +144,7 @@ flow control_flow(dt) {
 **Example:**
 ```bash
 # Compile to native code
-kairo compile main.morph --output main.so --optimize
+morphogen compile main.morph --output main.so --optimize
 
 # 5-10x faster than Python runtime
 ./main.so
@@ -437,7 +437,7 @@ def infer_operator_signature(op_func: Callable) -> TypeSignature:
 ```python
 # tests/test_language_integration.py
 
-def test_use_graph_in_kairo_program():
+def test_use_graph_in_morphogen_program():
     """Test that graph domain works in .morph files."""
     program = """
     use graph
@@ -1106,25 +1106,25 @@ Use this checklist for each domain:
 
 ```bash
 # Check domain registration
-kairo domains list
+morphogen domains list
 
 # Verify domain can be used
 morphogen check main.morph --domain graph
 
 # Run type checker
-kairo typecheck main.morph
+morphogen typecheck main.morph
 
 # Compile to MLIR
-kairo compile main.morph --emit-mlir
+morphogen compile main.morph --emit-mlir
 
 # Benchmark domain performance
-kairo benchmark --domain rigidbody --python-vs-mlir
+morphogen benchmark --domain rigidbody --python-vs-mlir
 
 # Run full test suite
 pytest tests/ --cov --cov-report=html
 
 # Generate domain documentation
-kairo docs generate --domain graph
+morphogen docs generate --domain graph
 ```
 
 ---

@@ -1,14 +1,14 @@
-"""Field-to-SCF Lowering Pass for Kairo v0.7.0 Phase 2
+"""Field-to-SCF Lowering Pass for Morphogen v0.7.0 Phase 2
 
-This module implements the lowering pass that transforms Kairo field operations
+This module implements the lowering pass that transforms Morphogen field operations
 into Structured Control Flow (SCF) loops with memref operations.
 
 Transformation:
-    kairo.field.* ops → scf.for loops + memref.load/store + arith ops
+    morphogen.field.* ops → scf.for loops + memref.load/store + arith ops
 
 Example:
     Input (High-level):
-        %grad = kairo.field.gradient %field : !kairo.field<f32>
+        %grad = morphogen.field.gradient %field : !morphogen.field<f32>
 
     Output (Low-level):
         %mem = memref.alloc(%h, %w, %c2) : memref<?x?x2xf32>
@@ -49,10 +49,10 @@ class FieldToSCFPass:
     with nested scf.for loops operating on memref storage.
 
     Operations Lowered:
-        - kairo.field.create → memref.alloc + initialization loop
-        - kairo.field.gradient → nested loops with central difference
-        - kairo.field.laplacian → nested loops with 5-point stencil
-        - kairo.field.diffuse → iteration loops with Jacobi solver
+        - morphogen.field.create → memref.alloc + initialization loop
+        - morphogen.field.gradient → nested loops with central difference
+        - morphogen.field.laplacian → nested loops with 5-point stencil
+        - morphogen.field.diffuse → iteration loops with Jacobi solver
 
     Usage:
         >>> pass_obj = FieldToSCFPass(context)
@@ -63,7 +63,7 @@ class FieldToSCFPass:
         """Initialize field-to-SCF pass.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -110,10 +110,10 @@ class FieldToSCFPass:
                         self._process_operation(nested_op)
 
     def _lower_field_create(self, op: Any) -> None:
-        """Lower kairo.field.create to memref.alloc + initialization loop.
+        """Lower morphogen.field.create to memref.alloc + initialization loop.
 
         Input:
-            %field = kairo.field.create %w, %h, %fill : !kairo.field<f32>
+            %field = morphogen.field.create %w, %h, %fill : !morphogen.field<f32>
 
         Output:
             %mem = memref.alloc(%h, %w) : memref<?x?xf32>
@@ -175,10 +175,10 @@ class FieldToSCFPass:
             op.operation.erase()
 
     def _lower_field_gradient(self, op: Any) -> None:
-        """Lower kairo.field.gradient to central difference stencil.
+        """Lower morphogen.field.gradient to central difference stencil.
 
         Input:
-            %grad = kairo.field.gradient %field : !kairo.field<f32>
+            %grad = morphogen.field.gradient %field : !morphogen.field<f32>
 
         Output:
             %h = memref.dim %field, %c0
@@ -287,10 +287,10 @@ class FieldToSCFPass:
             op.operation.erase()
 
     def _lower_field_laplacian(self, op: Any) -> None:
-        """Lower kairo.field.laplacian to 5-point stencil.
+        """Lower morphogen.field.laplacian to 5-point stencil.
 
         Input:
-            %lapl = kairo.field.laplacian %field : !kairo.field<f32>
+            %lapl = morphogen.field.laplacian %field : !morphogen.field<f32>
 
         Output:
             %h = memref.dim %field, %c0
@@ -387,10 +387,10 @@ class FieldToSCFPass:
             op.operation.erase()
 
     def _lower_field_diffuse(self, op: Any) -> None:
-        """Lower kairo.field.diffuse to Jacobi iteration loops.
+        """Lower morphogen.field.diffuse to Jacobi iteration loops.
 
         Input:
-            %diffused = kairo.field.diffuse %field, %rate, %dt, %iters
+            %diffused = morphogen.field.diffuse %field, %rate, %dt, %iters
 
         Output:
             // Allocate buffers
@@ -535,7 +535,7 @@ def create_field_to_scf_pass(context: MorphogenMLIRContext) -> FieldToSCFPass:
     """Factory function to create field-to-SCF lowering pass.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
         Configured FieldToSCFPass instance

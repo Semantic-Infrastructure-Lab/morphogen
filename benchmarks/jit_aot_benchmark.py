@@ -33,7 +33,7 @@ import tempfile
 
 # Try to import MLIR components
 try:
-    from morphogen.mlir.context import KairoMLIRContext
+    from morphogen.mlir.context import MorphogenMLIRContext
     from morphogen.mlir.codegen import create_jit, create_aot, create_execution_engine
     from morphogen.mlir.lowering import lower_to_llvm
     from mlir import ir
@@ -92,7 +92,7 @@ class BenchmarkResult:
             print(f"  {key}: {value}")
 
 
-def create_simple_module(ctx: KairoMLIRContext) -> ir.Module:
+def create_simple_module(ctx: MorphogenMLIRContext) -> ir.Module:
     """Create simple arithmetic module for benchmarking."""
     with ctx.ctx:
         module = ir.Module.create()
@@ -110,7 +110,7 @@ def create_simple_module(ctx: KairoMLIRContext) -> ir.Module:
     return module
 
 
-def create_loop_module(ctx: KairoMLIRContext, iterations: int) -> ir.Module:
+def create_loop_module(ctx: MorphogenMLIRContext, iterations: int) -> ir.Module:
     """Create module with nested loops for benchmarking."""
     with ctx.ctx:
         module = ir.Module.create()
@@ -160,7 +160,7 @@ def benchmark1_jit_compilation_time(iterations: int = 10):
     result = BenchmarkResult("JIT Compilation Time")
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         for i in range(iterations):
             module = create_simple_module(ctx)
@@ -198,7 +198,7 @@ def benchmark2_optimization_levels():
     results = {}
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         for opt_level in [0, 1, 2, 3]:
             result = BenchmarkResult(f"Optimization Level {opt_level}")
@@ -244,7 +244,7 @@ def benchmark3_cache_performance():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         module = create_simple_module(ctx)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -299,7 +299,7 @@ def benchmark4_aot_compilation_time():
     try:
         from morphogen.mlir.codegen import OutputFormat
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         module = create_simple_module(ctx)
         aot = create_aot(ctx)
 
@@ -352,7 +352,7 @@ def benchmark5_memory_usage():
 
         process = psutil.Process(os.getpid())
 
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         # Measure baseline
         gc.collect()
@@ -391,7 +391,7 @@ def benchmark6_scalability():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
 
         sizes = [10, 50, 100, 200]
 
@@ -432,7 +432,7 @@ def benchmark7_execution_engine_overhead():
         return
 
     try:
-        ctx = KairoMLIRContext()
+        ctx = MorphogenMLIRContext()
         module = create_simple_module(ctx)
 
         # Direct JIT
@@ -492,7 +492,7 @@ def print_benchmark_summary():
 def run_all_benchmarks():
     """Run all benchmarks."""
     print("\n" + "=" * 70)
-    print("  Kairo v0.7.4 Phase 6: JIT/AOT Performance Benchmarks")
+    print("  Morphogen v0.7.4 Phase 6: JIT/AOT Performance Benchmarks")
     print("=" * 70)
 
     if not MLIR_AVAILABLE:

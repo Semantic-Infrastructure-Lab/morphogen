@@ -403,7 +403,7 @@ def abstract_terrain_art():
 def main():
     """Run all procedural art demos."""
     print("=" * 60)
-    print("KAIRO PROCEDURAL ART GENERATOR - CROSS-DOMAIN SHOWCASE")
+    print("MORPHOGEN PROCEDURAL ART GENERATOR - CROSS-DOMAIN SHOWCASE")
     print("=" * 60)
     print()
     print("Demonstrating integration of:")

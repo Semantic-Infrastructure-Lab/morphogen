@@ -1,4 +1,4 @@
-"""Unit tests for Kairo Audio Dialect (Phase 5)
+"""Unit tests for Morphogen Audio Dialect (Phase 5)
 
 Tests the audio dialect operations, lowering passes, and compiler integration.
 These tests require MLIR Python bindings to be installed.

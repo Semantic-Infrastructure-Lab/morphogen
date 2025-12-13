@@ -8,7 +8,7 @@ This guide covers the philosophy, techniques, and best practices for generating 
 
 ## Table of Contents
 
-1. [Philosophy: What Makes Morphogen Outputs Special](#philosophy-what-makes-kairo-outputs-special)
+1. [Philosophy: What Makes Morphogen Outputs Special](#philosophy-what-makes-morphogen-outputs-special)
 2. [Output Types & Formats](#output-types--formats)
 3. [The Output Generation Pipeline](#the-output-generation-pipeline)
 4. [Cross-Domain Output Recipes](#cross-domain-output-recipes)
@@ -900,7 +900,7 @@ def generate_all_formats(simulation_name):
         'fps': 30,
         'duration_seconds': len(frames) / 30,
         'seed': 42,
-        'kairo_version': '0.8.2',
+        'morphogen_version': '0.8.2',
         'generated': datetime.now().isoformat(),
     }
 

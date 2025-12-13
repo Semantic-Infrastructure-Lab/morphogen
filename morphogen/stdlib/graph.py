@@ -9,7 +9,7 @@ Provides graph data structures and algorithms for:
 - Community detection
 - Flow algorithms
 
-Follows Kairo's immutability pattern: all operations return new instances.
+Follows Morphogen's immutability pattern: all operations return new instances.
 
 Version: v0.10.0
 """

@@ -1,9 +1,9 @@
-"""MLIR Lowering Passes for Kairo
+"""MLIR Lowering Passes for Morphogen
 
-This package contains lowering passes that transform Kairo's high-level
+This package contains lowering passes that transform Morphogen's high-level
 dialects into progressively lower-level representations:
 
-Kairo Dialects → SCF/Arith/Func → LLVM Dialect → LLVM IR → Native Code
+Morphogen Dialects → SCF/Arith/Func → LLVM Dialect → LLVM IR → Native Code
 
 Passes:
 - FieldToSCFPass: Lower field operations to structured control flow (Phase 2) ✅

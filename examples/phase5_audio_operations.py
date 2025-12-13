@@ -1,7 +1,7 @@
-"""Kairo v0.7.0 Phase 5: Audio Operations Dialect Examples
+"""Morphogen v0.7.0 Phase 5: Audio Operations Dialect Examples
 
 This module demonstrates the audio synthesis and processing capabilities of
-Kairo's MLIR-based audio dialect, including:
+Morphogen's MLIR-based audio dialect, including:
 
 1. Basic oscillator synthesis (sine, saw, square waves)
 2. ADSR envelope application
@@ -15,7 +15,7 @@ Kairo's MLIR-based audio dialect, including:
 All examples compile to MLIR and lower to optimized SCF loops with memref operations.
 """
 
-from morphogen.mlir.context import KairoMLIRContext, MLIR_AVAILABLE
+from morphogen.mlir.context import MorphogenMLIRContext, MLIR_AVAILABLE
 from morphogen.mlir.compiler_v2 import MLIRCompilerV2
 
 
@@ -31,7 +31,7 @@ def example1_basic_oscillator():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -67,7 +67,7 @@ def example2_envelope_application():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -116,7 +116,7 @@ def example3_filter_sweep():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -164,7 +164,7 @@ def example4_chord_mixing():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -227,7 +227,7 @@ def example5_complete_synth_patch():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -293,7 +293,7 @@ def example6_audio_effects_chain():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -345,7 +345,7 @@ def example7_multi_voice_synthesis():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -420,7 +420,7 @@ def example8_bass_synthesis():
         print("MLIR not available, skipping example")
         return
 
-    ctx = KairoMLIRContext()
+    ctx = MorphogenMLIRContext()
     compiler = MLIRCompilerV2(ctx)
 
     operations = [
@@ -474,7 +474,7 @@ def example8_bass_synthesis():
 def run_all_examples():
     """Run all audio dialect examples."""
     print("=" * 70)
-    print("Kairo v0.7.0 Phase 5: Audio Operations Dialect Examples")
+    print("Morphogen v0.7.0 Phase 5: Audio Operations Dialect Examples")
     print("=" * 70)
 
     if not MLIR_AVAILABLE:

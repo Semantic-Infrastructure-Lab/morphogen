@@ -1,6 +1,6 @@
 """Tests for MLIR compiler.
 
-This module tests the MLIR compilation pipeline for Kairo v0.3.1.
+This module tests the MLIR compilation pipeline for Morphogen v0.3.1.
 """
 
 import pytest
@@ -10,7 +10,7 @@ from morphogen.mlir import MLIRCompiler
 
 
 def parse(code: str):
-    """Helper to parse Kairo code."""
+    """Helper to parse Morphogen code."""
     lexer = Lexer(code)
     tokens = lexer.tokenize()
     parser = Parser(tokens)

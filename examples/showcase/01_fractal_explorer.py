@@ -1,6 +1,6 @@
 """Fractal Explorer - Cross-Domain Showcase Example
 
-This example demonstrates the power of combining multiple Kairo domains:
+This example demonstrates the power of combining multiple Morphogen domains:
 - Field operations for fractal computation
 - Noise for texture overlay and perturbation
 - Palette for sophisticated color mapping
@@ -316,7 +316,7 @@ def animated_fractal_palette_cycle():
 def main():
     """Run all fractal explorer demos."""
     print("=" * 60)
-    print("KAIRO FRACTAL EXPLORER - CROSS-DOMAIN SHOWCASE")
+    print("MORPHOGEN FRACTAL EXPLORER - CROSS-DOMAIN SHOWCASE")
     print("=" * 60)
     print()
     print("Demonstrating integration of:")

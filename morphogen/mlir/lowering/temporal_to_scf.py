@@ -1,16 +1,16 @@
-"""Temporal-to-SCF Lowering Pass for Kairo v0.7.0 Phase 3
+"""Temporal-to-SCF Lowering Pass for Morphogen v0.7.0 Phase 3
 
-This module implements the lowering pass that transforms Kairo temporal operations
+This module implements the lowering pass that transforms Morphogen temporal operations
 into Structured Control Flow (SCF) loops with memref-based state management.
 
 Transformation:
-    kairo.temporal.* ops → scf.for/while loops + memref.load/store + arith ops
+    morphogen.temporal.* ops → scf.for/while loops + memref.load/store + arith ops
 
 Example:
     Input (High-level):
-        %flow = kairo.temporal.flow.create %dt, %steps
-        %state = kairo.temporal.state.create %size, %init_val
-        %final = kairo.temporal.flow.run %flow, %state
+        %flow = morphogen.temporal.flow.create %dt, %steps
+        %state = morphogen.temporal.state.create %size, %init_val
+        %final = morphogen.temporal.flow.run %flow, %state
 
     Output (Low-level):
         %mem = memref.alloc(%size) : memref<?xf32>
@@ -47,11 +47,11 @@ class TemporalToSCFPass:
     with nested scf.for loops operating on memref storage for state management.
 
     Operations Lowered:
-        - kairo.temporal.flow.create → flow metadata storage
-        - kairo.temporal.flow.run → scf.for loop with iter_args
-        - kairo.temporal.state.create → memref.alloc + initialization loop
-        - kairo.temporal.state.update → memref.store
-        - kairo.temporal.state.query → memref.load
+        - morphogen.temporal.flow.create → flow metadata storage
+        - morphogen.temporal.flow.run → scf.for loop with iter_args
+        - morphogen.temporal.state.create → memref.alloc + initialization loop
+        - morphogen.temporal.state.update → memref.store
+        - morphogen.temporal.state.query → memref.load
 
     Usage:
         >>> pass_obj = TemporalToSCFPass(context)
@@ -62,7 +62,7 @@ class TemporalToSCFPass:
         """Initialize temporal-to-SCF pass.
 
         Args:
-            context: Kairo MLIR context
+            context: Morphogen MLIR context
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
@@ -112,10 +112,10 @@ class TemporalToSCFPass:
                         self._process_operation(nested_op)
 
     def _lower_flow_create(self, op: Any) -> None:
-        """Lower kairo.temporal.flow.create to metadata storage.
+        """Lower morphogen.temporal.flow.create to metadata storage.
 
         Input:
-            %flow = kairo.temporal.flow.create %dt, %steps
+            %flow = morphogen.temporal.flow.create %dt, %steps
 
         Output:
             Store dt and steps in metadata dictionary for later use.
@@ -154,10 +154,10 @@ class TemporalToSCFPass:
             op.operation.erase()
 
     def _lower_flow_run(self, op: Any) -> None:
-        """Lower kairo.temporal.flow.run to scf.for loop with temporal iteration.
+        """Lower morphogen.temporal.flow.run to scf.for loop with temporal iteration.
 
         Input:
-            %final = kairo.temporal.flow.run %flow, %initial_state
+            %final = morphogen.temporal.flow.run %flow, %initial_state
 
         Output:
             %c0 = arith.constant 0 : index
@@ -233,10 +233,10 @@ class TemporalToSCFPass:
             op.operation.erase()
 
     def _lower_state_create(self, op: Any) -> None:
-        """Lower kairo.temporal.state.create to memref.alloc + initialization loop.
+        """Lower morphogen.temporal.state.create to memref.alloc + initialization loop.
 
         Input:
-            %state = kairo.temporal.state.create %size, %init_val : !kairo.state<f32>
+            %state = morphogen.temporal.state.create %size, %init_val : !morphogen.state<f32>
 
         Output:
             %mem = memref.alloc(%size) : memref<?xf32>
@@ -289,10 +289,10 @@ class TemporalToSCFPass:
             op.operation.erase()
 
     def _lower_state_update(self, op: Any) -> None:
-        """Lower kairo.temporal.state.update to memref.store.
+        """Lower morphogen.temporal.state.update to memref.store.
 
         Input:
-            %new_state = kairo.temporal.state.update %state, %index, %value
+            %new_state = morphogen.temporal.state.update %state, %index, %value
 
         Output:
             memref.store %value, %state[%index]
@@ -323,10 +323,10 @@ class TemporalToSCFPass:
             op.operation.erase()
 
     def _lower_state_query(self, op: Any) -> None:
-        """Lower kairo.temporal.state.query to memref.load.
+        """Lower morphogen.temporal.state.query to memref.load.
 
         Input:
-            %value = kairo.temporal.state.query %state, %index : f32
+            %value = morphogen.temporal.state.query %state, %index : f32
 
         Output:
             %value = memref.load %state[%index] : memref<?xf32>
@@ -355,7 +355,7 @@ def create_temporal_to_scf_pass(context: MorphogenMLIRContext) -> TemporalToSCFP
     """Factory function to create temporal-to-SCF lowering pass.
 
     Args:
-        context: Kairo MLIR context
+        context: Morphogen MLIR context
 
     Returns:
         Configured TemporalToSCFPass instance

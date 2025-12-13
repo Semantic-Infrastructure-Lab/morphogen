@@ -9,7 +9,7 @@ Provides signal analysis and transformation operations:
 - Time-frequency representations
 - Signal generation and windowing
 
-Follows Kairo's immutability pattern: all operations return new instances.
+Follows Morphogen's immutability pattern: all operations return new instances.
 
 Version: v0.10.0
 """

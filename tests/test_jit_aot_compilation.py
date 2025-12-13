@@ -30,8 +30,8 @@ try:
         MLIR_AVAILABLE
     )
     from morphogen.mlir.codegen import (
-        KairoJIT,
-        KairoAOT,
+        MorphogenJIT,
+        MorphogenAOT,
         ExecutionEngine,
         CompilationCache,
         OutputFormat,
@@ -207,14 +207,14 @@ class TestJITCompilation:
 
     def test_jit_creation(self, context):
         """Test JIT compiler can be created."""
-        jit = KairoJIT(context)
+        jit = MorphogenJIT(context)
         assert jit is not None
         assert jit.context == context
 
     def test_create_jit_factory(self, context):
         """Test JIT factory function."""
         jit = create_jit(context)
-        assert isinstance(jit, KairoJIT)
+        assert isinstance(jit, MorphogenJIT)
 
     def test_jit_with_cache_enabled(self, context):
         """Test JIT with caching enabled."""
@@ -354,14 +354,14 @@ class TestAOTCompilation:
 
     def test_aot_creation(self, context):
         """Test AOT compiler can be created."""
-        aot = KairoAOT(context)
+        aot = MorphogenAOT(context)
         assert aot is not None
         assert aot.context == context
 
     def test_create_aot_factory(self, context):
         """Test AOT factory function."""
         aot = create_aot(context)
-        assert isinstance(aot, KairoAOT)
+        assert isinstance(aot, MorphogenAOT)
 
     def test_output_format_enum(self):
         """Test OutputFormat enum values."""

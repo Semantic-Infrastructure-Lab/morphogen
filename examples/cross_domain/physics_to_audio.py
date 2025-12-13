@@ -9,7 +9,7 @@ physics simulation events into audio synthesis. Specifically:
 
 Use case: Procedural sound design, game audio, physics sonification
 
-This showcases Kairo's unique ability to compose Physics and Audio domains
+This showcases Morphogen's unique ability to compose Physics and Audio domains
 in real-time - creating emergent soundscapes from physical simulations.
 """
 
@@ -395,7 +395,7 @@ def main():
     print("audio parameters, creating emergent soundscapes that")
     print("perfectly synchronize with simulation dynamics!")
     print()
-    print("This is IMPOSSIBLE in traditional audio engines - Kairo's")
+    print("This is IMPOSSIBLE in traditional audio engines - Morphogen's")
     print("cross-domain composition enables true physics-driven sound!")
 
 

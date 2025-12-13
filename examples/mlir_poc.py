@@ -1,6 +1,6 @@
-"""Proof of Concept: MLIR Integration for Kairo v0.7.0
+"""Proof of Concept: MLIR Integration for Morphogen v0.7.0
 
-This example demonstrates how Kairo will use real MLIR Python bindings
+This example demonstrates how Morphogen will use real MLIR Python bindings
 to compile and execute a simple arithmetic operation.
 
 Goal: Compile x = 3.0 + 4.0 to native code via MLIR
@@ -14,15 +14,15 @@ Note: This is a proof-of-concept. Full integration is ongoing.
 import sys
 from pathlib import Path
 
-# Add kairo to path
+# Add morphogen to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from morphogen.mlir.context import is_mlir_available, KairoMLIRContext
+from morphogen.mlir.context import is_mlir_available, MorphogenMLIRContext
 
 def example_arithmetic_without_mlir():
     """Example showing what we want to compile."""
     print("=" * 60)
-    print("Kairo Code (conceptual):")
+    print("Morphogen Code (conceptual):")
     print("=" * 60)
     print("""
     fn add_example() -> f32 {
@@ -63,7 +63,7 @@ def example_with_mlir():
         from mlir.dialects import builtin, func, arith
 
         # Create context and module
-        with KairoMLIRContext() as ctx:
+        with MorphogenMLIRContext() as ctx:
             module = ctx.create_module("add_example")
 
             with ctx.ctx, ir.Location.unknown():
@@ -121,7 +121,7 @@ def example_with_mlir():
 def main():
     """Run proof-of-concept examples."""
     print("\n" + "=" * 60)
-    print("Kairo v0.7.0 MLIR Integration - Proof of Concept")
+    print("Morphogen v0.7.0 MLIR Integration - Proof of Concept")
     print("=" * 60)
 
     example_arithmetic_without_mlir()

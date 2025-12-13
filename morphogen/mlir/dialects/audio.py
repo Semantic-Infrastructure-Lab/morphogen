@@ -1,19 +1,19 @@
-"""Kairo Audio Dialect (v0.7.0 Phase 5)
+"""Morphogen Audio Dialect (v0.7.0 Phase 5)
 
-This module defines the Kairo Audio dialect for MLIR, providing high-level
+This module defines the Morphogen Audio dialect for MLIR, providing high-level
 operations for audio synthesis and processing that lower to SCF loops and memref operations.
 
 Status: Phase 5 Implementation (Months 10-12)
 
 Operations:
-- kairo.audio.buffer.create: Allocate audio buffer with sample rate and duration
-- kairo.audio.oscillator: Generate waveforms (sine, square, saw, triangle)
-- kairo.audio.envelope: Apply ADSR envelope to audio signal
-- kairo.audio.filter: Apply IIR/FIR filters (lowpass, highpass, bandpass)
-- kairo.audio.mix: Mix multiple audio signals with scaling
+- morphogen.audio.buffer.create: Allocate audio buffer with sample rate and duration
+- morphogen.audio.oscillator: Generate waveforms (sine, square, saw, triangle)
+- morphogen.audio.envelope: Apply ADSR envelope to audio signal
+- morphogen.audio.filter: Apply IIR/FIR filters (lowpass, highpass, bandpass)
+- morphogen.audio.mix: Mix multiple audio signals with scaling
 
 Type System:
-- !kairo.audio<sample_rate, channels>: Audio buffer type (opaque for Phase 5)
+- !morphogen.audio<sample_rate, channels>: Audio buffer type (opaque for Phase 5)
 
 Integration:
 - Audio buffers can be converted to/from field data for sonification
@@ -41,7 +41,7 @@ except ImportError:
 
 
 class AudioType:
-    """Wrapper for !kairo.audio<sample_rate, channels> type.
+    """Wrapper for !morphogen.audio<sample_rate, channels> type.
 
     In Phase 5, we use OpaqueType to represent custom audio types.
     Future phases may use proper IRDL dialect definition.
@@ -49,7 +49,7 @@ class AudioType:
     Example:
         >>> ctx = MorphogenMLIRContext()
         >>> audio_type = AudioType.get(44100, 1, ctx.ctx)
-        >>> print(audio_type)  # !kairo.audio<44100, 1>
+        >>> print(audio_type)  # !morphogen.audio<44100, 1>
     """
 
     @staticmethod
@@ -62,24 +62,24 @@ class AudioType:
             context: MLIR context
 
         Returns:
-            Opaque audio type !kairo.audio<sample_rate, channels>
+            Opaque audio type !morphogen.audio<sample_rate, channels>
         """
         if not MLIR_AVAILABLE:
             raise RuntimeError("MLIR not available")
 
         # Use OpaqueType for custom types in Phase 5
-        # Format: !kairo.audio<sample_rate, channels>
+        # Format: !morphogen.audio<sample_rate, channels>
         return ir.OpaqueType.get("morphogen", f"audio<{sample_rate},{channels}>", context=context)
 
 
 class AudioBufferCreateOp:
-    """Operation: kairo.audio.buffer.create
+    """Operation: morphogen.audio.buffer.create
 
     Creates a new audio buffer with specified sample rate, channels, and duration.
 
     Syntax:
-        %buffer = kairo.audio.buffer.create %sample_rate, %channels, %duration
-                  : !kairo.audio<44100, 1>
+        %buffer = morphogen.audio.buffer.create %sample_rate, %channels, %duration
+                  : !morphogen.audio<44100, 1>
 
     Attributes:
         - sample_rate: Audio sample rate in Hz (index type)
@@ -87,7 +87,7 @@ class AudioBufferCreateOp:
         - duration: Duration in seconds (f32 type)
 
     Results:
-        - Audio buffer of type !kairo.audio<sample_rate, channels>
+        - Audio buffer of type !morphogen.audio<sample_rate, channels>
 
     Lowering:
         Lowers to memref.alloc with size = sample_rate * duration * channels
@@ -139,13 +139,13 @@ class AudioBufferCreateOp:
 
 
 class AudioOscillatorOp:
-    """Operation: kairo.audio.oscillator
+    """Operation: morphogen.audio.oscillator
 
     Generates audio waveforms (sine, square, sawtooth, triangle).
 
     Syntax:
-        %osc = kairo.audio.oscillator %buffer, %waveform, %freq, %phase
-               : !kairo.audio<44100, 1>
+        %osc = morphogen.audio.oscillator %buffer, %waveform, %freq, %phase
+               : !morphogen.audio<44100, 1>
 
     Arguments:
         - buffer: Target audio buffer (will be filled)
@@ -208,13 +208,13 @@ class AudioOscillatorOp:
 
 
 class AudioEnvelopeOp:
-    """Operation: kairo.audio.envelope
+    """Operation: morphogen.audio.envelope
 
     Applies ADSR (Attack, Decay, Sustain, Release) envelope to audio signal.
 
     Syntax:
-        %env = kairo.audio.envelope %buffer, %attack, %decay, %sustain, %release
-               : !kairo.audio<44100, 1>
+        %env = morphogen.audio.envelope %buffer, %attack, %decay, %sustain, %release
+               : !morphogen.audio<44100, 1>
 
     Arguments:
         - buffer: Input audio buffer
@@ -288,13 +288,13 @@ class AudioEnvelopeOp:
 
 
 class AudioFilterOp:
-    """Operation: kairo.audio.filter
+    """Operation: morphogen.audio.filter
 
     Applies IIR/FIR filters (lowpass, highpass, bandpass) to audio signal.
 
     Syntax:
-        %filtered = kairo.audio.filter %buffer, %filter_type, %cutoff, %resonance
-                    : !kairo.audio<44100, 1>
+        %filtered = morphogen.audio.filter %buffer, %filter_type, %cutoff, %resonance
+                    : !morphogen.audio<44100, 1>
 
     Arguments:
         - buffer: Input audio buffer
@@ -358,13 +358,13 @@ class AudioFilterOp:
 
 
 class AudioMixOp:
-    """Operation: kairo.audio.mix
+    """Operation: morphogen.audio.mix
 
     Mixes multiple audio signals with optional scaling/gain.
 
     Syntax:
-        %mixed = kairo.audio.mix %buffer1, %buffer2, %gain1, %gain2
-                 : !kairo.audio<44100, 1>
+        %mixed = morphogen.audio.mix %buffer1, %buffer2, %gain1, %gain2
+                 : !morphogen.audio<44100, 1>
 
     Arguments:
         - buffers: List of input audio buffers (variable length)
@@ -437,7 +437,7 @@ class AudioMixOp:
 
 
 class AudioDialect:
-    """Kairo Audio Dialect helper class.
+    """Morphogen Audio Dialect helper class.
 
     This class provides utility methods for working with audio operations
     and checking if operations belong to the audio dialect.

@@ -4,7 +4,7 @@
 Demonstrates comprehensive audio buffer operations, FFT/STFT transforms,
 spectral analysis metrics, and frequency-domain processing.
 
-This example showcases the new audio operations added to Kairo v0.7.0:
+This example showcases the new audio operations added to Morphogen v0.7.0:
 - Buffer operations (slice, concat, resample, reverse, fade)
 - FFT/spectral transforms (fft, ifft, stft, istft)
 - Spectral analysis (centroid, rolloff, flux, peaks, rms, zero crossings)
@@ -432,7 +432,7 @@ def example_8_complete_workflow():
 def main():
     """Run all examples."""
     print("\n" + "=" * 70)
-    print("  KAIRO AUDIO DSP & SPECTRAL ANALYSIS EXAMPLES")
+    print("  MORPHOGEN AUDIO DSP & SPECTRAL ANALYSIS EXAMPLES")
     print("=" * 70)
     print("\n  Demonstrating 21 new audio operations:")
     print("    • 6 buffer operations")
