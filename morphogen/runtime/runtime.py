@@ -74,10 +74,18 @@ class UserDefinedFunction:
             return result
 
         finally:
-            # Restore symbol table (except for any state variables modified)
-            # For now, we'll keep it simple and just restore
-            # In a real implementation, we'd preserve state variables
+            # Preserve state variable modifications before restoring symbol table
+            state_var_updates = {}
+            for name in self.runtime.context.state_symbols:
+                if name in self.runtime.context.symbols:
+                    state_var_updates[name] = self.runtime.context.symbols[name]
+
+            # Restore symbol table
             self.runtime.context.symbols = saved_symbols
+
+            # Re-apply state variable modifications
+            for name, value in state_var_updates.items():
+                self.runtime.context.symbols[name] = value
 
 
 class LambdaFunction:
@@ -129,6 +137,10 @@ class LambdaFunction:
             # Evaluate body expression
             result = self.runtime.execute_expression(self.body)
             return result
+
+        except ReturnValue as rv:
+            # Handle explicit return statements in lambda bodies
+            return rv.value
 
         finally:
             # Restore symbol table
@@ -232,19 +244,22 @@ class ExecutionContext:
         """
         self.symbols: Dict[str, Any] = {}
         self.const_symbols: set = set()  # Track which symbols are const
+        self.state_symbols: set = set()  # Track which symbols are state variables
         self.double_buffers: Dict[str, tuple] = {}  # name -> (front, back)
         self.config: Dict[str, Any] = {}
         self.timestep: int = 0
         self.global_seed: int = global_seed
         self.dt: float = 0.01  # default timestep
 
-    def set_variable(self, name: str, value: Any, is_const: bool = False) -> None:
+    def set_variable(self, name: str, value: Any, is_const: bool = False,
+                     is_state: bool = False) -> None:
         """Set a variable in the symbol table.
 
         Args:
             name: Variable name
             value: Variable value
             is_const: Whether this is a const variable
+            is_state: Whether this is a state variable (@state decorator)
 
         Raises:
             RuntimeError: If trying to reassign a const variable
@@ -254,6 +269,8 @@ class ExecutionContext:
         self.symbols[name] = value
         if is_const:
             self.const_symbols.add(name)
+        if is_state:
+            self.state_symbols.add(name)
 
     def get_variable(self, name: str) -> Any:
         """Get a variable from the symbol table.
@@ -348,6 +365,7 @@ class Runtime:
 
     def _setup_builtins(self) -> None:
         """Set up built-in namespaces (field, visual, agents, audio, etc.)."""
+        import math
         from ..stdlib.field import field
         from ..stdlib.visual import visual
         from ..stdlib.agents import agents
@@ -358,6 +376,22 @@ class Runtime:
         self.context.set_variable("visual", visual)
         self.context.set_variable("agents", agents)
         self.context.set_variable("audio", audio)
+
+        # Register math builtins
+        self.context.set_variable("sqrt", math.sqrt)
+        self.context.set_variable("sin", math.sin)
+        self.context.set_variable("cos", math.cos)
+        self.context.set_variable("tan", math.tan)
+        self.context.set_variable("abs", abs)
+        self.context.set_variable("min", min)
+        self.context.set_variable("max", max)
+        self.context.set_variable("floor", math.floor)
+        self.context.set_variable("ceil", math.ceil)
+        self.context.set_variable("exp", math.exp)
+        self.context.set_variable("log", math.log)
+        self.context.set_variable("pow", pow)
+        self.context.set_variable("pi", math.pi)
+        self.context.set_variable("e", math.e)
 
     def execute_program(self, program) -> None:
         """Execute a complete DSL program.
@@ -434,8 +468,12 @@ class Runtime:
         # Evaluate right-hand side
         value = self.execute_expression(assign.value)
 
+        # Check for @state decorator
+        is_state = any(d.name == 'state' for d in getattr(assign, 'decorators', []))
+
         # Store in context (target is a string)
-        self.context.set_variable(assign.target, value, is_const=assign.is_const)
+        self.context.set_variable(assign.target, value, is_const=assign.is_const,
+                                  is_state=is_state)
 
     def execute_set_statement(self, call) -> None:
         """Execute a 'set' configuration statement.
@@ -686,7 +724,7 @@ class Runtime:
         raise ReturnValue(value)
 
     def execute_use(self, use_node) -> None:
-        """Execute a use statement to validate domain imports.
+        """Execute a use statement to import domain operators.
 
         Args:
             use_node: Use AST node
@@ -699,7 +737,21 @@ class Runtime:
         # Ensure registry is initialized
         DomainRegistry.initialize()
 
-        # Validate each domain
+        # Domain module mapping
+        domain_modules = {
+            'field': 'morphogen.stdlib.field',
+            'visual': 'morphogen.stdlib.visual',
+            'agents': 'morphogen.stdlib.agents',
+            'audio': 'morphogen.stdlib.audio',
+            'cellular': 'morphogen.stdlib.cellular',
+            'geometry': 'morphogen.stdlib.geometry',
+            'noise': 'morphogen.stdlib.noise',
+            'palette': 'morphogen.stdlib.palette',
+            'signal': 'morphogen.stdlib.signal',
+            'temporal': 'morphogen.stdlib.temporal',
+        }
+
+        # Validate each domain and import operators
         for domain_name in use_node.domains:
             if not DomainRegistry.has_domain(domain_name):
                 available = DomainRegistry.list_domains()
@@ -708,13 +760,18 @@ class Runtime:
                     f"Available domains: {', '.join(available)}"
                 )
 
-        # Note: The use statement doesn't create variables or modify the symbol table.
-        # Domain access happens through the global namespaces (field.alloc, etc.)
-        # which are already registered in _setup_builtins().
-        # The use statement primarily serves as:
-        # 1. Documentation of dependencies
-        # 2. Validation that domains exist
-        # 3. Future: could be used for scoping/importing specific operators
+            # Import domain operators into global scope
+            if domain_name in domain_modules:
+                import importlib
+                try:
+                    module = importlib.import_module(domain_modules[domain_name])
+                    # Import all exported names from the module
+                    if hasattr(module, '__all__'):
+                        for name in module.__all__:
+                            if hasattr(module, name) and name not in self.context.symbols:
+                                self.context.set_variable(name, getattr(module, name))
+                except ImportError:
+                    pass  # Module not available, just skip
 
     def execute_if_else(self, if_else_node) -> Any:
         """Execute an if/else expression.
@@ -767,11 +824,12 @@ class Runtime:
             LambdaFunction instance
         """
         # Capture current variables (closure)
-        # We capture all current symbols except built-ins
+        # We capture all current symbols except built-ins and consts
+        # Consts are already accessible in scope and can't change
         captured_vars = {}
         for name, value in self.context.symbols.items():
-            # Don't capture built-in namespaces
-            if name not in ['field', 'visual']:
+            # Don't capture built-in namespaces or const variables
+            if name not in ['field', 'visual'] and name not in self.context.const_symbols:
                 captured_vars[name] = value
 
         # Create lambda function

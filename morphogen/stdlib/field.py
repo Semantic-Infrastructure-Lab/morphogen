@@ -43,6 +43,78 @@ class Field2D:
         """Create a copy of this field."""
         return Field2D(self.data.copy(), self.dx, self.dy)
 
+    def map(self, func: Callable) -> 'Field2D':
+        """Apply function to each element of field, optionally with coordinates.
+
+        Supports two calling conventions:
+        - func(value) -> value: Simple per-element transformation
+        - func(value, x, y) -> value: Position-aware transformation
+
+        Args:
+            func: Function to apply. If it has 3 parameters (value, x, y),
+                  coordinates will be passed. Otherwise, just the value.
+
+        Returns:
+            New Field2D with transformed values
+        """
+        result = self.copy()
+
+        # Detect if function expects position arguments
+        # Check for LambdaFunction from runtime or use inspect for Python callables
+        is_position_aware = False
+
+        if hasattr(func, 'params'):
+            # LambdaFunction from Morphogen runtime
+            is_position_aware = len(func.params) >= 3
+        else:
+            # Regular Python callable - check signature
+            import inspect
+            try:
+                sig = inspect.signature(func)
+                is_position_aware = len(sig.parameters) >= 3
+            except (ValueError, TypeError):
+                # Can't inspect, assume value-only
+                is_position_aware = False
+
+        if is_position_aware:
+            # Create coordinate grids
+            height, width = self.shape
+            y_coords, x_coords = np.meshgrid(
+                np.arange(height),
+                np.arange(width),
+                indexing='ij'
+            )
+
+            # Apply function element-wise with coordinates
+            # Use vectorize for runtime lambdas, direct call for numpy-compatible funcs
+            if hasattr(func, 'params'):
+                # Runtime lambda - must call per-element
+                new_data = np.zeros_like(self.data)
+                for y in range(height):
+                    for x in range(width):
+                        new_data[y, x] = func(self.data[y, x], x, y)
+                result.data = new_data
+            else:
+                # Try vectorized first, fall back to element-wise
+                try:
+                    result.data = func(self.data, x_coords, y_coords)
+                except (TypeError, ValueError):
+                    new_data = np.zeros_like(self.data)
+                    for y in range(height):
+                        for x in range(width):
+                            new_data[y, x] = func(self.data[y, x], x, y)
+                    result.data = new_data
+        else:
+            # Simple value-only mapping
+            if callable(func):
+                try:
+                    result.data = func(self.data)
+                except TypeError:
+                    # Might need element-wise application
+                    result.data = np.vectorize(func)(self.data)
+
+        return result
+
     def __repr__(self) -> str:
         return f"Field2D(shape={self.shape}, dtype={self.data.dtype})"
 
@@ -823,6 +895,14 @@ class FieldOperations:
 
 # Create singleton instance for use as 'field' namespace
 field = FieldOperations()
+
+# Define public API
+__all__ = [
+    'Field2D', 'FieldOperations', 'field',
+    'alloc', 'random', 'map', 'combine', 'threshold', 'clamp', 'normalize',
+    'abs', 'magnitude', 'gradient', 'divergence', 'curl', 'laplacian',
+    'smooth', 'diffuse', 'advect', 'project', 'boundary', 'sample',
+]
 
 # Export operators for domain registry discovery
 alloc = FieldOperations.alloc
