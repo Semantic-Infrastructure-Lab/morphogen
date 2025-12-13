@@ -69,9 +69,9 @@ flow(dt=0.01, steps=1000) {
 
     # Diffuse temperature
     # Using implicit solver (Jacobi iteration) for stability
-    temp = diffuse(temp, rate=KAPPA, dt, iterations=20)
+    temp = diffuse(temp, KAPPA, dt, iterations=20)
 
     # Visualize with fire palette
     # Color range from cold (black/red) to hot (yellow/white)
-    output colorize(temp, palette="fire", min=COLD_TEMP, max=HOT_TEMP)
+    output colorize(temp, palette="fire", vmin=COLD_TEMP, vmax=HOT_TEMP)
 }

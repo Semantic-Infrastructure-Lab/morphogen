@@ -51,8 +51,8 @@ init_hot_spot()
 # Main simulation loop
 flow(dt=0.1, steps=200) {
     # Diffuse the temperature field
-    temp = diffuse(temp, rate=DIFFUSION_RATE, dt, iterations=10)
+    temp = diffuse(temp, DIFFUSION_RATE, dt, iterations=10)
 
     # Visualize with fire palette (black -> red -> orange -> yellow -> white)
-    output colorize(temp, palette="fire", min=0.0, max=100.0)
+    output colorize(temp, palette="fire", vmin=0.0, vmax=100.0)
 }

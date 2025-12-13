@@ -115,11 +115,11 @@ init_voronoi_field()
 # Main simulation loop
 flow(dt=0.05, steps=400) {
     # Apply heat diffusion across Voronoi cells
-    temp = diffuse(temp, rate=DIFFUSION_RATE, dt, iterations=5)
+    temp = diffuse(temp, DIFFUSION_RATE, dt, iterations=5)
 
     # Create visualization overlay with seed points
     # First, colorize the temperature field
-    temp_visual = colorize(temp, palette="thermal", min=20.0, max=100.0)
+    temp_visual = colorize(temp, palette="thermal", vmin=20.0, vmax=100.0)
 
     # Mark seed points with bright circles
     output_field = temp_visual.map(|value, x, y| {

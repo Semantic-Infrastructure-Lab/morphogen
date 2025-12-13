@@ -32,6 +32,7 @@ class NodeType(Enum):
     COMPOSE = "compose"
     LINK = "link"
     USE = "use"
+    OUTPUT = "output"
 
     # Type annotations
     TYPE_ANNOTATION = "type_annotation"
@@ -339,6 +340,21 @@ class Use(Statement):
 
     def accept(self, visitor: 'ASTVisitor') -> Any:
         return visitor.visit_use(self)
+
+
+@dataclass
+class Output(Statement):
+    """Output statement for visual rendering.
+
+    Syntax:
+        output colorize(temp, palette="fire")   # Output visual to frame
+        output field                            # Output raw field data
+    """
+    value: Expression  # Expression to output
+    node_type: NodeType = field(default=NodeType.OUTPUT)
+
+    def accept(self, visitor: 'ASTVisitor') -> Any:
+        return visitor.visit_output(self)
 
 
 # ============================================================================

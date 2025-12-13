@@ -69,8 +69,8 @@ flow(dt=0.1, steps=400) {
     color_field = advect(color_field, velocity, dt)
 
     # Add slight diffusion to create smooth mixing
-    color_field = diffuse(color_field, rate=0.02, dt, iterations=5)
+    color_field = diffuse(color_field, 0.02, dt, iterations=5)
 
     # Visualize with coolwarm palette
-    output colorize(color_field, palette="coolwarm", min=0.0, max=1.0)
+    output colorize(color_field, palette="coolwarm", vmin=0.0, vmax=1.0)
 }

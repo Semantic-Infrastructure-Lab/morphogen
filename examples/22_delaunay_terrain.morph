@@ -146,7 +146,7 @@ flow(dt=0.1, steps=300) {
 
     # Visualize with elevation coloring
     # Low = blue (water), medium = green (land), high = white (mountains)
-    output colorize(height_field, palette="terrain", min=0.0, max=HEIGHT_SCALE)
+    output colorize(height_field, palette="terrain", vmin=0.0, vmax=HEIGHT_SCALE)
 
     # Advance time for animated noise
     time = time + dt * NOISE_SPEED

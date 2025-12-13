@@ -70,11 +70,11 @@ flow(dt=1.0, steps=2000) {
     }
 
     # Apply slight diffusion to smooth the density field
-    density = diffuse(density, rate=0.05, dt, iterations=5)
+    density = diffuse(density, 0.05, dt, iterations=5)
 
     # Normalize and visualize
     max_density = max(density)
     normalized = density / max(max_density, 1.0)
 
-    output colorize(normalized, palette="viridis", min=0.0, max=1.0)
+    output colorize(normalized, palette="viridis", vmin=0.0, vmax=1.0)
 }

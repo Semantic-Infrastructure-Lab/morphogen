@@ -14,13 +14,12 @@ from morphogen.stdlib.field import field, Field2D
 from morphogen.stdlib.visual import visual
 
 
-@pytest.mark.skip(reason="Portfolio examples need runtime compatibility fixes (field.map, function syntax)")
+@pytest.mark.slow
 class TestPortfolioExamples:
     """Test portfolio examples parse and execute correctly.
 
-    Partially updated: Allocation syntax updated (zeros/ones → field.alloc), but
-    examples still use other outdated syntax (field.map, function definitions) that
-    requires runtime updates.
+    Note: These tests are marked as slow because they run full simulations.
+    Run with: pytest -m slow tests/test_portfolio_examples.py
     """
 
     @pytest.fixture
@@ -141,7 +140,7 @@ class TestPortfolioExamples:
         assert isinstance(v, Field2D)
 
 
-@pytest.mark.skip(reason="Portfolio examples use outdated syntax - need updating")
+@pytest.mark.slow
 class TestPortfolioVisualOutput:
     """Test that portfolio examples generate visual output."""
 
@@ -254,7 +253,7 @@ class TestPortfolioVisualOutput:
         assert output_path.stat().st_size > 1000
 
 
-@pytest.mark.skip(reason="Portfolio examples use outdated syntax - need updating")
+@pytest.mark.slow
 class TestPortfolioDeterminism:
     """Test that portfolio examples are deterministic."""
 

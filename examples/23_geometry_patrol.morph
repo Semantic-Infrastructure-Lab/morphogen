@@ -186,7 +186,7 @@ flow(dt=0.05, steps=600) {
     update_influence_field()
 
     # Visualize
-    output_field = colorize(influence_field, palette="viridis", min=0.0, max=100.0)
+    output_field = colorize(influence_field, palette="viridis", vmin=0.0, vmax=100.0)
 
     # Draw patrol route and obstacles
     output_field = output_field.map(|value, x, y| {

@@ -33,6 +33,7 @@ class TokenType(Enum):
     LINK = auto()
     USE = auto()
     CONST = auto()
+    OUTPUT = auto()
 
     # Operators
     PLUS = auto()
@@ -106,6 +107,7 @@ class Lexer:
         "link": TokenType.LINK,
         "use": TokenType.USE,
         "const": TokenType.CONST,
+        "output": TokenType.OUTPUT,
         "true": TokenType.BOOL,
         "false": TokenType.BOOL,
     }

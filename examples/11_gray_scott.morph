@@ -93,5 +93,5 @@ flow(dt=1.0, steps=10000) {
 
     # Visualize V concentration (shows the pattern best)
     # Use viridis palette for beautiful gradient colors
-    output colorize(v, palette="viridis", min=0.0, max=1.0)
+    output colorize(v, palette="viridis", vmin=0.0, vmax=1.0)
 }

@@ -44,27 +44,21 @@ flow(dt=0.05, steps=200) {
 
     # Create circular field using map with coordinates
     # Lambda receives (value, x, y) and returns new value
-    field = field.alloc((GRID_SIZE, GRID_SIZE), fill_value=0.0).map(|value, x, y| {
+    edge_width = 2.0
+    circle_field = field.alloc((GRID_SIZE, GRID_SIZE), fill_value=0.0).map(|value, x, y| {
         # Calculate distance from center
         dx = x - cx
         dy = y - cy
         dist = sqrt(dx * dx + dy * dy)
 
-        # Return 1.0 inside circle, 0.0 outside
-        # Add smooth falloff at edge for anti-aliasing
-        edge_width = 2.0
-        if dist < radius - edge_width then
-            return 1.0
-        else if dist < radius + edge_width then
-            # Smooth interpolation at edge
-            t = (radius + edge_width - dist) / (2.0 * edge_width)
-            return t
-        else
-            return 0.0
+        # Return 1.0 inside circle, 0.0 outside with smooth falloff
+        inner = radius - edge_width
+        outer = radius + edge_width
+        return if dist < inner then 1.0 else if dist < outer then (outer - dist) / (2.0 * edge_width) else 0.0
     })
 
     # Visualize with viridis palette (purple to yellow gradient)
-    output colorize(field, palette="viridis", min=0.0, max=1.0)
+    output colorize(circle_field, palette="viridis", vmin=0.0, vmax=1.0)
 
     # Update time
     time = time + dt

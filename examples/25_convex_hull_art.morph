@@ -239,7 +239,7 @@ flow(dt=0.033, steps=600) {
     })
 
     # Visualize with color gradient
-    output colorize(visual_field, palette="plasma", min=0.0, max=100.0)
+    output colorize(visual_field, palette="plasma", vmin=0.0, vmax=100.0)
 
     # Update time
     time = time + dt

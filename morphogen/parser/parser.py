@@ -117,6 +117,10 @@ class Parser:
         if token.type == TokenType.USE:
             return self.parse_use()
 
+        # Output statement (visual output)
+        if token.type == TokenType.OUTPUT:
+            return self.parse_output()
+
         # Const declaration
         if token.type == TokenType.CONST:
             return self.parse_const_declaration(decorators)
@@ -140,6 +144,11 @@ class Parser:
         # Set statement (for configuration)
         if token.type == TokenType.SET:
             return self.parse_set_statement()
+
+        # If expression as statement (e.g., inside lambda blocks)
+        if token.type == TokenType.IF:
+            expr = self.parse_if_else()
+            return ExpressionStatement(expr)
 
         return None
 
@@ -331,6 +340,18 @@ class Parser:
             value = self.parse_expression()
 
         return Return(value=value)
+
+    def parse_output(self) -> 'Output':
+        """Parse an output statement: output expr"""
+        from morphogen.ast.nodes import Output
+        self.expect(TokenType.OUTPUT)
+
+        # Output requires an expression
+        if self.current_token().type in [TokenType.NEWLINE, TokenType.RBRACE, TokenType.EOF]:
+            raise ParseError("Output statement requires an expression", self.current_token())
+
+        value = self.parse_expression()
+        return Output(value=value)
 
     def parse_lambda(self) -> Lambda:
         """Parse a lambda expression: |args| expr or |args| { stmts }"""

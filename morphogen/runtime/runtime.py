@@ -424,11 +424,13 @@ class Runtime:
         from ..ast.nodes import (
             Assignment, ExpressionStatement, Step, Substep, Module, Compose,
             Call, Identifier, Literal, BinaryOp, UnaryOp, FieldAccess,
-            Function, Return, Flow, Struct, Use
+            Function, Return, Flow, Struct, Use, Output
         )
 
         # Handle different statement types
-        if isinstance(stmt, Use):
+        if isinstance(stmt, Output):
+            return self.execute_output(stmt)
+        elif isinstance(stmt, Use):
             return self.execute_use(stmt)
         elif isinstance(stmt, Assignment):
             return self.execute_assignment(stmt)
@@ -723,6 +725,25 @@ class Runtime:
         # Raise exception to exit function
         raise ReturnValue(value)
 
+    def execute_output(self, output_node) -> None:
+        """Execute an output statement for visual rendering.
+
+        Evaluates the expression (typically a colorize call) and stores it
+        in the context's output buffer for visualization.
+
+        Args:
+            output_node: Output AST node
+        """
+        # Evaluate the output expression
+        value = self.execute_expression(output_node.value)
+
+        # Store in output buffer (create if needed)
+        if not hasattr(self.context, 'outputs'):
+            self.context.outputs = []
+        self.context.outputs.append(value)
+
+        return value
+
     def execute_use(self, use_node) -> None:
         """Execute a use statement to import domain operators.
 
@@ -807,7 +828,7 @@ class Runtime:
             # If the statement was an expression, get its value
             from ..ast.nodes import ExpressionStatement, Return
             if isinstance(stmt, ExpressionStatement):
-                result = self.execute_expression(stmt.expr)
+                result = self.execute_expression(stmt.expression)
             elif isinstance(stmt, Return):
                 # Return statements will raise ReturnValue, so this won't be reached
                 # but we include it for completeness

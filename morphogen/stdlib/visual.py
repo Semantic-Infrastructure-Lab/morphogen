@@ -1528,6 +1528,23 @@ class VisualOperations:
 # Create singleton instance for use as 'visual' namespace
 visual = VisualOperations()
 
+# Define __all__ for explicit exports (used by `use visual`)
+__all__ = [
+    'visual',
+    'Visual',
+    'colorize',
+    'layer',
+    'composite',
+    'agents',
+    'display',
+    'output',
+    'video',
+    'spectrogram',
+    'graph',
+    'phase_space',
+    'add_metrics',
+]
+
 # Export operators for domain registry discovery
 layer = VisualOperations.layer
 colorize = VisualOperations.colorize

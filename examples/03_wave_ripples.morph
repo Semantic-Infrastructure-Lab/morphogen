@@ -86,5 +86,5 @@ flow(dt=0.1, steps=300) {
 
     # Visualize displacement field
     # Use coolwarm palette (blue for negative, white for zero, red for positive)
-    output colorize(u, palette="coolwarm", min=-1.0, max=1.0)
+    output colorize(u, palette="coolwarm", vmin=-1.0, vmax=1.0)
 }

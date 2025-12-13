@@ -115,6 +115,51 @@ class Field2D:
 
         return result
 
+    # Arithmetic operators for Field2D
+    def __add__(self, other) -> 'Field2D':
+        """Element-wise addition."""
+        if isinstance(other, Field2D):
+            return Field2D(self.data + other.data, self.dx, self.dy)
+        return Field2D(self.data + other, self.dx, self.dy)
+
+    def __radd__(self, other) -> 'Field2D':
+        """Right addition."""
+        return Field2D(other + self.data, self.dx, self.dy)
+
+    def __sub__(self, other) -> 'Field2D':
+        """Element-wise subtraction."""
+        if isinstance(other, Field2D):
+            return Field2D(self.data - other.data, self.dx, self.dy)
+        return Field2D(self.data - other, self.dx, self.dy)
+
+    def __rsub__(self, other) -> 'Field2D':
+        """Right subtraction."""
+        return Field2D(other - self.data, self.dx, self.dy)
+
+    def __mul__(self, other) -> 'Field2D':
+        """Element-wise multiplication."""
+        if isinstance(other, Field2D):
+            return Field2D(self.data * other.data, self.dx, self.dy)
+        return Field2D(self.data * other, self.dx, self.dy)
+
+    def __rmul__(self, other) -> 'Field2D':
+        """Right multiplication."""
+        return Field2D(other * self.data, self.dx, self.dy)
+
+    def __truediv__(self, other) -> 'Field2D':
+        """Element-wise division."""
+        if isinstance(other, Field2D):
+            return Field2D(self.data / other.data, self.dx, self.dy)
+        return Field2D(self.data / other, self.dx, self.dy)
+
+    def __rtruediv__(self, other) -> 'Field2D':
+        """Right division."""
+        return Field2D(other / self.data, self.dx, self.dy)
+
+    def __neg__(self) -> 'Field2D':
+        """Negation."""
+        return Field2D(-self.data, self.dx, self.dy)
+
     def __repr__(self) -> str:
         return f"Field2D(shape={self.shape}, dtype={self.data.dtype})"
 
