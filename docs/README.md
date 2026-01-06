@@ -50,14 +50,14 @@ Welcome to the Morphogen documentation! This guide will help you navigate the do
 
 📋 **[Read the Unified Roadmap](ROADMAP.md)** ⭐
 
-**Key Milestones:**
-- **v0.12.0** (Q1 2026): Domain Migration - bring 15 legacy domains into modern registry
-- **v1.0** (Q2 2026): Production release - 40+ domains, PyPI, community infrastructure
+**Current Status:**
+- **v0.12.0** ✅ (December 2025): 39 domains, 606 operators, legacy migration complete
+- **v1.0** (Q2 2026): Production release - 3D visualization, molecular features, community infrastructure
 
-**Three-track strategy:**
-- **Track 1:** Language evolution (type inference, error messages, performance)
-- **Track 2:** Domain completion (migrate legacy, polish active domains)
-- **Track 3:** Adoption & Polish (PyPI, docs, tutorials, community)
+**Critical Path to v1.0:**
+- **3D Visualization**: PyVista integration, camera, lighting, scene graph (12 weeks)
+- **Molecular Features**: Geometry optimization, MD simulations
+- **Community**: PyPI, docs, tutorials
 
 See [ROADMAP.md](ROADMAP.md) for complete details and implementation tracking.
 

@@ -65,6 +65,18 @@
 
 ### Remaining Gaps ⚠️
 
+**Critical Blocker - 3D Visualization** ⭐:
+- Blocks chemistry visualization (molecular structures, protein rendering)
+- Blocks volumetric data display (isosurfaces, scalar fields)
+- See [3D Visualization System Plan](planning/3D_VISUALIZATION_SYSTEM_PLAN.md) for implementation details
+- Estimated effort: 12 weeks (PyVista integration, camera, lighting, scene graph)
+
+**Incomplete Molecular Features**:
+- Geometry optimization not implemented (`tests/test_molecular.py:195`)
+- Molecular dynamics `run_md` not implemented (`tests/test_molecular.py:249`)
+- Trajectory analysis not implemented (`tests/test_molecular.py:316`)
+- 10 tests currently skipped pending these implementations
+
 **Integration Examples**:
 - Phase 3 domains (fluid_jet, audio_analysis, instrument_model) need usage examples
 - Cross-domain examples should demonstrate new capabilities
@@ -324,9 +336,10 @@
 - [SPECIFICATION.md](../SPECIFICATION.md) - Language specification
 - [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Full doc index
 
-### Planning Archives
-- [docs/archive/planning/](archive/planning/) - Historical planning documents
-- [docs/meta/](meta/) - Session artifacts and reports
+### Planning
+- [3D Visualization Plan](planning/3D_VISUALIZATION_SYSTEM_PLAN.md) - Critical path for v1.0
+- [Performance Research](planning/PERFORMANCE_INFRASTRUCTURE_RESEARCH.md) - GPU optimization
+- [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) - Historical documents moved to `~/Archive/morphogen/`
 
 ### Development
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - How to contribute
@@ -335,6 +348,6 @@
 
 ---
 
-**Last Updated**: 2025-12-12
+**Last Updated**: 2026-01-05
 **Next Review**: Monthly (first week of each month)
 **Maintainer**: See [CONTRIBUTING.md](../CONTRIBUTING.md)

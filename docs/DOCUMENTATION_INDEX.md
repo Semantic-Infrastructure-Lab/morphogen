@@ -1,7 +1,7 @@
 # Morphogen Documentation Index
 
 **Generated**: 2025-11-21
-**Updated**: 2025-12-07
+**Updated**: 2026-01-05
 **Purpose**: Comprehensive index of all documentation with structure and navigation
 
 > 💡 **Tip**: Use `./scripts/reveal.sh` to explore any document incrementally:
@@ -94,17 +94,17 @@
 
 ---
 
-### docs/ROADMAP.md (~300 lines) ⭐ **UNIFIED ROADMAP**
+### docs/ROADMAP.md (~350 lines) ⭐ **UNIFIED ROADMAP**
 **Purpose**: Single source of truth for Morphogen development roadmap
 **Key Sections**:
-- Current Status (v0.11.0) - what's complete, what's pending
-- v0.12.0 - Domain Migration (Q1 2026) - 3-phase migration plan
+- Current Status (v0.12.0) - 39 domains, 606 operators, legacy migration complete
+- Critical Blockers - 3D visualization, molecular features
 - v1.0 - Production Release (Q2 2026) - three-track strategy
 - Post-v1.0 Vision - v1.1, v1.5, v2.0 roadmap
-- Implementation Tracking - all 40 domains, completion status
+- Implementation Tracking - all 39 domains, completion status
 
 **Replaces**: Multiple scattered planning documents (consolidated 2025-12-07)
-**See also**: [docs/archive/planning/](archive/planning/) for historical planning documents
+**See also**: [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) for archived planning documents
 
 **Navigate**: `./scripts/reveal.sh 1 docs/ROADMAP.md`
 
@@ -243,10 +243,9 @@ Chemistry simulation framework across multiple domains
 
 ---
 
-## Reference Documentation (18 documents)
+## Reference Documentation (17 documents)
 
 ### Operator Catalogs
-- **operator-registry-expansion.md**: Complete operator registry
 - **procedural-operators.md**: Procedural generation operators
 - **emergence-operators.md**: Emergence domain operators
 - **genetic-algorithm-operators.md**: GA operators
@@ -271,7 +270,7 @@ Chemistry simulation framework across multiple domains
 
 ---
 
-## Architecture Decision Records (12 ADRs)
+## Architecture Decision Records (14 ADRs)
 
 Located in `docs/adr/`:
 
@@ -287,8 +286,10 @@ Located in `docs/adr/`:
 | 008 | Procedural Generation | Noise/terrain domain design |
 | 009 | Ambient Music & Generative | Generative music framework |
 | 010 | Ecosystem Branding | Morphogen/Philbrick naming |
-| 011 | Project Renaming | Morphogen → Morphogen transition |
+| 011 | Project Renaming | Kairo → Morphogen transition |
 | 012 | Universal Domain Translation | Cross-domain translation patterns |
+| 013 | Music Stack Consolidation | Audio domain unification |
+| 014 | Complexity Refactoring Plan | 6-phase code quality improvement |
 
 **Explore**: `scripts/reveal.sh 1 docs/adr/001-unified-reference-model.md`
 
@@ -316,7 +317,8 @@ Located in `docs/adr/`:
 - **README.md**: Roadmap directory guide
 
 ### docs/planning/
-- **MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md**: v2.0+ language strategy
+- **3D_VISUALIZATION_SYSTEM_PLAN.md** ⭐: Critical path for v1.0 (PyVista, camera, lighting, scene graph)
+- **PERFORMANCE_INFRASTRUCTURE_RESEARCH.md**: GPU optimization research
 - **README.md**: Planning directory guide
 
 ---
@@ -413,15 +415,15 @@ done
 
 **Root Documentation**: 5 major files (141KB total)
 **Architecture**: 7 documents
-**Specifications**: 27 documents
-**Guides**: 5 documents
+**Specifications**: 24 documents (3 research specs marked with 🔬 badges)
+**Guides**: 8 documents
 **Examples**: 6 documents
-**Reference**: 18 documents
-**ADRs**: 12 decision records
+**Reference**: 17 documents
+**ADRs**: 14 decision records
 **Philosophy**: 5 documents
-**Analysis**: 7 reports
+**Planning**: 3 active documents
 
-**Total**: ~90 documentation files covering all aspects of the Morphogen platform
+**Total**: ~117 documentation files (down from 156, 25% reduction through consolidation)
 
 ---
 
@@ -455,7 +457,7 @@ done
 ---
 
 **Generated**: 2025-11-21
-**Updated**: 2025-12-07
+**Updated**: 2026-01-05
 **Tool**: `scripts/reveal.py` and custom documentation mapping
 **Maintenance**: Regenerate when documentation structure changes significantly
 
@@ -470,8 +472,19 @@ done
 
 ## 🧹 Documentation Consolidation
 
-### 2026-01-05: Diligent Consolidation (122 docs)
-**Final document count: 122** (from original 156, -22% reduction)
+### 2026-01-05: Research Spec Cleanup (117 docs)
+**Final document count: 117** (from original 156, -25% reduction)
+
+**Session 3 (crimson-twilight-0105):**
+- **Archived**: `kairo-2.0-language-spec.md` (future research → `~/Archive/morphogen/docs-archive/2026-01-05/future-specs/`)
+- **Archived**: `operator-registry-expansion.md` (duplicate → `~/Archive/morphogen/docs-archive/2026-01-05/reference/`)
+- **Archived**: `KAIRO_2.0_STRATEGIC_ANALYSIS.md` (post-v1.0 planning → `~/Archive/morphogen/docs-archive/2026-01-05/planning/`)
+- **Added**: Implementation status badges (🔬) to research specs (kax-language, bi-domain, emergence)
+- **Updated**: ROADMAP.md with 3D visualization as critical blocker
+- **Fixed**: Broken cross-references to archived directories
+
+### 2026-01-05: Diligent Consolidation (120 docs)
+**Document count: 120** (from original 156, -23% reduction)
 
 **Phase 1 - Archive Consolidation:**
 - **Archived**: Session artifacts → `~/Archive/morphogen/session-artifacts/`
@@ -487,7 +500,7 @@ done
 - **Kept**: Planning/concept docs as active design documents
 - **Kept**: Analog-platform docs (active hardware project)
 
-**Result**: Cleaner structure, 22% reduction, all active docs well-organized
+**Result**: Cleaner structure, 25% total reduction, research vs production specs clearly marked
 
 ### 2025-12-07: Roadmap & Planning Consolidation
 - **Created**: Unified `docs/ROADMAP.md` (single source of truth)
