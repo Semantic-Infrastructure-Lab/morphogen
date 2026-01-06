@@ -1,7 +1,10 @@
 # SPEC: BI Domain for GPU-Native Analytics
 
+> 🔬 **Implementation Status: RESEARCH SPECIFICATION**
+> This is a proposed feature for future Morphogen versions. Not yet implemented.
+
 **Version:** 1.0
-**Status:** Proposed
+**Status:** Proposed (post-v1.0)
 **Last Updated:** 2025-11-15
 **Related:** ../adr/007-gpu-first-domains.md, kax-language.md
 

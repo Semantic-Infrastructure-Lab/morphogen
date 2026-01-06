@@ -44,6 +44,20 @@ All archived morphogen documentation is stored at: **`~/Archive/morphogen/`**
 
 **Files Updated**: README.md, DOCUMENTATION_INDEX.md, 11 guides/philosophy/use-cases docs
 
+### Session 3 (crimson-twilight-0105, 2026-01-05)
+**Document Reduction**: 120 → 117 docs (-3 docs)
+**Focus**: Separating implemented vs aspirational specifications
+
+**Archived to `~/Archive/morphogen/docs-archive/2026-01-05/`**:
+- `planning/KAIRO_2.0_STRATEGIC_ANALYSIS.md` → Post-v1.0 strategic planning (aspirational)
+- `reference/operator-registry-expansion.md` → Duplicate of operator-registry.md spec
+- `specifications/kairo-2.0-language-spec.md` → Future language research (not implemented)
+
+**Status Badges Added**:
+- `specifications/kax-language.md` - Marked as RESEARCH SPECIFICATION
+- `specifications/bi-domain.md` - Marked as RESEARCH SPECIFICATION
+- `specifications/emergence.md` - Marked as PARTIAL implementation
+
 ---
 
 ## What Was Archived (2026-01-05 Consolidation)
@@ -139,20 +153,21 @@ docs/
 ├── ROADMAP.md                    ← Canonical roadmap (ACTIVE)
 ├── README.md                     ← Documentation index (ACTIVE)
 ├── DOCUMENTATION_INDEX.md        ← Comprehensive doc index (ACTIVE)
+├── ARCHIVE_HISTORY.md            ← This file - archive tracking
 ├── getting-started.md            ← Quick start guide (ACTIVE)
 ├── adr/                          ← Architecture decisions (ACTIVE)
+├── analog-platform/              ← Philbrick hardware vision (ACTIVE)
 ├── architecture/                 ← System architecture (ACTIVE)
 ├── examples/                     ← Working examples (ACTIVE)
 ├── guides/                       ← Implementation guides (ACTIVE)
-├── meta/                         ← Session artifacts (see README)
+├── music/                        ← Music domain documentation (ACTIVE)
 ├── philosophy/                   ← Core principles (ACTIVE)
+├── physics/                      ← Physics domain specs (ACTIVE)
 ├── planning/                     ← Strategic planning (ACTIVE)
-│   └── KAIRO_2.0_STRATEGIC_ANALYSIS.md  ← v2.0+ planning
 ├── reference/                    ← Reference docs (ACTIVE)
 ├── roadmap/                      ← Feature roadmaps (ACTIVE)
-│   ├── language-features.md
-│   └── testing-strategy.md
 ├── specifications/               ← Technical specs (ACTIVE)
+│   └── (Note: Research specs marked with 🔬 status badges)
 └── use-cases/                    ← Application patterns (ACTIVE)
 ```
 
@@ -221,11 +236,18 @@ ls -R  # Browse archived content
 - Orphaned directories removed (philbrick-bridge, meta)
 - Documentation navigation fully coherent
 
+**After Session 3 (crimson-twilight-0105):**
+- 117 markdown files in `/docs/` (25% total reduction from start)
+- Archived aspirational/future specs to `~/Archive/morphogen/docs-archive/2026-01-05/`
+- Added implementation status badges to remaining research specs
+- Removed duplicate operator-registry-expansion.md (consolidated into operator-registry.md)
+
 **Impact:**
 - Reduced documentation load for new contributors
 - Clearer navigation for active documentation
 - Historical context preserved but not in the way
 - Easier to maintain canonical information
+- Clear distinction between implemented vs proposed specs
 
 ---
 
@@ -233,8 +255,8 @@ ls -R  # Browse archived content
 
 - **Current Roadmap**: `/docs/ROADMAP.md` - Canonical project roadmap
 - **Documentation Index**: `/docs/DOCUMENTATION_INDEX.md` - All active docs
-- **Meta Directory**: `/docs/meta/README.md` - Session artifacts policy
 - **Planning Directory**: `/docs/planning/README.md` - Active strategic planning
+- **ADRs**: `/docs/adr/` - Architecture decision records
 
 ---
 
