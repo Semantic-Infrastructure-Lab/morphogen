@@ -681,3 +681,316 @@ class TestFlyPath:
 
         with pytest.raises(ValueError, match="Need at least 2 waypoints"):
             visual3d.fly_path([(0, 0, 0)], frames=10)
+
+
+# =============================================================================
+# Phase 5: Advanced Scientific Visualization Tests
+# =============================================================================
+
+
+class TestStreamlines3D:
+    """Test 3D streamline generation from vector fields."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_streamlines_basic(self):
+        """Test basic streamline generation from a vortex field."""
+        from morphogen.stdlib import visual3d
+
+        # Create a simple circular flow field
+        nx, ny, nz = 16, 16, 16
+        x = np.linspace(-2, 2, nx)
+        y = np.linspace(-2, 2, ny)
+        z = np.linspace(-2, 2, nz)
+        X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+
+        # Circular flow in xy plane
+        vx = -Y
+        vy = X
+        vz = np.zeros_like(X)
+        field = np.stack([vx, vy, vz], axis=-1)
+
+        vis = visual3d.streamlines_3d(field, n_seeds=10, spacing=(0.25, 0.25, 0.25))
+
+        # Streamlines should be generated (might be empty if seeds are unlucky)
+        assert vis is not None
+        assert isinstance(vis.vertices, np.ndarray)
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_streamlines_with_seeds(self):
+        """Test streamlines with explicit seed points."""
+        from morphogen.stdlib import visual3d
+
+        # Uniform flow field
+        nx, ny, nz = 16, 16, 16
+        field = np.zeros((nx, ny, nz, 3))
+        field[:, :, :, 0] = 1.0  # Flow in x direction
+
+        seeds = np.array([
+            [1.0, 1.0, 1.0],
+            [1.0, 2.0, 1.0],
+            [1.0, 3.0, 1.0],
+        ])
+
+        vis = visual3d.streamlines_3d(field, seed_points=seeds)
+
+        assert vis is not None
+
+    def test_streamlines_invalid_shape(self):
+        """Test error on invalid vector field shape."""
+        from morphogen.stdlib import visual3d
+
+        # Wrong shape (should be 4D with last dim = 3)
+        field = np.random.randn(16, 16, 16, 2)  # Wrong vector dimension
+
+        with pytest.raises(ValueError, match="must have shape"):
+            visual3d.streamlines_3d(field)
+
+
+class TestGlyphField:
+    """Test glyph-based vector field visualization."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_glyph_arrows(self):
+        """Test arrow glyph generation."""
+        from morphogen.stdlib import visual3d
+
+        # Simple grid of vectors
+        positions = np.array([
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [1, 1, 0],
+        ], dtype=float)
+        vectors = np.array([
+            [0, 0, 1],
+            [0, 0, 1],
+            [0, 0, 1],
+            [0, 0, 1],
+        ], dtype=float)
+
+        vis = visual3d.glyph_field(positions, vectors, glyph_type="arrow", scale=0.5)
+
+        assert vis.n_vertices > 0
+        assert vis.n_faces > 0
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_glyph_cones(self):
+        """Test cone glyph generation."""
+        from morphogen.stdlib import visual3d
+
+        positions = np.array([[0, 0, 0], [1, 0, 0]], dtype=float)
+        vectors = np.array([[1, 0, 0], [0, 1, 0]], dtype=float)
+
+        vis = visual3d.glyph_field(positions, vectors, glyph_type="cone")
+
+        assert vis.n_vertices > 0
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_glyph_scale_by_magnitude(self):
+        """Test glyph scaling by vector magnitude."""
+        from morphogen.stdlib import visual3d
+
+        positions = np.array([[0, 0, 0], [2, 0, 0]], dtype=float)
+        vectors = np.array([[1, 0, 0], [3, 0, 0]], dtype=float)  # Different magnitudes
+
+        vis = visual3d.glyph_field(
+            positions, vectors, scale=1.0, scale_by_magnitude=True
+        )
+
+        assert vis.n_vertices > 0
+
+    def test_glyph_invalid_type(self):
+        """Test error on invalid glyph type."""
+        from morphogen.stdlib import visual3d
+
+        positions = np.array([[0, 0, 0]])
+        vectors = np.array([[1, 0, 0]])
+
+        with pytest.raises(ValueError, match="Unknown glyph_type"):
+            visual3d.glyph_field(positions, vectors, glyph_type="invalid")
+
+
+class TestSliceVolume:
+    """Test planar volume slicing."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_slice_z_plane(self):
+        """Test slicing through z-plane."""
+        from morphogen.stdlib import visual3d
+
+        # Create 3D Gaussian
+        x, y, z = np.mgrid[-2:2:32j, -2:2:32j, -2:2:32j]
+        volume = np.exp(-(x**2 + y**2 + z**2))
+
+        vis = visual3d.slice_volume(
+            volume,
+            normal=(0, 0, 1),  # z-plane
+            spacing=(4/31, 4/31, 4/31),
+            volume_origin=(-2, -2, -2)
+        )
+
+        assert vis.n_vertices > 0
+        assert vis.scalars is not None
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_slice_diagonal(self):
+        """Test slicing along diagonal plane."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(24, 24, 24)
+
+        vis = visual3d.slice_volume(
+            volume,
+            normal=(1, 1, 1),  # Diagonal plane
+        )
+
+        assert vis.n_vertices > 0
+
+    def test_slice_invalid_volume(self):
+        """Test error on non-3D volume."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(32, 32)  # 2D, not 3D
+
+        with pytest.raises(ValueError, match="must be 3D"):
+            visual3d.slice_volume(volume)
+
+
+class TestVolumeRender:
+    """Test volume rendering."""
+
+    def test_volume_render_basic(self):
+        """Test basic volume render setup."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(16, 16, 16)
+
+        vis = visual3d.volume_render(volume, colormap="hot")
+
+        assert vis._volume_data is not None
+        assert "volume" in vis._volume_data
+        assert vis._volume_data["opacity_map"] == "linear"
+
+    def test_volume_render_normalization(self):
+        """Test volume values are normalized."""
+        from morphogen.stdlib import visual3d
+
+        # Volume with specific range
+        volume = np.linspace(10, 100, 8**3).reshape(8, 8, 8)
+
+        vis = visual3d.volume_render(volume)
+
+        # Normalized volume should be in [0, 1]
+        norm_vol = vis._volume_data["volume"]
+        assert norm_vol.min() >= 0.0
+        assert norm_vol.max() <= 1.0
+
+    def test_volume_render_shading(self):
+        """Test volume render shading parameters."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(8, 8, 8)
+
+        vis = visual3d.volume_render(
+            volume,
+            shade=True,
+            ambient=0.5,
+            diffuse=0.4,
+            specular=0.3
+        )
+
+        assert vis._volume_data["shade"] is True
+        assert vis._volume_data["ambient"] == 0.5
+        assert vis._volume_data["diffuse"] == 0.4
+        assert vis._volume_data["specular"] == 0.3
+
+    def test_volume_render_invalid_shape(self):
+        """Test error on non-3D input."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(16, 16)  # 2D
+
+        with pytest.raises(ValueError, match="must be 3D"):
+            visual3d.volume_render(volume)
+
+
+class TestContour3D:
+    """Test 3D contour surface generation."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_contour_auto_isovalues(self):
+        """Test contour with automatic isovalue selection."""
+        from morphogen.stdlib import visual3d
+
+        # 3D Gaussian - good for contours
+        x, y, z = np.mgrid[-2:2:24j, -2:2:24j, -2:2:24j]
+        volume = np.exp(-(x**2 + y**2 + z**2))
+
+        vis = visual3d.contour_3d(volume, n_contours=3)
+
+        assert vis.n_vertices > 0
+        assert vis.n_faces > 0
+        assert vis.scalars is not None
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_contour_explicit_isovalues(self):
+        """Test contour with explicit isovalues."""
+        from morphogen.stdlib import visual3d
+
+        x, y, z = np.mgrid[-2:2:24j, -2:2:24j, -2:2:24j]
+        volume = np.exp(-(x**2 + y**2 + z**2))
+
+        vis = visual3d.contour_3d(volume, isovalues=[0.3, 0.5, 0.7])
+
+        assert vis.n_vertices > 0
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_contour_single_isovalue(self):
+        """Test contour with single isovalue."""
+        from morphogen.stdlib import visual3d
+
+        x, y, z = np.mgrid[-2:2:24j, -2:2:24j, -2:2:24j]
+        volume = np.sqrt(x**2 + y**2 + z**2)
+
+        vis = visual3d.contour_3d(volume, isovalues=1.5)
+
+        assert vis.n_vertices > 0
+
+    def test_contour_invalid_shape(self):
+        """Test error on non-3D input."""
+        from morphogen.stdlib import visual3d
+
+        volume = np.random.rand(24, 24)  # 2D
+
+        with pytest.raises(ValueError, match="must be 3D"):
+            visual3d.contour_3d(volume)

@@ -81,6 +81,9 @@ class Visual3D:
     clim: Optional[Tuple[float, float]] = None  # Scalar range (min, max)
     point_colors: Optional[np.ndarray] = None  # (N, 3) per-vertex RGB colors
 
+    # Volume rendering data (for volume_render operator)
+    _volume_data: Optional[dict] = dataclass_field(default=None, repr=False)
+
     # Cached PyVista mesh (created on demand)
     _pv_mesh: Optional[object] = dataclass_field(default=None, repr=False)
 
@@ -215,12 +218,42 @@ class Visual3DOperations:
     def _add_mesh_to_plotter(plotter, obj: Visual3D) -> None:
         """Add a Visual3D object to a PyVista plotter with appropriate styling.
 
-        Handles solid color, scalar coloring, per-vertex colors, and default white styling.
+        Handles solid color, scalar coloring, per-vertex colors, volume rendering,
+        and default white styling.
 
         Args:
             plotter: PyVista Plotter instance
             obj: Visual3D object to add
         """
+        import pyvista as pv
+
+        # Handle volume rendering specially
+        if obj._volume_data is not None:
+            vol_data = obj._volume_data
+            volume = vol_data["volume"]
+            nx, ny, nz = volume.shape
+
+            # Create ImageData for volume
+            grid = pv.ImageData(
+                dimensions=(nx, ny, nz),
+                spacing=vol_data["spacing"],
+                origin=vol_data["origin"]
+            )
+            grid.point_data["values"] = volume.flatten(order='F')
+
+            plotter.add_volume(
+                grid,
+                scalars="values",
+                cmap=obj.colormap,
+                opacity=vol_data["opacity_map"],
+                shade=vol_data["shade"],
+                ambient=vol_data["ambient"],
+                diffuse=vol_data["diffuse"],
+                specular=vol_data["specular"],
+                show_scalar_bar=False,
+            )
+            return
+
         mesh = obj.to_pyvista()
 
         if obj.point_colors is not None:
@@ -1403,6 +1436,502 @@ class Visual3DOperations:
             ))
 
         return cameras
+
+    # =========================================================================
+    # Phase 5: Advanced Scientific Visualization
+    # =========================================================================
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(vector_field: np.ndarray, ...) -> Visual3D",
+        deterministic=True,
+        doc="Generate streamlines from a 3D vector field"
+    )
+    def streamlines_3d(
+        vector_field: np.ndarray,
+        seed_points: Optional[np.ndarray] = None,
+        n_seeds: int = 100,
+        max_length: float = 100.0,
+        integration_step: float = 0.5,
+        colormap: str = "plasma",
+        color_by: str = "magnitude",
+        tube_radius: float = 0.0,
+        spacing: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+        origin: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    ) -> Visual3D:
+        """Generate streamlines from a 3D vector field.
+
+        Streamlines trace the path of massless particles through a vector field,
+        providing intuitive visualization of flow patterns, magnetic fields, etc.
+
+        Args:
+            vector_field: 4D array of shape (nx, ny, nz, 3) containing vector components
+            seed_points: Optional (N, 3) array of seed positions. If None, randomly generated.
+            n_seeds: Number of random seed points if seed_points not provided
+            max_length: Maximum streamline integration length
+            integration_step: Step size for streamline integration
+            colormap: Color map for streamlines
+            color_by: What to color by - "magnitude", "x", "y", "z", or "arc_length"
+            tube_radius: If > 0, render as tubes instead of lines
+            spacing: Grid spacing in (x, y, z)
+            origin: Origin offset in (x, y, z)
+
+        Returns:
+            Visual3D containing the streamlines mesh
+        """
+        import pyvista as pv
+
+        if vector_field.ndim != 4 or vector_field.shape[-1] != 3:
+            raise ValueError(f"vector_field must have shape (nx, ny, nz, 3), got {vector_field.shape}")
+
+        nx, ny, nz, _ = vector_field.shape
+
+        # Create structured grid
+        x = np.linspace(origin[0], origin[0] + (nx - 1) * spacing[0], nx)
+        y = np.linspace(origin[1], origin[1] + (ny - 1) * spacing[1], ny)
+        z = np.linspace(origin[2], origin[2] + (nz - 1) * spacing[2], nz)
+
+        grid = pv.RectilinearGrid(x, y, z)
+
+        # Reshape vectors for VTK (needs fortran order)
+        vectors = vector_field.reshape(-1, 3, order='F')
+        grid["vectors"] = vectors
+        grid.set_active_vectors("vectors")
+
+        # Generate seed points
+        if seed_points is None:
+            seed_points = np.column_stack([
+                np.random.uniform(x.min(), x.max(), n_seeds),
+                np.random.uniform(y.min(), y.max(), n_seeds),
+                np.random.uniform(z.min(), z.max(), n_seeds)
+            ])
+
+        seed_cloud = pv.PolyData(seed_points)
+
+        # Generate streamlines
+        streamlines = grid.streamlines_from_source(
+            seed_cloud,
+            vectors="vectors",
+            max_time=max_length,
+            integration_direction="both",
+            initial_step_length=integration_step
+        )
+
+        if streamlines.n_points == 0:
+            return Visual3D(
+                vertices=np.zeros((0, 3)),
+                faces=np.zeros((0, 3), dtype=np.int32),
+                colormap=colormap
+            )
+
+        # Calculate scalars for coloring
+        if color_by == "magnitude":
+            if "vectors" in streamlines.point_data:
+                vecs = streamlines.point_data["vectors"]
+                scalars = np.linalg.norm(vecs, axis=1)
+            else:
+                scalars = np.ones(streamlines.n_points)
+        elif color_by in ["x", "y", "z"]:
+            idx = {"x": 0, "y": 1, "z": 2}[color_by]
+            scalars = streamlines.points[:, idx]
+        else:
+            scalars = np.ones(streamlines.n_points)
+
+        # Convert to tubes if requested
+        if tube_radius > 0:
+            streamlines = streamlines.tube(radius=tube_radius)
+
+        # Extract mesh data
+        vertices = np.array(streamlines.points)
+        if streamlines.n_cells > 0 and hasattr(streamlines, 'faces'):
+            faces_flat = np.array(streamlines.faces)
+            faces = []
+            i = 0
+            while i < len(faces_flat):
+                n = faces_flat[i]
+                if n == 3:
+                    faces.append(faces_flat[i + 1:i + 4])
+                i += n + 1
+            faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+        else:
+            faces = np.zeros((0, 3), dtype=np.int32)
+
+        return Visual3D(
+            vertices=vertices,
+            faces=faces,
+            scalars=scalars if len(scalars) == len(vertices) else None,
+            colormap=colormap
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(positions: np.ndarray, vectors: np.ndarray, ...) -> Visual3D",
+        deterministic=True,
+        doc="Render a vector field using glyphs (arrows, cones, etc.)"
+    )
+    def glyph_field(
+        positions: np.ndarray,
+        vectors: np.ndarray,
+        glyph_type: str = "arrow",
+        scale: float = 1.0,
+        scale_by_magnitude: bool = True,
+        colormap: str = "viridis",
+        color_by: str = "magnitude"
+    ) -> Visual3D:
+        """Render a vector field using glyphs (arrows, cones, etc.).
+
+        Places oriented glyphs at each position to visualize vector direction
+        and optionally magnitude.
+
+        Args:
+            positions: (N, 3) array of glyph positions
+            vectors: (N, 3) array of vector directions at each position
+            glyph_type: Type of glyph - "arrow", "cone", "sphere", "cylinder"
+            scale: Base scale factor for glyphs
+            scale_by_magnitude: If True, scale glyph size by vector magnitude
+            colormap: Color map for glyphs
+            color_by: What to color by - "magnitude", "x", "y", "z"
+
+        Returns:
+            Visual3D containing the glyph mesh
+        """
+        import pyvista as pv
+
+        positions = np.asarray(positions)
+        vectors = np.asarray(vectors)
+
+        if positions.shape[0] != vectors.shape[0]:
+            raise ValueError(f"positions and vectors must have same length, got {positions.shape[0]} and {vectors.shape[0]}")
+
+        # Create point cloud with vectors
+        cloud = pv.PolyData(positions)
+        cloud["vectors"] = vectors
+
+        # Calculate magnitudes
+        magnitudes = np.linalg.norm(vectors, axis=1)
+        cloud["magnitude"] = magnitudes
+
+        # Create glyph source
+        if glyph_type == "arrow":
+            source = pv.Arrow(tip_length=0.25, tip_radius=0.1, shaft_radius=0.05)
+        elif glyph_type == "cone":
+            source = pv.Cone(radius=0.3, height=1.0, resolution=16)
+        elif glyph_type == "sphere":
+            source = pv.Sphere(radius=0.5, theta_resolution=8, phi_resolution=8)
+        elif glyph_type == "cylinder":
+            source = pv.Cylinder(radius=0.1, height=1.0, resolution=16)
+        else:
+            raise ValueError(f"Unknown glyph_type: {glyph_type}. Use 'arrow', 'cone', 'sphere', or 'cylinder'")
+
+        # Generate glyphs
+        glyphs = cloud.glyph(
+            orient="vectors",
+            scale="magnitude" if scale_by_magnitude else False,
+            factor=scale,
+            geom=source
+        )
+
+        # Calculate scalars for coloring
+        if color_by == "magnitude":
+            scalars = glyphs.point_data.get("magnitude", magnitudes)
+        elif color_by in ["x", "y", "z"]:
+            idx = {"x": 0, "y": 1, "z": 2}[color_by]
+            scalars = glyphs.points[:, idx]
+        else:
+            scalars = None
+
+        # Extract mesh
+        vertices = np.array(glyphs.points)
+        faces_flat = np.array(glyphs.faces)
+
+        # Parse VTK face format
+        faces = []
+        i = 0
+        while i < len(faces_flat):
+            n = faces_flat[i]
+            if n == 3:
+                faces.append(faces_flat[i + 1:i + 4])
+            elif n == 4:
+                idx = faces_flat[i + 1:i + 5]
+                faces.append([idx[0], idx[1], idx[2]])
+                faces.append([idx[0], idx[2], idx[3]])
+            i += n + 1
+
+        faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+
+        return Visual3D(
+            vertices=vertices,
+            faces=faces,
+            scalars=scalars if scalars is not None and len(scalars) == len(vertices) else None,
+            colormap=colormap
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(volume: np.ndarray, normal: Tuple, ...) -> Visual3D",
+        deterministic=True,
+        doc="Extract a planar slice through a 3D volume"
+    )
+    def slice_volume(
+        volume: np.ndarray,
+        normal: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+        origin: Optional[Tuple[float, float, float]] = None,
+        spacing: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+        volume_origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        colormap: str = "viridis",
+        opacity: float = 1.0
+    ) -> Visual3D:
+        """Extract a planar slice through a 3D volume.
+
+        Creates a 2D cross-section of volumetric data along an arbitrary plane,
+        useful for examining internal structure of 3D datasets.
+
+        Args:
+            volume: 3D array of scalar values
+            normal: Normal vector defining the slice plane orientation
+            origin: Point on the slice plane. If None, uses volume center.
+            spacing: Grid spacing in (x, y, z)
+            volume_origin: Origin offset of the volume in (x, y, z)
+            colormap: Color map for the slice
+            opacity: Opacity of the slice (0-1)
+
+        Returns:
+            Visual3D containing the slice mesh
+        """
+        import pyvista as pv
+
+        volume = np.asarray(volume)
+        if volume.ndim != 3:
+            raise ValueError(f"volume must be 3D, got shape {volume.shape}")
+
+        nx, ny, nz = volume.shape
+
+        # Create image data (uniform grid)
+        grid = pv.ImageData(
+            dimensions=(nx, ny, nz),
+            spacing=spacing,
+            origin=volume_origin
+        )
+        grid.point_data["values"] = volume.flatten(order='F')
+
+        # Determine slice origin
+        if origin is None:
+            origin = (
+                volume_origin[0] + (nx - 1) * spacing[0] / 2,
+                volume_origin[1] + (ny - 1) * spacing[1] / 2,
+                volume_origin[2] + (nz - 1) * spacing[2] / 2
+            )
+
+        # Extract slice
+        sliced = grid.slice(normal=normal, origin=origin)
+
+        if sliced.n_points == 0:
+            return Visual3D(
+                vertices=np.zeros((0, 3)),
+                faces=np.zeros((0, 3), dtype=np.int32),
+                colormap=colormap,
+                opacity=opacity
+            )
+
+        # Extract mesh data
+        vertices = np.array(sliced.points)
+        scalars = sliced.point_data.get("values", None)
+
+        # Extract faces
+        if hasattr(sliced, 'faces') and len(sliced.faces) > 0:
+            faces_flat = np.array(sliced.faces)
+            faces = []
+            i = 0
+            while i < len(faces_flat):
+                n = faces_flat[i]
+                if n == 3:
+                    faces.append(faces_flat[i + 1:i + 4])
+                elif n == 4:
+                    idx = faces_flat[i + 1:i + 5]
+                    faces.append([idx[0], idx[1], idx[2]])
+                    faces.append([idx[0], idx[2], idx[3]])
+                i += n + 1
+            faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+        else:
+            faces = np.zeros((0, 3), dtype=np.int32)
+
+        return Visual3D(
+            vertices=vertices,
+            faces=faces,
+            scalars=scalars,
+            colormap=colormap,
+            opacity=opacity
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(volume: np.ndarray, ...) -> Visual3D",
+        deterministic=True,
+        doc="Perform direct volume rendering of 3D scalar data"
+    )
+    def volume_render(
+        volume: np.ndarray,
+        opacity_map: str = "linear",
+        colormap: str = "viridis",
+        spacing: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+        origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        shade: bool = True,
+        ambient: float = 0.3,
+        diffuse: float = 0.6,
+        specular: float = 0.5
+    ) -> Visual3D:
+        """Perform direct volume rendering of 3D scalar data.
+
+        Uses ray casting to render semi-transparent volumetric data,
+        ideal for medical imaging, fluid density fields, etc.
+
+        Args:
+            volume: 3D array of scalar values (will be normalized to 0-1)
+            opacity_map: Opacity transfer function - "linear", "sigmoid", "geom", or "geom_r"
+            colormap: Color map for volume values
+            spacing: Grid spacing in (x, y, z)
+            origin: Origin offset in (x, y, z)
+            shade: Enable shading based on gradients
+            ambient: Ambient lighting coefficient
+            diffuse: Diffuse lighting coefficient
+            specular: Specular lighting coefficient
+
+        Returns:
+            Visual3D containing the volume data (special handling in render)
+        """
+        volume = np.asarray(volume)
+        if volume.ndim != 3:
+            raise ValueError(f"volume must be 3D, got shape {volume.shape}")
+
+        # Normalize volume to 0-1
+        vmin, vmax = volume.min(), volume.max()
+        if vmax > vmin:
+            normalized = (volume - vmin) / (vmax - vmin)
+        else:
+            normalized = np.zeros_like(volume)
+
+        return Visual3D(
+            vertices=np.array([origin]),  # Dummy vertex at origin
+            faces=np.zeros((0, 3), dtype=np.int32),
+            scalars=normalized.flatten(order='F'),
+            colormap=colormap,
+            opacity=1.0,
+            _volume_data={
+                "volume": normalized,
+                "spacing": spacing,
+                "origin": origin,
+                "opacity_map": opacity_map,
+                "shade": shade,
+                "ambient": ambient,
+                "diffuse": diffuse,
+                "specular": specular
+            }
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(volume: np.ndarray, ...) -> Visual3D",
+        deterministic=True,
+        doc="Generate multiple isosurface contours from a 3D scalar field"
+    )
+    def contour_3d(
+        volume: np.ndarray,
+        isovalues: Union[float, List[float]] = None,
+        n_contours: int = 5,
+        spacing: Tuple[float, float, float] = (1.0, 1.0, 1.0),
+        origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        colormap: str = "viridis",
+        opacity: float = 0.7
+    ) -> Visual3D:
+        """Generate multiple isosurface contours from a 3D scalar field.
+
+        Creates a set of nested isosurfaces at specified values, useful for
+        visualizing density distributions, potential fields, etc.
+
+        Args:
+            volume: 3D array of scalar values
+            isovalues: Specific isovalue(s) to extract. If None, uses n_contours evenly spaced.
+            n_contours: Number of contours if isovalues not specified
+            spacing: Grid spacing in (x, y, z)
+            origin: Origin offset in (x, y, z)
+            colormap: Color map for contour surfaces
+            opacity: Opacity of contour surfaces (0-1)
+
+        Returns:
+            Visual3D containing all contour surfaces
+        """
+        import pyvista as pv
+
+        volume = np.asarray(volume)
+        if volume.ndim != 3:
+            raise ValueError(f"volume must be 3D, got shape {volume.shape}")
+
+        nx, ny, nz = volume.shape
+
+        # Create image data
+        grid = pv.ImageData(
+            dimensions=(nx, ny, nz),
+            spacing=spacing,
+            origin=origin
+        )
+        grid.point_data["values"] = volume.flatten(order='F')
+
+        # Determine isovalues
+        if isovalues is None:
+            vmin, vmax = volume.min(), volume.max()
+            margin = (vmax - vmin) * 0.1
+            isovalues = np.linspace(vmin + margin, vmax - margin, n_contours)
+        elif isinstance(isovalues, (int, float)):
+            isovalues = [isovalues]
+
+        # Extract contours
+        contours = grid.contour(isovalues, scalars="values")
+
+        if contours.n_points == 0:
+            return Visual3D(
+                vertices=np.zeros((0, 3)),
+                faces=np.zeros((0, 3), dtype=np.int32),
+                colormap=colormap,
+                opacity=opacity
+            )
+
+        # Extract mesh data
+        vertices = np.array(contours.points)
+        scalars = contours.point_data.get("values", None)
+
+        # Extract faces
+        faces_flat = np.array(contours.faces)
+        faces = []
+        i = 0
+        while i < len(faces_flat):
+            n = faces_flat[i]
+            if n == 3:
+                faces.append(faces_flat[i + 1:i + 4])
+            elif n == 4:
+                idx = faces_flat[i + 1:i + 5]
+                faces.append([idx[0], idx[1], idx[2]])
+                faces.append([idx[0], idx[2], idx[3]])
+            i += n + 1
+
+        faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+
+        return Visual3D(
+            vertices=vertices,
+            faces=faces,
+            scalars=scalars,
+            colormap=colormap,
+            opacity=opacity
+        )
 
 
 # Module-level instance for DSL access
