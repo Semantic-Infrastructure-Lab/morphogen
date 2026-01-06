@@ -459,3 +459,225 @@ class TestRendering:
         image = visual3d.render_3d(mesh, camera=camera, width=400, height=300)
 
         assert image.shape == (300, 400)
+
+
+class TestMolecularVisualization:
+    """Test molecular 3D visualization."""
+
+    def test_molecule_ball_and_stick(self):
+        """Test ball-and-stick molecular visualization."""
+        from morphogen.stdlib import visual3d
+        from morphogen.stdlib.molecular import Atom, Bond, Molecule
+
+        # Create water molecule
+        atoms = [
+            Atom.from_element('O'),
+            Atom.from_element('H'),
+            Atom.from_element('H'),
+        ]
+        positions = np.array([
+            [0.0, 0.0, 0.0],
+            [0.96, 0.0, 0.0],
+            [-0.24, 0.93, 0.0],
+        ])
+        bonds = [Bond(0, 1, 1.0), Bond(0, 2, 1.0)]
+        mol = Molecule(atoms=atoms, bonds=bonds, positions=positions)
+
+        vis = visual3d.molecule(mol, style='ball_and_stick')
+
+        assert vis.n_vertices > 0
+        assert vis.n_faces > 0
+        assert vis.point_colors is not None
+        assert vis.point_colors.shape[1] == 3  # RGB colors
+
+    def test_molecule_spacefill(self):
+        """Test spacefill molecular visualization."""
+        from morphogen.stdlib import visual3d
+        from morphogen.stdlib.molecular import Atom, Bond, Molecule
+
+        # Create methane molecule
+        atoms = [
+            Atom.from_element('C'),
+            Atom.from_element('H'),
+            Atom.from_element('H'),
+            Atom.from_element('H'),
+            Atom.from_element('H'),
+        ]
+        positions = np.array([
+            [0.0, 0.0, 0.0],
+            [1.09, 0.0, 0.0],
+            [-0.36, 1.03, 0.0],
+            [-0.36, -0.51, 0.89],
+            [-0.36, -0.51, -0.89],
+        ])
+        bonds = [Bond(0, i, 1.0) for i in range(1, 5)]
+        mol = Molecule(atoms=atoms, bonds=bonds, positions=positions)
+
+        # Spacefill should have larger atoms (no bonds visible)
+        vis = visual3d.molecule(mol, style='spacefill')
+
+        assert vis.n_vertices > 0
+        # Should be more vertices than ball_and_stick due to larger spheres
+
+    def test_molecule_color_by_element(self):
+        """Test coloring by element type."""
+        from morphogen.stdlib import visual3d
+        from morphogen.stdlib.molecular import Atom, Bond, Molecule
+
+        atoms = [Atom.from_element('O'), Atom.from_element('H')]
+        positions = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        bonds = [Bond(0, 1, 1.0)]
+        mol = Molecule(atoms=atoms, bonds=bonds, positions=positions)
+
+        vis = visual3d.molecule(mol, color_by='element')
+
+        assert vis.point_colors is not None
+        # Verify colors are present (oxygen=red, hydrogen=white)
+
+    def test_molecule_color_by_charge(self):
+        """Test coloring by atomic charge."""
+        from morphogen.stdlib import visual3d
+        from morphogen.stdlib.molecular import Atom, Bond, Molecule
+
+        atoms = [
+            Atom.from_element('O', charge=-0.5),
+            Atom.from_element('H', charge=0.25),
+            Atom.from_element('H', charge=0.25),
+        ]
+        positions = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [-0.3, 0.95, 0.0]])
+        bonds = [Bond(0, 1, 1.0), Bond(0, 2, 1.0)]
+        mol = Molecule(atoms=atoms, bonds=bonds, positions=positions)
+
+        vis = visual3d.molecule(mol, color_by='charge')
+
+        assert vis.point_colors is not None
+
+    def test_molecule_empty(self):
+        """Test empty molecule handling."""
+        from morphogen.stdlib import visual3d
+        from morphogen.stdlib.molecular import Molecule
+
+        mol = Molecule(atoms=[], bonds=[], positions=np.zeros((0, 3)))
+
+        vis = visual3d.molecule(mol)
+
+        assert vis.n_vertices == 0
+
+
+class TestOrbitalVisualization:
+    """Test orbital isosurface visualization."""
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_orbital_basic(self):
+        """Test basic orbital isosurface extraction."""
+        from morphogen.stdlib import visual3d
+
+        # Create simple orbital-like field (positive and negative regions)
+        x, y, z = np.mgrid[-3:3:32j, -3:3:32j, -3:3:32j]
+        # 2p-like orbital: positive on one side, negative on other
+        orbital_field = x * np.exp(-np.sqrt(x**2 + y**2 + z**2))
+
+        vis = visual3d.orbital(orbital_field, isovalues=(0.1, -0.1))
+
+        assert vis.n_vertices > 0
+        # Should have both positive and negative lobes
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("pyvista", reason="PyVista not installed"),
+        reason="PyVista not installed"
+    )
+    def test_orbital_custom_colors(self):
+        """Test orbital with custom colors."""
+        from morphogen.stdlib import visual3d
+
+        x, y, z = np.mgrid[-3:3:24j, -3:3:24j, -3:3:24j]
+        orbital_field = x * np.exp(-np.sqrt(x**2 + y**2 + z**2))
+
+        vis = visual3d.orbital(
+            orbital_field,
+            isovalues=(0.08, -0.08),
+            positive_color=(0.0, 0.5, 1.0),
+            negative_color=(1.0, 0.5, 0.0),
+            opacity=0.8
+        )
+
+        assert vis.opacity == 0.8
+
+
+class TestFlyPath:
+    """Test camera fly path generation."""
+
+    def test_fly_path_linear(self):
+        """Test linear camera path interpolation."""
+        from morphogen.stdlib import visual3d
+
+        waypoints = [
+            (0.0, 0.0, 0.0),
+            (10.0, 0.0, 0.0),
+            (10.0, 10.0, 0.0),
+        ]
+
+        cameras = visual3d.fly_path(waypoints, frames=10, interpolation="linear")
+
+        assert len(cameras) == 10
+        # First position should be at start
+        assert np.allclose(cameras[0].position, waypoints[0], atol=0.01)
+        # Last position should be at end
+        assert np.allclose(cameras[-1].position, waypoints[-1], atol=0.01)
+
+    def test_fly_path_spline(self):
+        """Test spline camera path interpolation."""
+        from morphogen.stdlib import visual3d
+
+        waypoints = [
+            (0.0, 0.0, 5.0),
+            (10.0, 0.0, 5.0),
+            (10.0, 10.0, 5.0),
+            (0.0, 10.0, 5.0),
+        ]
+
+        cameras = visual3d.fly_path(waypoints, frames=30, interpolation="spline")
+
+        assert len(cameras) == 30
+        # Spline should start and end at waypoints
+        assert np.allclose(cameras[0].position, waypoints[0], atol=0.01)
+        assert np.allclose(cameras[-1].position, waypoints[-1], atol=0.01)
+
+    def test_fly_path_look_at(self):
+        """Test camera path with fixed look_at point."""
+        from morphogen.stdlib import visual3d
+
+        waypoints = [(10, 0, 5), (0, 10, 5), (-10, 0, 5)]
+        look_at = (0, 0, 0)
+
+        cameras = visual3d.fly_path(
+            waypoints, frames=15, look_at=look_at, interpolation="linear"
+        )
+
+        assert len(cameras) == 15
+        # All cameras should look at origin
+        for cam in cameras:
+            assert cam.focal_point == (0, 0, 0)
+
+    def test_fly_path_look_ahead(self):
+        """Test camera path with look-ahead."""
+        from morphogen.stdlib import visual3d
+
+        waypoints = [(0, 0, 5), (10, 0, 5), (10, 10, 5)]
+
+        cameras = visual3d.fly_path(
+            waypoints, frames=10, look_ahead=True, interpolation="linear"
+        )
+
+        assert len(cameras) == 10
+        # Each camera (except last) should look toward next position
+
+    def test_fly_path_too_few_waypoints(self):
+        """Test error handling for too few waypoints."""
+        from morphogen.stdlib import visual3d
+
+        with pytest.raises(ValueError, match="Need at least 2 waypoints"):
+            visual3d.fly_path([(0, 0, 0)], frames=10)

@@ -79,6 +79,7 @@ class Visual3D:
     opacity: float = 1.0
     color: Optional[Tuple[float, float, float]] = None  # Solid color override
     clim: Optional[Tuple[float, float]] = None  # Scalar range (min, max)
+    point_colors: Optional[np.ndarray] = None  # (N, 3) per-vertex RGB colors
 
     # Cached PyVista mesh (created on demand)
     _pv_mesh: Optional[object] = dataclass_field(default=None, repr=False)
@@ -214,7 +215,7 @@ class Visual3DOperations:
     def _add_mesh_to_plotter(plotter, obj: Visual3D) -> None:
         """Add a Visual3D object to a PyVista plotter with appropriate styling.
 
-        Handles solid color, scalar coloring, and default white styling.
+        Handles solid color, scalar coloring, per-vertex colors, and default white styling.
 
         Args:
             plotter: PyVista Plotter instance
@@ -222,7 +223,17 @@ class Visual3DOperations:
         """
         mesh = obj.to_pyvista()
 
-        if obj.color is not None:
+        if obj.point_colors is not None:
+            # Per-vertex RGB colors (e.g., molecular visualization)
+            mesh['RGB'] = (obj.point_colors * 255).astype(np.uint8)
+            plotter.add_mesh(
+                mesh,
+                scalars='RGB',
+                rgb=True,
+                opacity=obj.opacity,
+                smooth_shading=True,
+            )
+        elif obj.color is not None:
             plotter.add_mesh(
                 mesh,
                 color=obj.color,
@@ -1065,6 +1076,333 @@ class Visual3DOperations:
             colormap=colormap,
             color=color,
         )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(mol: Molecule, style: str, ...) -> Visual3D",
+        deterministic=True,
+        doc="Render molecular structure as 3D visualization"
+    )
+    def molecule(
+        mol,  # Molecule type (avoid circular import)
+        style: str = "ball_and_stick",
+        color_by: str = "element",
+        atom_scale: float = 0.3,
+        bond_radius: float = 0.1,
+        resolution: int = 16
+    ) -> Visual3D:
+        """Render molecular structure as 3D visualization.
+
+        Args:
+            mol: Molecule object with atoms, bonds, and positions
+            style: Rendering style - "ball_and_stick", "spacefill", "stick", "wireframe"
+            color_by: Coloring mode - "element", "charge", "index"
+            atom_scale: Scale factor for atom spheres (relative to vdW radius)
+            bond_radius: Radius of bond cylinders
+            resolution: Mesh resolution for spheres/cylinders
+
+        Returns:
+            Visual3D containing combined molecular mesh
+        """
+        import pyvista as pv
+
+        # CPK/Jmol element colors (RGB, normalized 0-1)
+        element_colors = {
+            'H': (1.0, 1.0, 1.0),      # White
+            'C': (0.5, 0.5, 0.5),      # Gray
+            'N': (0.0, 0.0, 1.0),      # Blue
+            'O': (1.0, 0.0, 0.0),      # Red
+            'F': (0.0, 1.0, 0.0),      # Green
+            'Cl': (0.0, 1.0, 0.0),     # Green
+            'Br': (0.6, 0.1, 0.1),     # Dark red
+            'S': (1.0, 1.0, 0.0),      # Yellow
+            'P': (1.0, 0.5, 0.0),      # Orange
+            'Na': (0.0, 0.0, 1.0),     # Blue
+            'default': (1.0, 0.0, 1.0)  # Magenta for unknown
+        }
+
+        # Van der Waals radii in Angstroms
+        vdw_radii = {
+            'H': 1.20, 'C': 1.70, 'N': 1.55, 'O': 1.52,
+            'F': 1.47, 'Cl': 1.75, 'Br': 1.85, 'S': 1.80,
+            'P': 1.80, 'Na': 2.27, 'default': 1.50
+        }
+
+        # Collect all mesh components
+        meshes = []
+
+        # Determine atom radii based on style
+        if style == "spacefill":
+            base_scale = 1.0
+        elif style == "ball_and_stick":
+            base_scale = atom_scale
+        elif style == "stick":
+            base_scale = 0.15  # Small atoms for stick style
+        elif style == "wireframe":
+            base_scale = 0.0  # No atom spheres
+        else:
+            base_scale = atom_scale
+
+        # Create atom spheres
+        if style != "wireframe":
+            for i, atom in enumerate(mol.atoms):
+                pos = mol.positions[i]
+                element = atom.element
+
+                # Get color
+                if color_by == "element":
+                    color = element_colors.get(element, element_colors['default'])
+                elif color_by == "charge":
+                    # Map charge to color: negative=red, neutral=white, positive=blue
+                    charge = atom.charge
+                    if charge < 0:
+                        t = min(1.0, abs(charge))
+                        color = (1.0, 1.0 - t, 1.0 - t)  # Toward red
+                    elif charge > 0:
+                        t = min(1.0, charge)
+                        color = (1.0 - t, 1.0 - t, 1.0)  # Toward blue
+                    else:
+                        color = (1.0, 1.0, 1.0)  # White
+                elif color_by == "index":
+                    # Rainbow by atom index
+                    t = i / max(1, mol.n_atoms - 1)
+                    color = (
+                        0.5 + 0.5 * np.sin(2 * np.pi * t),
+                        0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.33)),
+                        0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.67))
+                    )
+                else:
+                    color = element_colors.get(element, element_colors['default'])
+
+                # Get radius
+                radius = vdw_radii.get(element, vdw_radii['default']) * base_scale
+
+                if radius > 0:
+                    sphere = pv.Sphere(
+                        center=tuple(pos),
+                        radius=radius,
+                        theta_resolution=resolution,
+                        phi_resolution=resolution
+                    )
+                    # Store color as point data for rendering
+                    sphere['color'] = np.array([color] * sphere.n_points)
+                    meshes.append(sphere)
+
+        # Create bond cylinders
+        if style in ("ball_and_stick", "stick", "wireframe"):
+            for bond in mol.bonds:
+                pos1 = mol.positions[bond.atom1]
+                pos2 = mol.positions[bond.atom2]
+
+                # Bond midpoint and direction
+                center = (pos1 + pos2) / 2
+                direction = pos2 - pos1
+                length = np.linalg.norm(direction)
+
+                if length > 0.01:  # Skip if atoms overlap
+                    # Create cylinder along bond
+                    if style == "wireframe":
+                        # Use lines for wireframe (thin cylinder approximation)
+                        cyl_radius = 0.02
+                    else:
+                        cyl_radius = bond_radius
+
+                    # Split bond into two halves colored by atom
+                    for half in [0, 1]:
+                        if half == 0:
+                            c = (pos1 + center) / 2
+                            atom_idx = bond.atom1
+                        else:
+                            c = (pos2 + center) / 2
+                            atom_idx = bond.atom2
+
+                        element = mol.atoms[atom_idx].element
+                        color = element_colors.get(element, element_colors['default'])
+
+                        cylinder = pv.Cylinder(
+                            center=tuple(c),
+                            direction=tuple(direction),
+                            radius=cyl_radius,
+                            height=length / 2,
+                            resolution=max(8, resolution // 2)
+                        )
+                        cylinder['color'] = np.array([color] * cylinder.n_points)
+                        meshes.append(cylinder)
+
+        # Combine all meshes
+        if len(meshes) == 0:
+            # Return empty mesh if nothing to render
+            return Visual3D(
+                vertices=np.zeros((0, 3), dtype=np.float32),
+                faces=np.zeros((0, 3), dtype=np.int64)
+            )
+
+        combined = meshes[0]
+        for m in meshes[1:]:
+            combined = combined.merge(m)
+
+        # Extract colors from point data if available
+        colors = None
+        if 'color' in combined.point_data:
+            colors = combined.point_data['color']
+
+        return Visual3D(
+            vertices=np.array(combined.points, dtype=np.float32),
+            faces=combined.faces.reshape(-1, 4)[:, 1:].astype(np.int64),
+            color=(0.5, 0.5, 0.5),  # Default gray, overridden by per-vertex colors
+            point_colors=colors
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.RENDER,
+        signature="(orbital_field: np.ndarray, isovalues: Tuple, ...) -> Visual3D",
+        deterministic=True,
+        doc="Render molecular orbital as positive/negative isosurfaces"
+    )
+    def orbital(
+        orbital_field: np.ndarray,
+        isovalues: Tuple[float, float] = (0.02, -0.02),
+        positive_color: Tuple[float, float, float] = (0.0, 0.0, 0.8),
+        negative_color: Tuple[float, float, float] = (0.8, 0.0, 0.0),
+        opacity: float = 0.7,
+        spacing: Tuple[float, float, float] = (0.2, 0.2, 0.2),
+        origin: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    ) -> Visual3D:
+        """Render molecular orbital as positive/negative isosurfaces.
+
+        Args:
+            orbital_field: 3D array of orbital values
+            isovalues: (positive_isovalue, negative_isovalue)
+            positive_color: Color for positive lobe (blue)
+            negative_color: Color for negative lobe (red)
+            opacity: Surface transparency
+            spacing: Grid spacing in each dimension
+            origin: Grid origin
+
+        Returns:
+            Visual3D with two-colored orbital lobes
+        """
+        import pyvista as pv
+
+        # Create uniform grid for orbital data (use point data for contour)
+        grid = pv.ImageData()
+        grid.dimensions = orbital_field.shape
+        grid.spacing = spacing
+        grid.origin = origin
+        grid.point_data['orbital'] = orbital_field.flatten(order='F')
+
+        meshes = []
+
+        # Positive isosurface
+        if isovalues[0] != 0 and np.max(orbital_field) >= isovalues[0]:
+            pos_surface = grid.contour([isovalues[0]], scalars='orbital')
+            if pos_surface.n_points > 0:
+                pos_surface['color'] = np.array([positive_color] * pos_surface.n_points)
+                meshes.append(pos_surface)
+
+        # Negative isosurface
+        if isovalues[1] != 0 and np.min(orbital_field) <= isovalues[1]:
+            neg_surface = grid.contour([isovalues[1]], scalars='orbital')
+            if neg_surface.n_points > 0:
+                neg_surface['color'] = np.array([negative_color] * neg_surface.n_points)
+                meshes.append(neg_surface)
+
+        if len(meshes) == 0:
+            return Visual3D(
+                vertices=np.zeros((0, 3), dtype=np.float32),
+                faces=np.zeros((0, 3), dtype=np.int64)
+            )
+
+        combined = meshes[0]
+        for m in meshes[1:]:
+            combined = combined.merge(m)
+
+        colors = None
+        if 'color' in combined.point_data:
+            colors = combined.point_data['color']
+
+        return Visual3D(
+            vertices=np.array(combined.points, dtype=np.float32),
+            faces=combined.faces.reshape(-1, 4)[:, 1:].astype(np.int64),
+            opacity=opacity,
+            point_colors=colors
+        )
+
+    @staticmethod
+    @operator(
+        domain="visual3d",
+        category=OpCategory.CONSTRUCT,
+        signature="(waypoints: List, frames: int, ...) -> List[Camera3D]",
+        deterministic=True,
+        doc="Generate camera path through waypoints"
+    )
+    def fly_path(
+        waypoints: List[Tuple[float, float, float]],
+        frames: int,
+        look_at: Optional[Tuple[float, float, float]] = None,
+        look_ahead: bool = False,
+        interpolation: str = "spline"
+    ) -> List[Camera3D]:
+        """Generate camera path through waypoints.
+
+        Args:
+            waypoints: List of (x, y, z) camera positions
+            frames: Total number of frames
+            look_at: Fixed point to look at (if None, uses look_ahead)
+            look_ahead: If True, camera looks in direction of travel
+            interpolation: "linear" or "spline" interpolation
+
+        Returns:
+            List of Camera3D configurations for each frame
+        """
+        from scipy import interpolate
+
+        waypoints = np.array(waypoints)
+        n_waypoints = len(waypoints)
+
+        if n_waypoints < 2:
+            raise ValueError("Need at least 2 waypoints")
+
+        # Parameter along path
+        t_waypoints = np.linspace(0, 1, n_waypoints)
+        t_frames = np.linspace(0, 1, frames)
+
+        # Interpolate positions
+        if interpolation == "spline" and n_waypoints >= 4:
+            # Cubic spline interpolation
+            tck, u = interpolate.splprep([waypoints[:, i] for i in range(3)], s=0)
+            positions = np.array(interpolate.splev(t_frames, tck)).T
+        else:
+            # Linear interpolation
+            positions = np.array([
+                np.interp(t_frames, t_waypoints, waypoints[:, i])
+                for i in range(3)
+            ]).T
+
+        cameras = []
+        for i in range(frames):
+            pos = positions[i]
+
+            if look_at is not None:
+                focal = np.array(look_at)
+            elif look_ahead and i < frames - 1:
+                # Look toward next position
+                focal = positions[min(i + 1, frames - 1)]
+            else:
+                focal = np.array([0.0, 0.0, 0.0])
+
+            cameras.append(Camera3D(
+                position=tuple(pos),
+                focal_point=tuple(focal),
+                up_vector=(0.0, 0.0, 1.0),
+                fov=30.0
+            ))
+
+        return cameras
 
 
 # Module-level instance for DSL access
