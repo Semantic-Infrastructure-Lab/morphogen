@@ -649,7 +649,7 @@ D = degree matrix, A = adjacency matrix. Eigenvalues of L encode graph structure
 
 **Reference:**
 - [Universal Domain Frameworks](../reference/universal-domain-frameworks.md) — Theoretical foundations
-- [Cross-Domain API](../CROSS_DOMAIN_API.md) — Practical patterns
+- [Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md) — Practical patterns
 
 ---
 

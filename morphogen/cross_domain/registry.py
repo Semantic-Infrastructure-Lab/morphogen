@@ -9,7 +9,7 @@ No explicit initialization required for normal usage.
 """
 
 from typing import Dict, List, Optional, Tuple, Type
-from .interface import DomainInterface
+from .base import DomainInterface
 
 
 class CrossDomainRegistry:
@@ -202,26 +202,15 @@ def register_builtin_transforms():
     if CrossDomainRegistry._builtins_registered:
         return
 
-    from .interface import (
-        FieldToAgentInterface,
-        AgentToFieldInterface,
-        PhysicsToAudioInterface,
-        AudioToVisualInterface,
-        FieldToAudioInterface,
-        TerrainToFieldInterface,
-        FieldToTerrainInterface,
-        VisionToFieldInterface,
-        TimeToCepstralInterface,
-        CepstralToTimeInterface,
-        TimeToWaveletInterface,
-        SpatialAffineInterface,
-        CartesianToPolarInterface,
-        PolarToCartesianInterface,
-        GraphToVisualInterface,
-        CellularToFieldInterface,
-        FluidToAcousticsInterface,
-        AcousticsToAudioInterface,
-    )
+    from .field_agent import FieldToAgentInterface, AgentToFieldInterface
+    from .audio_visual import AudioToVisualInterface, FieldToAudioInterface
+    from .physics_audio import PhysicsToAudioInterface, FluidToAcousticsInterface, AcousticsToAudioInterface
+    from .terrain import TerrainToFieldInterface, FieldToTerrainInterface
+    from .vision_field import VisionToFieldInterface
+    from .graph_visual import GraphToVisualInterface
+    from .cellular import CellularToFieldInterface
+    from .spectral import TimeToCepstralInterface, CepstralToTimeInterface, TimeToWaveletInterface
+    from .spatial import SpatialAffineInterface, CartesianToPolarInterface, PolarToCartesianInterface
 
     # Original Phase 1 transforms
     CrossDomainRegistry.register(

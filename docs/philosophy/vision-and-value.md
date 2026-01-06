@@ -633,7 +633,7 @@ See [Use Cases](../use-cases/) for domain-specific deep dives:
 - [Inverse Kinematics Unified](../use-cases/inverse-kinematics-unified.md)
 
 ### For Engineers
-See [Architecture](../architecture/) and [Cross-Domain API](../CROSS_DOMAIN_API.md)
+See [Architecture](../architecture/) and [Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)
 
 ### For Educators
 See [Getting Started](../getting-started.md) and [Examples](../examples/)

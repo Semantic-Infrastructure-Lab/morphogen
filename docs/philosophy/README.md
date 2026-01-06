@@ -299,7 +299,7 @@ See [Universal Domain Frameworks](../reference/universal-domain-frameworks.md) f
 ### Architecture & Design
 - [Architecture Overview](../architecture/overview.md) — System design
 - [Domain Architecture](../architecture/domain-architecture.md) — Domain specifications
-- [Cross-Domain API](../CROSS_DOMAIN_API.md) — Practical patterns
+- [Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md) — Practical patterns
 
 ### Strategic Context
 - [Use Cases](../use-cases/) — Domain-specific deep dives and applications

@@ -12,28 +12,72 @@ Key components:
 - Transform composition: Automatic path finding and pipeline execution
 """
 
-from .interface import (
+# Base classes
+from .base import (
     DomainInterface,
+    DomainMetadata,
     DomainTransform,
+)
+
+# Field ↔ Agent
+from .field_agent import (
     FieldToAgentInterface,
     AgentToFieldInterface,
-    PhysicsToAudioInterface,
+)
+
+# Audio ↔ Visual
+from .audio_visual import (
     AudioToVisualInterface,
     FieldToAudioInterface,
-    TerrainToFieldInterface,
-    FieldToTerrainInterface,
-    VisionToFieldInterface,
-    GraphToVisualInterface,
-    CellularToFieldInterface,
+)
+
+# Physics → Audio
+from .physics_audio import (
+    PhysicsToAudioInterface,
     FluidToAcousticsInterface,
     AcousticsToAudioInterface,
 )
+
+# Terrain ↔ Field
+from .terrain import (
+    TerrainToFieldInterface,
+    FieldToTerrainInterface,
+)
+
+# Vision → Field
+from .vision_field import VisionToFieldInterface
+
+# Graph → Visual
+from .graph_visual import GraphToVisualInterface
+
+# Cellular → Field
+from .cellular import CellularToFieldInterface
+
+# Time-Frequency Transforms
+from .spectral import (
+    TimeToCepstralInterface,
+    CepstralToTimeInterface,
+    TimeToWaveletInterface,
+)
+
+# Spatial Transforms
+from .spatial import (
+    SpatialAffineInterface,
+    CartesianToPolarInterface,
+    PolarToCartesianInterface,
+)
+
+# Registry
 from .registry import CrossDomainRegistry, register_transform
+
+# Validators
 from .validators import (
     validate_cross_domain_flow,
     CrossDomainTypeError,
     CrossDomainValidationError,
 )
+
+# Composer
 from .composer import (
     TransformComposer,
     TransformPipeline,
@@ -46,6 +90,7 @@ from .composer import (
 __all__ = [
     # Base infrastructure
     'DomainInterface',
+    'DomainMetadata',
     'DomainTransform',
     'CrossDomainRegistry',
     'register_transform',
@@ -67,6 +112,14 @@ __all__ = [
     # Phase 3 transforms (3-domain pipeline)
     'FluidToAcousticsInterface',
     'AcousticsToAudioInterface',
+    # Time-Frequency transforms
+    'TimeToCepstralInterface',
+    'CepstralToTimeInterface',
+    'TimeToWaveletInterface',
+    # Spatial transforms
+    'SpatialAffineInterface',
+    'CartesianToPolarInterface',
+    'PolarToCartesianInterface',
     # Composition engine
     'TransformComposer',
     'TransformPipeline',

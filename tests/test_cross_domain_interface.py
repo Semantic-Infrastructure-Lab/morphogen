@@ -10,7 +10,7 @@ Tests the DomainInterface base class and concrete implementations for:
 """
 
 import numpy as np
-from morphogen.cross_domain.interface import (
+from morphogen.cross_domain import (
     FieldToAgentInterface,
     AgentToFieldInterface,
     PhysicsToAudioInterface,

@@ -213,45 +213,45 @@ class Polygon:
         """Get number of vertices."""
         return len(self.vertices)
 
-    @property
-    def area(self) -> float:
-        """Calculate polygon area using shoelace formula.
-
-        Returns:
-            Signed area (positive for CCW, negative for CW winding)
-        """
+    def _compute_area(self) -> float:
+        """Calculate polygon area using shoelace formula."""
         n = len(self.vertices)
         if n < 3:
             return 0.0
-
         area = 0.0
         for i in range(n):
             j = (i + 1) % n
             area += self.vertices[i][0] * self.vertices[j][1]
             area -= self.vertices[j][0] * self.vertices[i][1]
-
         return abs(area) / 2.0
+
+    @property
+    def area(self) -> float:
+        """Polygon area (positive for CCW, negative for CW winding)."""
+        return self._compute_area()
 
     @property
     def centroid(self) -> Point2D:
         """Calculate polygon centroid."""
         return Point2D(x=float(np.mean(self.vertices[:, 0])), y=float(np.mean(self.vertices[:, 1])))
 
-    @property
-    def perimeter(self) -> float:
+    def _compute_perimeter(self) -> float:
         """Calculate polygon perimeter."""
         n = len(self.vertices)
         if n < 2:
             return 0.0
-
         perim = 0.0
         for i in range(n):
             j = (i + 1) % n
             dx = self.vertices[j][0] - self.vertices[i][0]
             dy = self.vertices[j][1] - self.vertices[i][1]
             perim += np.sqrt(dx * dx + dy * dy)
-
         return perim
+
+    @property
+    def perimeter(self) -> float:
+        """Polygon perimeter."""
+        return self._compute_perimeter()
 
     def __repr__(self) -> str:
         return f"Polygon(vertices={self.num_vertices})"

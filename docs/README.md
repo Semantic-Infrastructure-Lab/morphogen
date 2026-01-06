@@ -28,7 +28,7 @@ Welcome to the Morphogen documentation! This guide will help you navigate the do
 3. [Specifications](specifications/) - Technical details
 4. [ADRs](adr/) - Design decisions
 
-**Not sure where to start?** See ["Finding What You Need"](#finding-what-you-need) below
+**Not sure where to start?** See [Finding What You Need](#finding-what-you-need) below
 
 ---
 
@@ -36,9 +36,8 @@ Welcome to the Morphogen documentation! This guide will help you navigate the do
 
 - **New to Morphogen?** Start with [Getting Started](getting-started.md) for installation and your first program
 - **Understand the architecture?** Read [Architecture Overview](architecture/overview.md)
-- **See the full ecosystem?** Check [ECOSYSTEM_MAP.md](../ECOSYSTEM_MAP.md) for all domains and roadmap
-- **Explore cross-domain transforms?** ⭐ **NEW:** [CROSS_DOMAIN_MESH_CATALOG.md](CROSS_DOMAIN_MESH_CATALOG.md) — Complete transformation mesh (40 domains, 18 transforms, multi-hop chains)
-- **Use cross-domain transforms?** See [CROSS_DOMAIN_API.md](CROSS_DOMAIN_API.md) — API reference for domain-to-domain composition
+- **See the full ecosystem?** Check [ECOSYSTEM_MAP.md](architecture/ECOSYSTEM_MAP.md) for all domains and roadmap
+- **Explore cross-domain patterns?** See [Cross-Domain Architectural Patterns](adr/002-cross-domain-architectural-patterns.md) and [Domain Mesh Catalog](reference/domain-mesh-catalog.md)
 - **Browse all documentation?** See [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) ⭐ — Complete map with reveal tool usage
 - **Explore efficiently?** Use the [reveal tool](../scripts/README.md) (`./scripts/reveal.sh`) for incremental documentation exploration
 - **Need help?** Check [Troubleshooting](troubleshooting.md)
@@ -74,7 +73,7 @@ See [ROADMAP.md](ROADMAP.md) for complete details and implementation tracking.
 - [Categorical Structure](philosophy/categorical-structure.md) — Category-theoretic formalization
 - [Philosophy README](philosophy/README.md) — Overview of philosophical foundations
 
-**Note:** Philosophy docs establish "why" Morphogen is designed this way. For "how" to implement it, see [Architecture](#-architecture).
+**Note:** Philosophy docs establish "why" Morphogen is designed this way. For "how" to implement it, see [Architecture](architecture/).
 
 ### 📐 [Architecture](architecture/)
 **High-level design and architectural principles** (answers "HOW")
@@ -85,7 +84,7 @@ See [ROADMAP.md](ROADMAP.md) for complete details and implementation tracking.
 - [GPU & MLIR Principles](architecture/gpu-mlir-principles.md) - GPU execution and MLIR integration
 - [Interactive Visualization](architecture/interactive-visualization.md) - Visualization approach
 
-**Note:** Architecture docs explain "how" to implement the principles from [Philosophy](#-philosophy).
+**Note:** Architecture docs explain "how" to implement the principles from [Philosophy](philosophy/).
 
 ### 📋 [Specifications](specifications/)
 Detailed technical specifications (21 documents)
@@ -152,27 +151,19 @@ Specific real-world applications
 - [Testing Strategy](roadmap/testing-strategy.md) — Testing approach
 
 **Strategic Planning**: [planning/](planning/)
-- [MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md](planning/MORPHOGEN_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
-- [archive/planning/](archive/planning/) — Historical planning documents (consolidated 2025-12-07)
+- [KAIRO_2.0_STRATEGIC_ANALYSIS.md](planning/KAIRO_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
+- See [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) for historical planning documents
 
-### 🔬 [Analysis](analysis/)
+### 📦 [Archive History](ARCHIVE_HISTORY.md) ⭐ NEW
+Documentation of archived materials and their locations
 
-> 📁 **Note:** This directory contains internal analysis documents. External contributors may find [Domain Implementation Guide](guides/domain-implementation.md) more useful for getting started.
+**What's archived:**
+- Session artifacts from development sessions (point-in-time snapshots)
+- Historical planning documents (superseded by unified roadmap)
+- Analysis reports from v0.8.0 era (outdated technical analyses)
+- Mesh documentation (pre-consolidation)
 
-Technical analysis and integration guides
-- [Domain Validation Report](analysis/DOMAIN_VALIDATION_REPORT.md) — Implementation vs documentation alignment
-- [Morphogen Rename Analysis](analysis/MORPHOGEN_RENAME_ANALYSIS.md) — Comprehensive rename impact analysis
-- [Agents Domain Analysis](analysis/AGENTS_DOMAIN_ANALYSIS.md)
-- [Agents-VFX Integration Guide](analysis/AGENTS_VFX_INTEGRATION_GUIDE.md)
-- [Cross-Domain Implementation Summary](analysis/CROSS_DOMAIN_IMPLEMENTATION_SUMMARY.md)
-- [Codebase Exploration Summary](analysis/CODEBASE_EXPLORATION_SUMMARY.md)
-- [Exploration Guide](analysis/EXPLORATION_GUIDE.md)
-
-### 📦 [Archive](archive/)
-Historical documents and old reviews (well-organized for reference)
-
-### 🏛️ [Legacy](legacy/)
-Deprecated CCDSL v0.2.2 documentation (for historical reference)
+**Where:** `~/Archive/morphogen/` - See [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) for complete details and inventory
 
 ---
 
@@ -189,7 +180,7 @@ Deprecated CCDSL v0.2.2 documentation (for historical reference)
 - **Understand Morphogen's vision and impact** → Read the main [README.md](../README.md)
 - **Understand Morphogen's architecture** → Start with [Architecture Overview](architecture/overview.md), then [Domain Architecture](architecture/domain-architecture.md)
 - **Understand transformations intuitively** → Read [Mathematical Transformation Metaphors](reference/math-transformation-metaphors.md)
-- **See the complete ecosystem** → Check [ECOSYSTEM_MAP.md](../ECOSYSTEM_MAP.md) for all domains and roadmap
+- **See the complete ecosystem** → Check [ECOSYSTEM_MAP.md](architecture/ECOSYSTEM_MAP.md) for all domains and roadmap
 - **Understand language roadmap** → Read [Language Features Roadmap](roadmap/language-features.md) ⭐ — Path to 1.0, finalized vs planned features
 - **Understand cross-domain type safety** → Check [Level 3 Type System](specifications/level-3-type-system.md)
 - **Implement a new domain** → Read [Domain Implementation Guide](guides/domain-implementation.md) and relevant [ADRs](adr/)

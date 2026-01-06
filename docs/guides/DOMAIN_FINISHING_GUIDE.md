@@ -1088,7 +1088,7 @@ Use this checklist for each domain:
 - **Master Plan:** `docs/planning/EXECUTION_PLAN_Q4_2025.md` (full 10-month timeline)
 - **Domain Implementation:** `docs/guides/domain-implementation.md` (MLIR integration details)
 - **Testing Strategy:** `docs/roadmap/testing-strategy.md` (production-ready testing)
-- **Cross-Domain API:** `docs/CROSS_DOMAIN_API.md` (domain interop patterns)
+- **Cross-Domain Patterns:** `docs/adr/002-cross-domain-architectural-patterns.md` (domain interop patterns)
 
 ### Architecture
 - **Domain Architecture:** `docs/architecture/domain-architecture.md` (23 domain specs)
@@ -1170,4 +1170,4 @@ A: Testing happens at every level:
 - *`docs/planning/EXECUTION_PLAN_Q4_2025.md` (master timeline)*
 - *`docs/guides/domain-implementation.md` (MLIR integration)*
 - *`docs/roadmap/testing-strategy.md` (testing requirements)*
-- *`docs/CROSS_DOMAIN_API.md` (cross-domain patterns)*
+- *`docs/adr/002-cross-domain-architectural-patterns.md` (cross-domain patterns)*

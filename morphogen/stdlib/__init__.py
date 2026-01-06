@@ -3,6 +3,7 @@
 # Core domains
 from .field import field, Field2D, FieldOperations
 from .visual import visual, Visual, VisualOperations
+from .visual3d import visual3d, Visual3D, Camera3D, Light3D, Scene3D, Visual3DOperations
 
 # Physics domains
 from .acoustics import (
@@ -70,6 +71,7 @@ __all__ = [
     # Core domains
     "field", "Field2D", "FieldOperations",
     "visual", "Visual", "VisualOperations",
+    "visual3d", "Visual3D", "Camera3D", "Light3D", "Scene3D", "Visual3DOperations",
 
     # Physics domains
     "acoustics", "AcousticsOperations", "PipeGeometry", "WaveguideNetwork",

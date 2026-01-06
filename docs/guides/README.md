@@ -25,13 +25,39 @@ Complete guide for implementing a **new** domain in Morphogen:
 
 **Use this guide if:** You're adding a brand new domain (Level 0 → Level 5).
 
+### [Analysis and Visualization Guide](analysis-visualization.md) ⭐ NEW
+**Complete guide for analyzing and visualizing Morphogen simulations**:
+- Built-in analysis capabilities (audio_analysis, signal, graph domains)
+- Modal decomposition with PyDMD (external workflow)
+- Creating showcase animations (mode galleries, cross-domain comparison)
+- Spectral analysis workflows
+- Best practices for data export and visualization
+
+**Use this guide if:** You want to understand simulation dynamics, create explanatory animations, or perform advanced analysis.
+
+---
+
+## Additional Guides
+
+### [Domain Migration Guide](DOMAIN_MIGRATION_GUIDE.md)
+Migrating legacy domains to modern `@operator` system
+
+### [Easy Transforms Guide](EASY_TRANSFORMS_GUIDE.md)
+Creating cross-domain transforms
+
+### [Optimization Implementation](optimization-implementation.md)
+Implementing optimization algorithms
+
+### [Output Generation](output-generation.md)
+Rendering and exporting simulation results
+
 ---
 
 ## Coming Soon
 
 Additional guides are planned:
 - Writing custom operators
-- Performance optimization
+- Performance optimization best practices
 - Debugging Morphogen programs
 - Contributing to Morphogen
 

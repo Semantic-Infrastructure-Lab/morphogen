@@ -4,8 +4,7 @@ This module provides the core runtime infrastructure for executing
 Creative Computation DSL programs using NumPy as the backend.
 """
 
-from typing import Any, Dict, Optional, List, Callable
-import numpy as np
+from typing import Any, Dict, Optional, List
 
 
 class ReturnValue(Exception):
@@ -412,6 +411,19 @@ class Runtime:
                 # Return outside function - raise error
                 raise RuntimeError("Return statement outside function")
 
+    # Dispatch table for statement types (type name -> handler method name)
+    _STATEMENT_DISPATCH = {
+        'Output': 'execute_output',
+        'Use': 'execute_use',
+        'Assignment': 'execute_assignment',
+        'Function': 'execute_function',
+        'Return': 'execute_return',
+        'Flow': 'execute_flow',
+        'Struct': 'execute_struct',
+        'Step': 'execute_step',
+        'Substep': 'execute_substep',
+    }
+
     def execute_statement(self, stmt) -> Any:
         """Execute a single statement.
 
@@ -421,45 +433,29 @@ class Runtime:
         Returns:
             Result of statement execution (if any)
         """
-        from ..ast.nodes import (
-            Assignment, ExpressionStatement, Step, Substep, Module, Compose,
-            Call, Identifier, Literal, BinaryOp, UnaryOp, FieldAccess,
-            Function, Return, Flow, Struct, Use, Output
-        )
+        type_name = type(stmt).__name__
 
-        # Handle different statement types
-        if isinstance(stmt, Output):
-            return self.execute_output(stmt)
-        elif isinstance(stmt, Use):
-            return self.execute_use(stmt)
-        elif isinstance(stmt, Assignment):
-            return self.execute_assignment(stmt)
-        elif isinstance(stmt, ExpressionStatement):
+        # Fast path: dispatch table lookup
+        if type_name in self._STATEMENT_DISPATCH:
+            handler = getattr(self, self._STATEMENT_DISPATCH[type_name])
+            return handler(stmt)
+
+        # ExpressionStatement: unwrap and execute the inner expression
+        if type_name == 'ExpressionStatement':
             return self.execute_expression(stmt.expression)
-        elif isinstance(stmt, Function):
-            return self.execute_function(stmt)
-        elif isinstance(stmt, Return):
-            return self.execute_return(stmt)
-        elif isinstance(stmt, Flow):
-            return self.execute_flow(stmt)
-        elif isinstance(stmt, Struct):
-            return self.execute_struct(stmt)
-        elif isinstance(stmt, Step):
-            return self.execute_step(stmt)
-        elif isinstance(stmt, Substep):
-            return self.execute_substep(stmt)
-        elif isinstance(stmt, Module):
-            raise NotImplementedError("Module execution not yet implemented (post-MVP)")
-        elif isinstance(stmt, Compose):
-            raise NotImplementedError("Compose execution not yet implemented (post-MVP)")
-        elif isinstance(stmt, Call):
-            # Handle 'set' statements as special function calls
-            if isinstance(stmt.func, Identifier) and stmt.func.name == "set":
+
+        # Call: check for special 'set' statement
+        if type_name == 'Call':
+            if type(stmt.func).__name__ == 'Identifier' and stmt.func.name == "set":
                 return self.execute_set_statement(stmt)
             return self.execute_expression(stmt)
-        else:
-            # Try to execute as expression
-            return self.execute_expression(stmt)
+
+        # Post-MVP features
+        if type_name in ('Module', 'Compose'):
+            raise NotImplementedError(f"{type_name} execution not yet implemented (post-MVP)")
+
+        # Fallback: try to execute as expression
+        return self.execute_expression(stmt)
 
     def execute_assignment(self, assign) -> None:
         """Execute an assignment statement.
@@ -532,6 +528,18 @@ class Runtime:
         # Restore original dt
         self.context.dt = original_dt
 
+    # Dispatch table for expression types (type name -> handler method name)
+    _EXPRESSION_DISPATCH = {
+        'BinaryOp': 'execute_binary_op',
+        'UnaryOp': 'execute_unary_op',
+        'Call': 'execute_call',
+        'FieldAccess': 'execute_field_access',
+        'Lambda': 'execute_lambda',
+        'IfElse': 'execute_if_else',
+        'Block': 'execute_block',
+        'StructLiteral': 'execute_struct_literal',
+    }
+
     def execute_expression(self, expr) -> Any:
         """Execute an expression and return its value.
 
@@ -541,47 +549,24 @@ class Runtime:
         Returns:
             Evaluated expression value
         """
-        from ..ast.nodes import (
-            Literal, Identifier, BinaryOp, UnaryOp, Call, FieldAccess, Tuple,
-            Lambda, IfElse, Block, StructLiteral
-        )
+        type_name = type(expr).__name__
 
-        if isinstance(expr, Literal):
+        # Fast path: dispatch table lookup
+        if type_name in self._EXPRESSION_DISPATCH:
+            handler = getattr(self, self._EXPRESSION_DISPATCH[type_name])
+            return handler(expr)
+
+        # Inline handlers for simple cases
+        if type_name == 'Literal':
             return expr.value
 
-        elif isinstance(expr, Identifier):
+        if type_name == 'Identifier':
             return self.context.get_variable(expr.name)
 
-        elif isinstance(expr, BinaryOp):
-            return self.execute_binary_op(expr)
-
-        elif isinstance(expr, UnaryOp):
-            return self.execute_unary_op(expr)
-
-        elif isinstance(expr, Call):
-            return self.execute_call(expr)
-
-        elif isinstance(expr, FieldAccess):
-            return self.execute_field_access(expr)
-
-        elif isinstance(expr, Tuple):
-            # Evaluate all elements and return as Python tuple
+        if type_name == 'Tuple':
             return tuple(self.execute_expression(elem) for elem in expr.elements)
 
-        elif isinstance(expr, Lambda):
-            return self.execute_lambda(expr)
-
-        elif isinstance(expr, IfElse):
-            return self.execute_if_else(expr)
-
-        elif isinstance(expr, Block):
-            return self.execute_block(expr)
-
-        elif isinstance(expr, StructLiteral):
-            return self.execute_struct_literal(expr)
-
-        else:
-            raise TypeError(f"Unknown expression type: {type(expr)}")
+        raise TypeError(f"Unknown expression type: {type(expr)}")
 
     def execute_binary_op(self, binop) -> Any:
         """Execute a binary operation.
@@ -744,6 +729,39 @@ class Runtime:
 
         return value
 
+    # Domain module mapping (constant)
+    _DOMAIN_MODULES = {
+        'field': 'morphogen.stdlib.field',
+        'visual': 'morphogen.stdlib.visual',
+        'agents': 'morphogen.stdlib.agents',
+        'audio': 'morphogen.stdlib.audio',
+        'cellular': 'morphogen.stdlib.cellular',
+        'geometry': 'morphogen.stdlib.geometry',
+        'noise': 'morphogen.stdlib.noise',
+        'palette': 'morphogen.stdlib.palette',
+        'signal': 'morphogen.stdlib.signal',
+        'temporal': 'morphogen.stdlib.temporal',
+    }
+
+    def _import_domain_exports(self, module_path: str) -> None:
+        """Import all exported names from a domain module.
+
+        Args:
+            module_path: Full module path (e.g., 'morphogen.stdlib.field')
+        """
+        import importlib
+        try:
+            module = importlib.import_module(module_path)
+        except ImportError:
+            return
+
+        if not hasattr(module, '__all__'):
+            return
+
+        for name in module.__all__:
+            if hasattr(module, name) and name not in self.context.symbols:
+                self.context.set_variable(name, getattr(module, name))
+
     def execute_use(self, use_node) -> None:
         """Execute a use statement to import domain operators.
 
@@ -754,25 +772,8 @@ class Runtime:
             ValueError: If a domain is not registered
         """
         from ..core.domain_registry import DomainRegistry
-
-        # Ensure registry is initialized
         DomainRegistry.initialize()
 
-        # Domain module mapping
-        domain_modules = {
-            'field': 'morphogen.stdlib.field',
-            'visual': 'morphogen.stdlib.visual',
-            'agents': 'morphogen.stdlib.agents',
-            'audio': 'morphogen.stdlib.audio',
-            'cellular': 'morphogen.stdlib.cellular',
-            'geometry': 'morphogen.stdlib.geometry',
-            'noise': 'morphogen.stdlib.noise',
-            'palette': 'morphogen.stdlib.palette',
-            'signal': 'morphogen.stdlib.signal',
-            'temporal': 'morphogen.stdlib.temporal',
-        }
-
-        # Validate each domain and import operators
         for domain_name in use_node.domains:
             if not DomainRegistry.has_domain(domain_name):
                 available = DomainRegistry.list_domains()
@@ -781,18 +782,8 @@ class Runtime:
                     f"Available domains: {', '.join(available)}"
                 )
 
-            # Import domain operators into global scope
-            if domain_name in domain_modules:
-                import importlib
-                try:
-                    module = importlib.import_module(domain_modules[domain_name])
-                    # Import all exported names from the module
-                    if hasattr(module, '__all__'):
-                        for name in module.__all__:
-                            if hasattr(module, name) and name not in self.context.symbols:
-                                self.context.set_variable(name, getattr(module, name))
-                except ImportError:
-                    pass  # Module not available, just skip
+            if domain_name in self._DOMAIN_MODULES:
+                self._import_domain_exports(self._DOMAIN_MODULES[domain_name])
 
     def execute_if_else(self, if_else_node) -> Any:
         """Execute an if/else expression.
@@ -924,6 +915,56 @@ class Runtime:
         # Create struct instance
         return StructInstance(struct_type, field_values)
 
+    def _init_flow_state_vars(self, body) -> Dict[str, Any]:
+        """Initialize state variables from flow body.
+
+        Args:
+            body: List of statements in flow body
+
+        Returns:
+            Dict mapping state variable names to initial values
+        """
+        state_vars = {}
+        for stmt in body:
+            if type(stmt).__name__ != 'Assignment':
+                continue
+            if not any(d.name == 'state' for d in stmt.decorators):
+                continue
+            initial_value = self.execute_expression(stmt.value)
+            state_vars[stmt.target] = initial_value
+            self.context.set_variable(stmt.target, initial_value)
+        return state_vars
+
+    def _execute_flow_body(self, body, state_vars: Dict[str, Any]) -> None:
+        """Execute flow body statements.
+
+        Args:
+            body: List of statements
+            state_vars: Dict of state variable names
+        """
+        for stmt in body:
+            is_assignment = type(stmt).__name__ == 'Assignment'
+            is_state = is_assignment and any(d.name == 'state' for d in stmt.decorators)
+            if is_state:
+                if stmt.target in state_vars:
+                    self.execute_statement(stmt)
+                continue
+            self.execute_statement(stmt)
+
+    def _execute_flow_iteration(self, body, state_vars: Dict[str, Any], dt: float) -> None:
+        """Execute a single flow iteration with dt context.
+
+        Args:
+            body: List of statements
+            state_vars: Dict of state variable names
+            dt: Delta time for this iteration
+        """
+        old_dt = self.context.dt
+        self.context.dt = dt
+        self.context.set_variable('dt', dt)
+        self._execute_flow_body(body, state_vars)
+        self.context.dt = old_dt
+
     def execute_flow(self, flow_node) -> None:
         """Execute a flow block with temporal semantics.
 
@@ -932,74 +973,20 @@ class Runtime:
         """
         # Evaluate flow parameters
         dt = self.execute_expression(flow_node.dt) if flow_node.dt else 0.01
-        steps = self.execute_expression(flow_node.steps) if flow_node.steps else None
+        steps = int(self.execute_expression(flow_node.steps) if flow_node.steps else 1)
         substeps = self.execute_expression(flow_node.substeps) if flow_node.substeps else None
 
-        # If steps not specified, execute once (for testing) or infinite loop
-        if steps is None:
-            steps = 1  # Execute once for testing
-
-        # Identify state variables (assignments with @state decorator)
-        state_vars = {}
-        for stmt in flow_node.body:
-            from ..ast.nodes import Assignment
-            if isinstance(stmt, Assignment):
-                # Check if this assignment has @state decorator
-                if any(d.name == 'state' for d in stmt.decorators):
-                    # Evaluate initial value before flow loop
-                    initial_value = self.execute_expression(stmt.value)
-                    state_vars[stmt.target] = initial_value
-                    self.context.set_variable(stmt.target, initial_value)
+        # Initialize state variables
+        state_vars = self._init_flow_state_vars(flow_node.body)
 
         # Execute flow loop
         if substeps:
-            # Nested loop structure: outer (steps) x inner (substeps)
             sub_dt = dt / substeps
-            for step in range(int(steps)):
-                for substep in range(int(substeps)):
-                    # Update dt for substep
-                    old_dt = self.context.dt
-                    self.context.dt = sub_dt
-                    self.context.set_variable('dt', sub_dt)
-
-                    # Execute flow body
-                    for stmt in flow_node.body:
-                        from ..ast.nodes import Assignment
-                        # Skip initial @state assignments (already done)
-                        if isinstance(stmt, Assignment) and any(d.name == 'state' for d in stmt.decorators):
-                            # Execute the update (right-hand side) but it's a state variable
-                            if stmt.target in state_vars:
-                                # This is an update to state variable, execute normally
-                                self.execute_statement(stmt)
-                            continue
-                        self.execute_statement(stmt)
-
-                    # Restore dt
-                    self.context.dt = old_dt
-
-                # Advance timestep after all substeps
+            for _ in range(steps):
+                for _ in range(int(substeps)):
+                    self._execute_flow_iteration(flow_node.body, state_vars, sub_dt)
                 self.context.advance_timestep()
         else:
-            # Simple loop without substeps
-            for step in range(int(steps)):
-                # Update dt
-                old_dt = self.context.dt
-                self.context.dt = dt
-                self.context.set_variable('dt', dt)
-
-                # Execute flow body
-                for stmt in flow_node.body:
-                    from ..ast.nodes import Assignment
-                    # Skip initial @state assignments (already done)
-                    if isinstance(stmt, Assignment) and any(d.name == 'state' for d in stmt.decorators):
-                        # This is an update to state variable, execute normally
-                        if stmt.target in state_vars:
-                            self.execute_statement(stmt)
-                        continue
-                    self.execute_statement(stmt)
-
-                # Restore dt
-                self.context.dt = old_dt
-
-                # Advance timestep
+            for _ in range(steps):
+                self._execute_flow_iteration(flow_node.body, state_vars, dt)
                 self.context.advance_timestep()

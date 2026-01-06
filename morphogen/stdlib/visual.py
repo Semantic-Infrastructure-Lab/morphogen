@@ -5,6 +5,7 @@ PNG output, and interactive real-time display for the MVP.
 """
 
 from typing import Optional, Union, Callable, Tuple
+from dataclasses import dataclass, field
 import numpy as np
 
 from morphogen.core.operator import operator, OpCategory
@@ -45,6 +46,241 @@ class Visual:
 
     def __repr__(self) -> str:
         return f"Visual(shape={self.shape})"
+
+
+# =============================================================================
+# CONFIG DATACLASSES
+# =============================================================================
+
+@dataclass
+class AgentRenderConfig:
+    """Configuration for agent visualization."""
+    width: int = 512
+    height: int = 512
+    position_property: str = 'pos'
+    color_property: Optional[str] = None
+    size_property: Optional[str] = None
+    alpha_property: Optional[str] = None
+    rotation_property: Optional[str] = None
+    color: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    size: float = 2.0
+    alpha: float = 1.0
+    palette: str = "viridis"
+    background: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    bounds: Optional[Tuple[Tuple[float, float], Tuple[float, float]]] = None
+    blend_mode: str = "alpha"
+    trail: bool = False
+    trail_length: int = 10
+    trail_alpha: float = 0.5
+
+
+@dataclass
+class PhaseSpaceConfig:
+    """Configuration for phase space visualization."""
+    position_property: str = 'pos'
+    velocity_property: str = 'vel'
+    width: int = 512
+    height: int = 512
+    color_property: Optional[str] = None
+    palette: str = "viridis"
+    point_size: float = 2.0
+    alpha: float = 0.6
+    show_trajectories: bool = False
+    background: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+
+
+@dataclass
+class GraphConfig:
+    """Configuration for graph visualization."""
+    width: int = 800
+    height: int = 800
+    node_size: float = 8.0
+    node_color: Tuple[float, float, float] = (0.3, 0.6, 1.0)
+    edge_color: Tuple[float, float, float] = (0.5, 0.5, 0.5)
+    edge_width: float = 1.0
+    layout: str = "force"
+    iterations: int = 50
+    color_by_centrality: bool = False
+    palette: str = "viridis"
+    show_labels: bool = False
+    background: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+
+
+@dataclass
+class MetricsConfig:
+    """Configuration for metrics overlay."""
+    position: str = "top-left"
+    font_size: int = 14
+    text_color: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    bg_color: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    bg_alpha: float = 0.7
+
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def _compute_bounds(positions: np.ndarray, padding: float = 0.1) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    """Compute bounds for positions with padding."""
+    xmin, xmax = np.min(positions[:, 0]), np.max(positions[:, 0])
+    ymin, ymax = np.min(positions[:, 1]), np.max(positions[:, 1])
+    x_padding = (xmax - xmin) * padding
+    y_padding = (ymax - ymin) * padding
+    return ((xmin - x_padding, xmax + x_padding), (ymin - y_padding, ymax + y_padding))
+
+
+def _positions_to_pixels(positions: np.ndarray, bounds: Tuple, width: int, height: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Map positions to pixel coordinates."""
+    (xmin, xmax), (ymin, ymax) = bounds
+    x_range = xmax - xmin
+    y_range = ymax - ymin
+
+    if x_range == 0.0:
+        x_norm = np.full(len(positions), 0.5)
+    else:
+        x_norm = (positions[:, 0] - xmin) / x_range
+
+    if y_range == 0.0:
+        y_norm = np.full(len(positions), 0.5)
+    else:
+        y_norm = (positions[:, 1] - ymin) / y_range
+
+    px = np.clip((x_norm * (width - 1)).astype(int), 0, width - 1)
+    py = np.clip(((1.0 - y_norm) * (height - 1)).astype(int), 0, height - 1)
+    return px, py
+
+
+def _map_property_to_colors(values: np.ndarray, palette_colors: np.ndarray) -> np.ndarray:
+    """Map property values to colors using palette interpolation."""
+    # Handle vector properties (use magnitude)
+    if len(values.shape) > 1:
+        values = np.linalg.norm(values, axis=1)
+
+    # Normalize to [0, 1]
+    vmin, vmax = np.min(values), np.max(values)
+    if vmax - vmin < 1e-10:
+        color_norm = np.zeros_like(values)
+    else:
+        color_norm = (values - vmin) / (vmax - vmin)
+
+    # Interpolate colors
+    n_colors = len(palette_colors)
+    indices = color_norm * (n_colors - 1)
+    idx_low = np.floor(indices).astype(int)
+    idx_high = np.minimum(idx_low + 1, n_colors - 1)
+    frac = (indices - idx_low)[:, np.newaxis]
+
+    return palette_colors[idx_low] * (1 - frac) + palette_colors[idx_high] * frac
+
+
+def _map_property_to_sizes(values: np.ndarray, base_size: float) -> np.ndarray:
+    """Map property values to sizes with normalization."""
+    if len(values.shape) > 1:
+        values = np.linalg.norm(values, axis=1)
+
+    vmin, vmax = np.min(values), np.max(values)
+    if vmax - vmin < 1e-10:
+        return np.ones(len(values)) * base_size
+    else:
+        size_norm = (values - vmin) / (vmax - vmin)
+        return size_norm * base_size * 2
+
+
+def _blend_pixel(img: np.ndarray, y: int, x: int, color: np.ndarray, alpha: float, mode: str) -> None:
+    """Blend a single pixel with the image."""
+    if mode == "alpha":
+        img[y, x] = img[y, x] * (1 - alpha) + color * alpha
+    else:  # additive
+        img[y, x] = np.clip(img[y, x] + color * alpha, 0.0, 1.0)
+
+
+def _render_filled_circle(img: np.ndarray, cx: int, cy: int, radius: int,
+                          color: np.ndarray, alpha: float, blend_mode: str) -> None:
+    """Render a filled circle with alpha blending."""
+    height, width = img.shape[:2]
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            if dx * dx + dy * dy <= radius * radius:
+                ny, nx = cy + dy, cx + dx
+                if 0 <= ny < height and 0 <= nx < width:
+                    _blend_pixel(img, ny, nx, color, alpha, blend_mode)
+
+
+def _render_rotation_indicator(img: np.ndarray, cx: int, cy: int, angle: float,
+                               length: int, color: np.ndarray, alpha: float, blend_mode: str) -> None:
+    """Render a rotation indicator line from center."""
+    height, width = img.shape[:2]
+    dx_line = int(length * np.cos(angle))
+    dy_line = int(length * np.sin(angle))
+    indicator_color = np.minimum(color * 1.5, 1.0)
+
+    steps = max(abs(dx_line), abs(dy_line)) + 1
+    for s in range(steps):
+        t = s / max(steps - 1, 1)
+        lx = cx + int(t * dx_line)
+        ly = cy - int(t * dy_line)
+        if 0 <= ly < height and 0 <= lx < width:
+            _blend_pixel(img, ly, lx, indicator_color, alpha, blend_mode)
+
+
+def _render_agent_trails(img: np.ndarray, trail_history: np.ndarray, colors: np.ndarray,
+                         alphas: np.ndarray, bounds: Tuple, width: int, height: int,
+                         trail_alpha: float, blend_mode: str) -> None:
+    """Render trails for all agents."""
+    (xmin, xmax), (ymin, ymax) = bounds
+    x_range = xmax - xmin if xmax - xmin > 0 else 1.0
+    y_range = ymax - ymin if ymax - ymin > 0 else 1.0
+
+    for i in range(len(trail_history)):
+        history = trail_history[i]
+        agent_color = colors[i]
+
+        for t in range(len(history)):
+            if np.any(np.isnan(history[t])):
+                continue
+
+            x_norm = (history[t, 0] - xmin) / x_range
+            y_norm = (history[t, 1] - ymin) / y_range
+            tx = int(np.clip(x_norm * (width - 1), 0, width - 1))
+            ty = int(np.clip((1.0 - y_norm) * (height - 1), 0, height - 1))
+
+            trail_t_alpha = (t / len(history)) * trail_alpha * alphas[i]
+            _blend_pixel(img, ty, tx, agent_color, trail_t_alpha, blend_mode)
+
+
+def _draw_background_box(img: np.ndarray, x_start: int, y_start: int,
+                         box_width: int, box_height: int,
+                         bg_color: Tuple, bg_alpha: float) -> None:
+    """Draw a semi-transparent background box on image."""
+    height, width = img.shape[:2]
+    x_end = min(x_start + box_width, width)
+    y_end = min(y_start + box_height, height)
+    bg_arr = np.array(bg_color)
+    for y in range(max(0, y_start), y_end):
+        for x in range(max(0, x_start), x_end):
+            img[y, x] = img[y, x] * (1 - bg_alpha) + bg_arr * bg_alpha
+
+
+def _compute_text_position(position: str, width: int, height: int,
+                           text_width: int, text_height: int) -> Tuple[int, int]:
+    """Compute starting position for text based on position string."""
+    positions = {
+        "top-left": (10, 10),
+        "top-right": (width - text_width - 10, 10),
+        "bottom-left": (10, height - text_height - 10),
+        "bottom-right": (width - text_width - 10, height - text_height - 10),
+    }
+    if position not in positions:
+        raise ValueError(f"Unknown position: {position}. Supported: {list(positions.keys())}")
+    return positions[position]
+
+
+def _get_edge_weight(adjacency_list: dict, i: int, j: int) -> float:
+    """Get edge weight between two nodes from adjacency list."""
+    for neighbor, weight in adjacency_list.get(i, []):
+        if neighbor == j:
+            return weight
+    return 0.0
 
 
 class VisualOperations:
@@ -236,6 +472,30 @@ class VisualOperations:
         return np.clip(srgb, 0.0, 1.0)
 
     @staticmethod
+    def _render_status_overlay(screen, font, actual_fps, current_fps, total_frames, paused):
+        """Render status text overlay on pygame screen."""
+        status_lines = [
+            f"FPS: {actual_fps:.1f} / {current_fps}",
+            f"Frame: {total_frames}" if paused else "",
+            "PAUSED" if paused else "RUNNING",
+            "", "Controls:", "SPACE: Pause/Resume",
+            "→: Step (paused)", "↑↓: Speed", "Q: Quit"
+        ]
+        y_offset = 10
+        for line in status_lines:
+            if not line:
+                y_offset += 22
+                continue
+            text = font.render(line, True, (255, 255, 255))
+            import pygame
+            text_bg = pygame.Surface((text.get_width() + 10, text.get_height() + 4))
+            text_bg.set_alpha(180)
+            text_bg.fill((0, 0, 0))
+            screen.blit(text_bg, (5, y_offset))
+            screen.blit(text, (10, y_offset + 2))
+            y_offset += 22
+
+    @staticmethod
     @operator(
         domain="visual",
         category=OpCategory.TRANSFORM,
@@ -255,70 +515,36 @@ class VisualOperations:
             target_fps: Target frames per second
             scale: Scale factor for display (1 = native resolution)
 
-        Controls:
-            SPACE: Pause/Resume
-            RIGHT: Step forward (when paused)
-            UP/DOWN: Increase/decrease speed
-            Q/ESC: Quit
-
-        Example:
-            >>> def generate_frames():
-            ...     temp = field.random((128, 128), seed=42)
-            ...     while True:
-            ...         temp = field.diffuse(temp, rate=0.1, dt=0.1)
-            ...         yield visual.colorize(temp, palette="fire")
-            >>>
-            >>> gen = generate_frames()
-            >>> visual.display(lambda: next(gen))
+        Controls: SPACE (pause), RIGHT (step), UP/DOWN (speed), Q/ESC (quit)
         """
-        # Input validation
         if not callable(frame_generator):
             raise TypeError(f"frame_generator must be callable, got {type(frame_generator)}")
-
-        if not isinstance(title, str):
-            raise TypeError(f"title must be str, got {type(title)}")
-
         if not isinstance(target_fps, int) or target_fps <= 0:
             raise ValueError(f"target_fps must be positive integer, got {target_fps}")
-
         if not isinstance(scale, int) or scale <= 0:
             raise ValueError(f"scale must be positive integer, got {scale}")
 
         try:
             import pygame
         except ImportError:
-            raise ImportError(
-                "pygame is required for interactive display. "
-                "Install with: pip install pygame"
-            )
+            raise ImportError("pygame is required for interactive display. Install with: pip install pygame")
 
-        # Initialize pygame
         pygame.init()
-
-        # Get first frame to determine size
         first_frame = frame_generator()
         if first_frame is None:
             return
-
         if not isinstance(first_frame, Visual):
             raise TypeError(f"frame_generator must return Visual, got {type(first_frame)}")
 
-        # Create display window
         width, height = first_frame.width * scale, first_frame.height * scale
         screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption(title)
-        clock = pygame.time.Clock()
+        clock, font = pygame.time.Clock(), pygame.font.Font(None, 24)
 
-        # Create font for UI
-        font = pygame.font.Font(None, 24)
-
-        # State
-        paused = False
-        current_fps = target_fps
-        fps_frame_count = 0  # For FPS calculation (resets every second)
-        total_frames = 0  # Total frames generated
-        fps_timer = time.time()
-        actual_fps = 0.0
+        # State variables
+        paused, current_fps = False, target_fps
+        fps_frame_count, total_frames = 0, 0
+        fps_timer, actual_fps = time.time(), 0.0
         current_visual = first_frame
 
         try:
@@ -332,12 +558,9 @@ class VisualOperations:
                         if event.key == pygame.K_SPACE:
                             paused = not paused
                         elif event.key == pygame.K_RIGHT and paused:
-                            # Step forward one frame
                             new_frame = frame_generator()
                             if new_frame is not None:
-                                current_visual = new_frame
-                                total_frames += 1
-                                fps_frame_count += 1
+                                current_visual, total_frames, fps_frame_count = new_frame, total_frames + 1, fps_frame_count + 1
                         elif event.key == pygame.K_UP:
                             current_fps = min(current_fps + 5, 120)
                         elif event.key == pygame.K_DOWN:
@@ -351,57 +574,25 @@ class VisualOperations:
                     if new_frame is None:
                         running = False
                         continue
-                    current_visual = new_frame
-                    total_frames += 1
-                    fps_frame_count += 1
+                    current_visual, total_frames, fps_frame_count = new_frame, total_frames + 1, fps_frame_count + 1
 
-                # Convert visual to pygame surface
+                # Render frame
                 srgb = VisualOperations._linear_to_srgb(current_visual.data)
                 rgb_8bit = (srgb * 255).astype(np.uint8)
-
-                # Create surface and scale
                 surf = pygame.surfarray.make_surface(np.transpose(rgb_8bit, (1, 0, 2)))
                 if scale != 1:
                     surf = pygame.transform.scale(surf, (width, height))
-
-                # Draw to screen
                 screen.blit(surf, (0, 0))
 
-                # Draw UI overlay
+                # Update FPS counter
                 now = time.time()
                 if now - fps_timer >= 1.0:
-                    actual_fps = fps_frame_count / (now - fps_timer)
-                    fps_frame_count = 0
-                    fps_timer = now
+                    actual_fps, fps_frame_count, fps_timer = fps_frame_count / (now - fps_timer), 0, now
 
-                # Status text
-                status_lines = [
-                    f"FPS: {actual_fps:.1f} / {current_fps}",
-                    f"Frame: {total_frames}" if paused else "",
-                    "PAUSED" if paused else "RUNNING",
-                    "",
-                    "Controls:",
-                    "SPACE: Pause/Resume",
-                    "→: Step (paused)",
-                    "↑↓: Speed",
-                    "Q: Quit"
-                ]
-
-                y_offset = 10
-                for line in status_lines:
-                    if line:
-                        # Draw with black background for readability
-                        text = font.render(line, True, (255, 255, 255))
-                        text_bg = pygame.Surface((text.get_width() + 10, text.get_height() + 4))
-                        text_bg.set_alpha(180)
-                        text_bg.fill((0, 0, 0))
-                        screen.blit(text_bg, (5, y_offset))
-                        screen.blit(text, (10, y_offset + 2))
-                    y_offset += 22
-
+                # Draw status overlay
+                VisualOperations._render_status_overlay(screen, font, actual_fps, current_fps, total_frames, paused)
                 pygame.display.flip()
                 clock.tick(current_fps)
-
         finally:
             pygame.quit()
 
@@ -457,227 +648,74 @@ class VisualOperations:
 
         Returns:
             Visual representation of agents
-
-        Example:
-            # Render particles with fade out
-            vis = visual.agents(
-                particles,
-                alpha_property='alpha',
-                color_property='temperature',
-                size=3.0,
-                palette='fire',
-                blend_mode='additive'
-            )
-
-            # Render with trails
-            vis = visual.agents(
-                particles,
-                trail=True,
-                trail_length=20,
-                trail_alpha=0.3
-            )
         """
         from .agents import Agents
 
         if not isinstance(agents, Agents):
             raise TypeError(f"Expected Agents, got {type(agents)}")
 
-        # Get positions
+        # Get and validate positions
         positions = agents.get(position_property)
         if len(positions.shape) != 2 or positions.shape[1] != 2:
-            raise ValueError(
-                f"Position property must be (N, 2) array, got shape {positions.shape}"
-            )
+            raise ValueError(f"Position property must be (N, 2) array, got shape {positions.shape}")
 
-        # Determine bounds
+        # Compute bounds and pixel coordinates
         if bounds is None:
-            xmin, xmax = np.min(positions[:, 0]), np.max(positions[:, 0])
-            ymin, ymax = np.min(positions[:, 1]), np.max(positions[:, 1])
-
-            # Add 10% padding
-            x_padding = (xmax - xmin) * 0.1
-            y_padding = (ymax - ymin) * 0.1
-            bounds = ((xmin - x_padding, xmax + x_padding),
-                     (ymin - y_padding, ymax + y_padding))
-        else:
-            (xmin, xmax), (ymin, ymax) = bounds
+            bounds = _compute_bounds(positions)
+        px, py = _positions_to_pixels(positions, bounds, width, height)
 
         # Create output image
         img = np.zeros((height, width, 3), dtype=np.float32)
         img[:, :, :] = background
 
-        # Map positions to pixel coordinates
-        # Handle degenerate case where all agents are at same position
-        x_range = xmax - xmin
-        y_range = ymax - ymin
-
-        if x_range == 0.0:
-            # All agents at same x - center horizontally
-            x_norm = np.full(len(positions), 0.5)
-        else:
-            x_norm = (positions[:, 0] - xmin) / x_range
-
-        if y_range == 0.0:
-            # All agents at same y - center vertically
-            y_norm = np.full(len(positions), 0.5)
-        else:
-            y_norm = (positions[:, 1] - ymin) / y_range
-
-        px = (x_norm * (width - 1)).astype(int)
-        py = ((1.0 - y_norm) * (height - 1)).astype(int)  # Flip Y axis
-
-        # Clip to image bounds
-        px = np.clip(px, 0, width - 1)
-        py = np.clip(py, 0, height - 1)
-
-        # Determine colors
+        # Compute colors, sizes, and alphas
+        palette_colors = np.array(VisualOperations.PALETTES[palette])
         if color_property is not None:
-            # Color by property
-            color_values = agents.get(color_property)
-
-            # Handle vector properties (use magnitude)
-            if len(color_values.shape) > 1:
-                color_values = np.linalg.norm(color_values, axis=1)
-
-            # Normalize to [0, 1]
-            vmin, vmax = np.min(color_values), np.max(color_values)
-            if vmax - vmin < 1e-10:
-                color_norm = np.zeros_like(color_values)
-            else:
-                color_norm = (color_values - vmin) / (vmax - vmin)
-
-            # Map to palette
-            palette_colors = np.array(VisualOperations.PALETTES[palette])
-            n_colors = len(palette_colors)
-
-            indices = color_norm * (n_colors - 1)
-            idx_low = np.floor(indices).astype(int)
-            idx_high = np.minimum(idx_low + 1, n_colors - 1)
-            frac = indices - idx_low
-
-            colors = np.zeros((len(agents.get(position_property)), 3), dtype=np.float32)
-            for c in range(3):
-                colors[:, c] = (
-                    palette_colors[idx_low, c] * (1 - frac) +
-                    palette_colors[idx_high, c] * frac
-                )
+            colors = _map_property_to_colors(agents.get(color_property), palette_colors)
         else:
-            # Use default color for all agents
             colors = np.tile(color, (len(positions), 1))
 
-        # Determine sizes
         if size_property is not None:
-            size_values = agents.get(size_property)
-
-            # Handle vector properties (use magnitude)
-            if len(size_values.shape) > 1:
-                size_values = np.linalg.norm(size_values, axis=1)
-
-            # Normalize and scale
-            vmin, vmax = np.min(size_values), np.max(size_values)
-            if vmax - vmin < 1e-10:
-                sizes = np.ones(len(size_values)) * size
-            else:
-                size_norm = (size_values - vmin) / (vmax - vmin)
-                sizes = size_norm * size * 2  # Scale up to 2x base size
+            sizes = _map_property_to_sizes(agents.get(size_property), size)
         else:
             sizes = np.ones(len(positions)) * size
 
-        # Determine alpha values
         if alpha_property is not None:
             alpha_values = agents.get(alpha_property)
-
-            # Handle vector properties (use magnitude)
             if len(alpha_values.shape) > 1:
                 alpha_values = np.linalg.norm(alpha_values, axis=1)
-
             alphas = np.clip(alpha_values, 0.0, 1.0)
         else:
             alphas = np.ones(len(positions)) * alpha
 
-        # Get rotation if specified
+        # Get rotations if specified
         rotations = None
         if rotation_property is not None and rotation_property in agents.properties:
             rotation_values = agents.get(rotation_property)
-            # Handle 2D vectors (use as direction)
             if len(rotation_values.shape) > 1 and rotation_values.shape[1] == 2:
                 rotations = np.arctan2(rotation_values[:, 1], rotation_values[:, 0])
             else:
                 rotations = rotation_values
 
-        # Render trails if requested
+        # Render trails
         if trail and 'trail_history' in agents.properties:
             trail_history = agents.get('trail_history')
-            # trail_history should be (N, trail_length, 2)
             if len(trail_history.shape) == 3:
-                for i in range(len(trail_history)):
-                    history = trail_history[i]  # (trail_length, 2)
-                    agent_color = colors[i]
+                _render_agent_trails(img, trail_history, colors, alphas, bounds,
+                                     width, height, trail_alpha, blend_mode)
 
-                    for t in range(len(history)):
-                        if np.any(np.isnan(history[t])):
-                            continue
-
-                        # Map to pixel coords
-                        x_norm = (history[t, 0] - xmin) / (xmax - xmin)
-                        y_norm = (history[t, 1] - ymin) / (ymax - ymin)
-                        tx = int(x_norm * (width - 1))
-                        ty = int((1.0 - y_norm) * (height - 1))
-
-                        if 0 <= tx < width and 0 <= ty < height:
-                            # Fade alpha based on position in trail
-                            trail_t_alpha = (t / len(history)) * trail_alpha * alphas[i]
-
-                            # Alpha blend
-                            if blend_mode == "alpha":
-                                img[ty, tx] = img[ty, tx] * (1 - trail_t_alpha) + agent_color * trail_t_alpha
-                            else:  # additive
-                                img[ty, tx] = np.clip(img[ty, tx] + agent_color * trail_t_alpha, 0.0, 1.0)
-
-        # Render agents as circles
+        # Render agents
         for i in range(len(positions)):
-            agent_size = int(sizes[i])
+            x, y = px[i], py[i]
             agent_color = colors[i]
             agent_alpha = alphas[i]
+            agent_size = int(sizes[i])
 
-            # Draw filled circle with alpha
-            y, x = py[i], px[i]
-
-            # Draw rotation indicator if specified
             if rotations is not None:
-                angle = rotations[i]
-                # Draw a line from center to edge showing rotation
-                line_len = agent_size
-                dx_line = int(line_len * np.cos(angle))
-                dy_line = int(line_len * np.sin(angle))
+                _render_rotation_indicator(img, x, y, rotations[i], agent_size,
+                                           agent_color, agent_alpha, blend_mode)
 
-                # Draw line
-                steps = max(abs(dx_line), abs(dy_line)) + 1
-                for s in range(steps):
-                    t = s / max(steps - 1, 1)
-                    lx = x + int(t * dx_line)
-                    ly = y - int(t * dy_line)  # Flip Y
-                    if 0 <= ly < height and 0 <= lx < width:
-                        # Brighter color for rotation indicator
-                        indicator_color = np.minimum(agent_color * 1.5, 1.0)
-                        if blend_mode == "alpha":
-                            img[ly, lx] = img[ly, lx] * (1 - agent_alpha) + indicator_color * agent_alpha
-                        else:  # additive
-                            img[ly, lx] = np.clip(img[ly, lx] + indicator_color * agent_alpha, 0.0, 1.0)
-
-            # Draw circle
-            for dy in range(-agent_size, agent_size + 1):
-                for dx in range(-agent_size, agent_size + 1):
-                    if dx*dx + dy*dy <= agent_size * agent_size:
-                        ny, nx = y + dy, x + dx
-                        if 0 <= ny < height and 0 <= nx < width:
-                            # Alpha blending
-                            if blend_mode == "alpha":
-                                img[ny, nx] = img[ny, nx] * (1 - agent_alpha) + agent_color * agent_alpha
-                            elif blend_mode == "additive":
-                                img[ny, nx] = np.clip(img[ny, nx] + agent_color * agent_alpha, 0.0, 1.0)
-                            else:
-                                img[ny, nx] = agent_color
+            _render_filled_circle(img, x, y, agent_size, agent_color, agent_alpha, blend_mode)
 
         return Visual(img)
 
@@ -1074,79 +1112,54 @@ class VisualOperations:
 
         Returns:
             Visual representation of the graph
-
-        Example:
-            # Create and visualize network
-            g = graph.create(10)
-            g = graph.add_edge(g, 0, 1, 1.0)
-            vis = visual.graph(g, color_by_centrality=True, palette="fire")
-            visual.output(vis, "network.png")
         """
         from .graph import Graph
 
         if not isinstance(graph, Graph):
             raise TypeError(f"Expected Graph, got {type(graph)}")
 
-        n_nodes = graph.n_nodes
+        n_nodes = graph.num_nodes
         if n_nodes == 0:
-            # Return blank image
             img = np.zeros((height, width, 3), dtype=np.float32)
             img[:, :, :] = background
             return Visual(img)
 
         # Compute layout
-        if layout == "force":
-            positions = VisualOperations._force_directed_layout(
-                graph, iterations=iterations, width=width, height=height
-            )
-        elif layout == "circular":
-            positions = VisualOperations._circular_layout(n_nodes, width, height)
-        elif layout == "grid":
-            positions = VisualOperations._grid_layout(n_nodes, width, height)
-        else:
-            raise ValueError(f"Unknown layout: {layout}")
+        layout_funcs = {
+            "force": lambda: VisualOperations._force_directed_layout(graph, iterations, width, height),
+            "circular": lambda: VisualOperations._circular_layout(n_nodes, width, height),
+            "grid": lambda: VisualOperations._grid_layout(n_nodes, width, height),
+        }
+        if layout not in layout_funcs:
+            raise ValueError(f"Unknown layout: {layout}. Supported: {list(layout_funcs.keys())}")
+        positions = layout_funcs[layout]()
 
         # Create output image
         img = np.zeros((height, width, 3), dtype=np.float32)
         img[:, :, :] = background
 
         # Draw edges first (so nodes appear on top)
+        adj = graph.adjacency_list
         for i in range(n_nodes):
             for j in range(i + 1, n_nodes):
-                weight = graph.get_edge(i, j)
-                if weight > 0:
+                if _get_edge_weight(adj, i, j) > 0:
                     x1, y1 = positions[i]
                     x2, y2 = positions[j]
-                    VisualOperations._draw_line(
-                        img, int(x1), int(y1), int(x2), int(y2),
-                        edge_color, edge_width
-                    )
+                    VisualOperations._draw_line(img, int(x1), int(y1), int(x2), int(y2),
+                                                edge_color, edge_width)
 
         # Compute node colors
         if color_by_centrality:
-            # Use degree centrality
-            degrees = np.sum(graph.adj > 0, axis=1)
-            max_degree = np.max(degrees) if np.max(degrees) > 0 else 1
-            centrality = degrees / max_degree
-
-            # Map to palette
+            degrees = np.array([len(graph.adjacency_list.get(i, [])) for i in range(n_nodes)], dtype=float)
             palette_colors = np.array(VisualOperations.PALETTES[palette])
-            n_colors = len(palette_colors)
-
-            node_colors = np.zeros((n_nodes, 3))
-            for i in range(n_nodes):
-                idx = int(centrality[i] * (n_colors - 1))
-                idx = min(idx, n_colors - 1)
-                node_colors[i] = palette_colors[idx]
+            node_colors = _map_property_to_colors(degrees, palette_colors)
         else:
             node_colors = np.tile(node_color, (n_nodes, 1))
 
         # Draw nodes
         for i in range(n_nodes):
             x, y = positions[i]
-            VisualOperations._draw_circle(
-                img, int(x), int(y), int(node_size), node_colors[i]
-            )
+            VisualOperations._draw_circle(img, int(x), int(y), int(node_size), node_colors[i])
 
         return Visual(img)
 
@@ -1154,7 +1167,7 @@ class VisualOperations:
     def _force_directed_layout(graph, iterations: int = 50,
                               width: int = 800, height: int = 800) -> np.ndarray:
         """Compute force-directed graph layout using Fruchterman-Reingold algorithm."""
-        n_nodes = graph.n_nodes
+        n_nodes = graph.num_nodes
 
         # Initialize positions randomly
         positions = np.random.rand(n_nodes, 2)
@@ -1165,6 +1178,7 @@ class VisualOperations:
         area = width * height
         k = np.sqrt(area / n_nodes)  # Optimal distance
         t = width / 10.0  # Temperature (decreases over time)
+        adj = graph.adjacency_list
 
         for iteration in range(iterations):
             # Repulsive forces between all nodes
@@ -1181,7 +1195,7 @@ class VisualOperations:
             # Attractive forces for connected nodes
             for i in range(n_nodes):
                 for j in range(i + 1, n_nodes):
-                    if graph.get_edge(i, j) > 0:
+                    if _get_edge_weight(adj, i, j) > 0:
                         delta = positions[i] - positions[j]
                         distance = np.linalg.norm(delta) + 0.01
                         attraction = (distance * distance) / k
@@ -1320,101 +1334,47 @@ class VisualOperations:
 
         Returns:
             Visual representation of phase space
-
-        Example:
-            # Visualize particle dynamics
-            particles = agents.create(1000, pos=np.random.randn(1000, 2))
-            particles = agents.set(particles, 'vel', np.random.randn(1000, 2))
-            vis = visual.phase_space(particles, color_property='energy', palette='fire')
-            visual.output(vis, "phase_space.png")
         """
         from .agents import Agents
 
         if not isinstance(agents, Agents):
             raise TypeError(f"Expected Agents, got {type(agents)}")
 
-        # Get position and velocity
+        # Get position and velocity values (use magnitude for multi-dimensional)
         positions = agents.get(position_property)
         velocities = agents.get(velocity_property)
-
-        # Handle multi-dimensional data
-        if len(positions.shape) > 1:
-            # Use magnitude for 2D/3D
-            pos_values = np.linalg.norm(positions, axis=1)
-            vel_values = np.linalg.norm(velocities, axis=1)
-        else:
-            pos_values = positions
-            vel_values = velocities
+        pos_values = np.linalg.norm(positions, axis=1) if len(positions.shape) > 1 else positions
+        vel_values = np.linalg.norm(velocities, axis=1) if len(velocities.shape) > 1 else velocities
 
         # Create output image
         img = np.zeros((height, width, 3), dtype=np.float32)
         img[:, :, :] = background
 
-        # Normalize to image coordinates
-        pos_min, pos_max = np.min(pos_values), np.max(pos_values)
-        vel_min, vel_max = np.min(vel_values), np.max(vel_values)
+        # Normalize to pixel coordinates with 10px padding
+        pos_range = max(np.max(pos_values) - np.min(pos_values), 1e-10)
+        vel_range = max(np.max(vel_values) - np.min(vel_values), 1e-10)
+        pos_norm = (pos_values - np.min(pos_values)) / pos_range
+        vel_norm = (vel_values - np.min(vel_values)) / vel_range
 
-        # Add padding
-        pos_range = pos_max - pos_min if pos_max - pos_min > 1e-10 else 1.0
-        vel_range = vel_max - vel_min if vel_max - vel_min > 1e-10 else 1.0
+        px = np.clip((pos_norm * (width - 20) + 10).astype(int), 0, width - 1)
+        py = np.clip(((1.0 - vel_norm) * (height - 20) + 10).astype(int), 0, height - 1)
 
-        pos_norm = (pos_values - pos_min) / pos_range
-        vel_norm = (vel_values - vel_min) / vel_range
-
-        px = (pos_norm * (width - 20) + 10).astype(int)
-        py = ((1.0 - vel_norm) * (height - 20) + 10).astype(int)
-
-        # Clip to bounds
-        px = np.clip(px, 0, width - 1)
-        py = np.clip(py, 0, height - 1)
-
-        # Determine colors
+        # Compute colors
+        palette_colors = np.array(VisualOperations.PALETTES[palette])
         if color_property is not None:
-            color_values = agents.get(color_property)
-
-            if len(color_values.shape) > 1:
-                color_values = np.linalg.norm(color_values, axis=1)
-
-            # Normalize
-            vmin, vmax = np.min(color_values), np.max(color_values)
-            if vmax - vmin < 1e-10:
-                color_norm = np.zeros_like(color_values)
-            else:
-                color_norm = (color_values - vmin) / (vmax - vmin)
-
-            # Map to palette
-            palette_colors = np.array(VisualOperations.PALETTES[palette])
-            n_colors = len(palette_colors)
-
-            colors = np.zeros((len(agents.get(position_property)), 3))
-            for i in range(len(agents.get(position_property))):
-                idx = int(color_norm[i] * (n_colors - 1))
-                idx = min(idx, n_colors - 1)
-                colors[i] = palette_colors[idx]
+            colors = _map_property_to_colors(agents.get(color_property), palette_colors)
         else:
-            # Default color
             colors = np.tile((1.0, 1.0, 1.0), (len(pos_values), 1))
 
         # Draw trajectories if requested
         if show_trajectories and len(px) > 1:
             for i in range(len(px) - 1):
-                VisualOperations._draw_line(
-                    img, px[i], py[i], px[i + 1], py[i + 1],
-                    colors[i] * 0.3, 1.0
-                )
+                VisualOperations._draw_line(img, px[i], py[i], px[i + 1], py[i + 1],
+                                            colors[i] * 0.3, 1.0)
 
         # Draw points
         for i in range(len(px)):
-            x, y = px[i], py[i]
-            color = colors[i]
-
-            # Draw point with alpha blending
-            for dy in range(-int(point_size), int(point_size) + 1):
-                for dx in range(-int(point_size), int(point_size) + 1):
-                    if dx * dx + dy * dy <= point_size * point_size:
-                        nx, ny = x + dx, y + dy
-                        if 0 <= nx < width and 0 <= ny < height:
-                            img[ny, nx] = img[ny, nx] * (1 - alpha) + color * alpha
+            _render_filled_circle(img, px[i], py[i], int(point_size), colors[i], alpha, "alpha")
 
         return Visual(img)
 
@@ -1445,82 +1405,44 @@ class VisualOperations:
 
         Returns:
             Visual with metrics overlay
-
-        Example:
-            # Add simulation metrics
-            metrics = {
-                "Frame": 42,
-                "FPS": 59.8,
-                "Agents": 1000,
-                "Temperature": 273.15
-            }
-            vis_with_metrics = visual.add_metrics(vis, metrics, position="top-left")
         """
         if not isinstance(visual, Visual):
             raise TypeError(f"Expected Visual, got {type(visual)}")
 
-        # Create copy to avoid modifying original
         result = visual.copy()
         img = result.data
+        height, width = img.shape[:2]
 
         # Format metrics text
-        lines = []
-        for key, value in metrics.items():
-            if isinstance(value, float):
-                lines.append(f"{key}: {value:.2f}")
-            else:
-                lines.append(f"{key}: {value}")
+        lines = [f"{k}: {v:.2f}" if isinstance(v, float) else f"{k}: {v}"
+                 for k, v in metrics.items()]
+        if not lines:
+            return result
 
-        # Calculate text dimensions (rough approximation)
+        # Calculate text dimensions
         char_width = font_size * 0.6
         char_height = font_size * 1.2
         line_height = int(char_height * 1.3)
-
-        max_line_length = max(len(line) for line in lines) if lines else 0
-        text_width = int(max_line_length * char_width) + 20
+        text_width = int(max(len(line) for line in lines) * char_width) + 20
         text_height = len(lines) * line_height + 10
 
-        # Determine position
-        height, width, _ = img.shape
-        if position == "top-left":
-            x_start, y_start = 10, 10
-        elif position == "top-right":
-            x_start, y_start = width - text_width - 10, 10
-        elif position == "bottom-left":
-            x_start, y_start = 10, height - text_height - 10
-        elif position == "bottom-right":
-            x_start, y_start = width - text_width - 10, height - text_height - 10
-        else:
-            raise ValueError(f"Unknown position: {position}")
+        # Get position and draw background
+        x_start, y_start = _compute_text_position(position, width, height, text_width, text_height)
+        _draw_background_box(img, x_start, y_start, text_width, text_height, bg_color, bg_alpha)
 
-        # Draw background box with alpha blending
-        x_end = min(x_start + text_width, width)
-        y_end = min(y_start + text_height, height)
-
-        for y in range(y_start, y_end):
-            for x in range(x_start, x_end):
-                if 0 <= y < height and 0 <= x < width:
-                    img[y, x] = img[y, x] * (1 - bg_alpha) + np.array(bg_color) * bg_alpha
-
-        # Draw text (simple raster text)
+        # Draw text (simple raster rendering)
         for i, line in enumerate(lines):
             y_pos = y_start + 5 + i * line_height
             x_pos = x_start + 10
-
-            # Draw each character as a simple block (very basic text rendering)
             for char_idx, char in enumerate(line):
+                if char == ' ':
+                    continue
                 char_x = x_pos + int(char_idx * char_width)
-                char_y = y_pos
-
-                # Draw character as small rectangle (simplified)
-                if char != ' ':
-                    for dy in range(int(char_height)):
-                        for dx in range(int(char_width * 0.8)):
-                            px, py = char_x + dx, char_y + dy
-                            if 0 <= py < height and 0 <= px < width:
-                                # Simple character rendering
-                                if dy % 2 == 0 or dx % 2 == 0:  # Create text-like pattern
-                                    img[py, px] = text_color
+                for dy in range(int(char_height)):
+                    for dx in range(int(char_width * 0.8)):
+                        px, py = char_x + dx, y_pos + dy
+                        if 0 <= py < height and 0 <= px < width and (dy % 2 == 0 or dx % 2 == 0):
+                            img[py, px] = text_color
 
         return result
 

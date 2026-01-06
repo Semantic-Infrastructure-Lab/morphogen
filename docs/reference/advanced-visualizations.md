@@ -731,9 +731,49 @@ See [Palette Domain](./palette-domain.md) for custom palette creation.
 
 ---
 
+## External Analysis Tools
+
+### Modal Decomposition with PyDMD
+
+While Morphogen provides built-in spectral analysis (`spectrogram`, `fft`, `stft`), **external tools like PyDMD** can reveal deeper mathematical structure through **Dynamic Mode Decomposition (DMD)**.
+
+**What DMD Offers:**
+- Extract coherent spatial-temporal modes from simulations
+- Reveal dominant patterns driving complex dynamics
+- Create explanatory animations (mode galleries, progressive reconstruction)
+- Compare modes across domains (e.g., do fluid modes match audio spectrum?)
+- Compress simulations (reconstruct with 5-10 modes instead of 10,000 timesteps)
+
+**When to Use DMD:**
+- ✅ Understanding *what patterns drive* behavior (not just visualizing output)
+- ✅ Creating showcase animations for papers/presentations
+- ✅ Detecting bifurcations, attractors, and regime changes
+- ✅ Cross-domain mode correlation studies
+
+**Workflow:**
+1. Export Morphogen simulation data (NumPy arrays)
+2. Run PyDMD analysis externally
+3. Visualize modes and create animations
+4. Optionally: Feed insights back into Morphogen design
+
+**Learn More:**
+📘 **[Analysis and Visualization Guide](../guides/analysis-visualization.md)** - Complete PyDMD tutorial with Morphogen examples
+
+**Example Use Cases:**
+- `examples/cross_domain/fluid_acoustics_audio.py` - 3-domain pipeline perfect for DMD mode correlation
+- `examples/reaction_diffusion.py` - Spatial pattern modes
+- `examples/smoke_simulation.py` - Turbulent flow vortex modes
+
+**Resources:**
+- PyDMD: [https://github.com/PyDMD/PyDMD](https://github.com/PyDMD/PyDMD)
+- PyDMD Docs: [https://pydmd.github.io/PyDMD/](https://pydmd.github.io/PyDMD/)
+
+---
+
 ## See Also
 
 ### Related Documentation
+- **[Analysis and Visualization Guide](../guides/analysis-visualization.md)** ⭐ NEW - Complete guide to analyzing Morphogen simulations
 - [Mathematical Transformation Metaphors](./math-transformation-metaphors.md) - Intuitive frameworks for understanding transforms
 - [Visualization Ideas by Domain](./visualization-ideas-by-domain.md) - Comprehensive visualization catalog
 - [Transform Specification](../specifications/transform.md) - Technical transform details

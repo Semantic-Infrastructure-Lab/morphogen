@@ -12,7 +12,7 @@ Tests the following transformations:
 
 import numpy as np
 import pytest
-from morphogen.cross_domain.interface import (
+from morphogen.cross_domain import (
     TimeToCepstralInterface,
     CepstralToTimeInterface,
     TimeToWaveletInterface,

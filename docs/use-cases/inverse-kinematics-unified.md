@@ -418,7 +418,7 @@ Morphogen's multi-rate scheduling + determinism enable:
 
 ### Relevant Documentation
 - **[Architecture](../architecture/)** - Transform system, multi-rate scheduling
-- **[CROSS_DOMAIN_API.md](../CROSS_DOMAIN_API.md)** - Domain coupling mechanisms
+- **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Domain coupling mechanisms
 - **[Planning](../planning/)** - Kinematics domain roadmap
 
 ### Potential Workflows

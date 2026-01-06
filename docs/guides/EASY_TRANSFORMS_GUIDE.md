@@ -400,10 +400,10 @@ For each transform:
    ```
 
 4. **Update documentation**
-   - Add to `CROSS_DOMAIN_MESH_CATALOG.md`
-   - Update transform count
-   - Add example to `MESH_USER_GUIDE.md`
-   - Regenerate visualization: `python tools/visualize_mesh.py`
+   - Add to `reference/domain-mesh-catalog.md`
+   - Update transform count in relevant ADRs
+   - Add example to domain specification
+   - Update cross-domain visualization if needed
 
 ---
 

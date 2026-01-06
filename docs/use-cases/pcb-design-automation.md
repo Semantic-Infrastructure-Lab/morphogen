@@ -295,7 +295,7 @@ Real-time layout with live feedback:
 ## Getting Started
 
 ### Relevant Documentation
-- **Architecture**: [CROSS_DOMAIN_API.md](../CROSS_DOMAIN_API.md)
+- **Architecture**: [Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)
 - **Circuit Domain**: [CIRCUIT_DOMAIN_IMPLEMENTATION.md](../CIRCUIT_DOMAIN_IMPLEMENTATION.md)
 - **Planning**: [docs/planning/](../planning/)
 

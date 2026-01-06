@@ -59,6 +59,12 @@ video = [
     "imageio>=2.9.0",        # Video export (MP4, GIF)
     "imageio-ffmpeg>=0.4.0", # FFMPEG backend for MP4
 ]
+visual3d = [
+    "pyvista>=0.44",         # 3D scientific visualization
+    "vtk>=9.3",              # VTK backend for PyVista
+    "imageio>=2.9.0",        # Video export support
+    "imageio-ffmpeg>=0.4.0", # FFMPEG backend for 3D videos
+]
 io = [
     "sounddevice>=0.4.0",
     "soundfile>=0.12.0",

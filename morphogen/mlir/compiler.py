@@ -36,6 +36,25 @@ class MLIRCompiler:
     - Phase 4: Advanced features (lambdas, recursion)
     """
 
+    # Arithmetic operator mappings: operator → (float_opcode, int_opcode)
+    _ARITH_OPS = {
+        '+': ("arith.addf", "arith.addi"),
+        '-': ("arith.subf", "arith.subi"),
+        '*': ("arith.mulf", "arith.muli"),
+        '/': ("arith.divf", "arith.divsi"),
+        '%': ("arith.remf", "arith.remsi"),
+    }
+
+    # Comparison operator mappings: operator → (float_predicate, int_predicate)
+    _CMP_PREDICATES = {
+        '<': ("olt", "slt"),
+        '>': ("ogt", "sgt"),
+        '==': ("oeq", "eq"),
+        '!=': ("one", "ne"),
+        '<=': ("ole", "sle"),
+        '>=': ("oge", "sge"),
+    }
+
     def __init__(self):
         """Initialize MLIR compiler."""
         self.builder = IRBuilder()
@@ -321,6 +340,32 @@ class MLIRCompiler:
     # Phase 1.4: Binary and Unary Operations
     # =========================================================================
 
+    def _compile_comparison(
+        self, left: IRValue, right: IRValue, operator: str, is_float: bool
+    ) -> IRValue:
+        """Compile a comparison operation.
+
+        Args:
+            left: Left operand SSA value
+            right: Right operand SSA value
+            operator: Comparison operator (<, >, ==, !=, <=, >=)
+            is_float: True if operands are floating point
+
+        Returns:
+            Boolean (i1) result SSA value
+        """
+        float_pred, int_pred = self._CMP_PREDICATES[operator]
+        opcode = "arith.cmpf" if is_float else "arith.cmpi"
+        predicate = float_pred if is_float else int_pred
+
+        results = self.builder.add_operation(
+            opcode,
+            operands=[left, right],
+            result_types=[IRType.I1],
+            attributes={"predicate": predicate}
+        )
+        return results[0]
+
     def compile_binary_op(self, binop: BinaryOp) -> IRValue:
         """Compile binary operation.
 
@@ -335,148 +380,27 @@ class MLIRCompiler:
             x * y → arith.mulf %x, %y : f32
             i < j → arith.cmpf olt, %i, %j : f32
         """
-        # Compile operands
         left = self.compile_expression(binop.left)
         right = self.compile_expression(binop.right)
-
-        # Determine if operands are floating point or integer
         is_float = left.type in [IRType.F32, IRType.F64]
+        op = binop.operator
 
-        # Map operator to MLIR operation
-        if binop.operator == '+':
-            opcode = "arith.addf" if is_float else "arith.addi"
-        elif binop.operator == '-':
-            opcode = "arith.subf" if is_float else "arith.subi"
-        elif binop.operator == '*':
-            opcode = "arith.mulf" if is_float else "arith.muli"
-        elif binop.operator == '/':
-            opcode = "arith.divf" if is_float else "arith.divsi"
-        elif binop.operator == '%':
-            opcode = "arith.remf" if is_float else "arith.remsi"
-        elif binop.operator == '<':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "olt"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "slt"}
-                )
-                return results[0]
-        elif binop.operator == '>':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "ogt"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "sgt"}
-                )
-                return results[0]
-        elif binop.operator == '==':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "oeq"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "eq"}
-                )
-                return results[0]
-        elif binop.operator == '!=':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "one"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "ne"}
-                )
-                return results[0]
-        elif binop.operator == '<=':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "ole"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "sle"}
-                )
-                return results[0]
-        elif binop.operator == '>=':
-            if is_float:
-                opcode = "arith.cmpf"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "oge"}
-                )
-                return results[0]
-            else:
-                opcode = "arith.cmpi"
-                results = self.builder.add_operation(
-                    opcode,
-                    operands=[left, right],
-                    result_types=[IRType.I1],
-                    attributes={"predicate": "sge"}
-                )
-                return results[0]
-        else:
-            raise ValueError(f"Unsupported binary operator: {binop.operator}")
+        # Handle comparison operators
+        if op in self._CMP_PREDICATES:
+            return self._compile_comparison(left, right, op, is_float)
 
-        # Perform operation for arithmetic ops
-        results = self.builder.add_operation(
-            opcode,
-            operands=[left, right],
-            result_types=[left.type]
-        )
-        return results[0]
+        # Handle arithmetic operators
+        if op in self._ARITH_OPS:
+            float_op, int_op = self._ARITH_OPS[op]
+            opcode = float_op if is_float else int_op
+            results = self.builder.add_operation(
+                opcode,
+                operands=[left, right],
+                result_types=[left.type]
+            )
+            return results[0]
+
+        raise ValueError(f"Unsupported binary operator: {op}")
 
     def compile_unary_op(self, unop: UnaryOp) -> IRValue:
         """Compile unary operation.
@@ -1057,6 +981,59 @@ class MLIRCompiler:
 
         return free_vars
 
+    def _build_lambda_signature(
+        self, params: List[str], captured_var_list: List[str]
+    ) -> tuple:
+        """Build argument types and values for a lambda function.
+
+        Args:
+            params: Lambda parameter names
+            captured_var_list: Captured variable names from enclosing scope
+
+        Returns:
+            Tuple of (arg_types, arg_values) lists
+        """
+        arg_types = []
+        arg_values = []
+
+        # Add lambda parameters
+        for i, param_name in enumerate(params):
+            param_type = IRType.F32  # TODO: Better type inference
+            arg_types.append(param_type)
+            arg_values.append(IRValue(name=f"%arg{i}", type=param_type))
+
+        # Add captured variables as additional parameters
+        for i, captured_var in enumerate(captured_var_list):
+            captured_val = self.symbols[captured_var]
+            param_idx = len(params) + i
+            arg_types.append(captured_val.type)
+            arg_values.append(IRValue(name=f"%arg{param_idx}", type=captured_val.type))
+
+        return arg_types, arg_values
+
+    def _create_lambda_value(
+        self, lambda_name: str, captured_var_list: List[str]
+    ) -> IRValue:
+        """Create IRValue representing a compiled lambda with metadata.
+
+        Args:
+            lambda_name: Generated function name for the lambda
+            captured_var_list: Names of captured variables
+
+        Returns:
+            IRValue with _lambda_meta attached
+        """
+        lambda_value = IRValue(
+            name=f"%{lambda_name}",
+            type=IRType.F32  # Placeholder type
+        )
+        lambda_value._lambda_meta = {
+            'function': lambda_name,
+            'captured_vars': captured_var_list,
+            'captured_values': [self.symbols[v] for v in captured_var_list]
+        }
+        return lambda_value
+
     def compile_lambda(self, lambda_expr: Lambda) -> IRValue:
         """Compile lambda expression (Phase 4.1).
 
@@ -1087,98 +1064,132 @@ class MLIRCompiler:
         # Find captured variables (free variables in lambda body)
         bound_vars = set(lambda_expr.params)
         captured_vars = self._find_free_variables(lambda_expr.body, bound_vars)
-
-        # Filter to only variables that exist in current scope
         captured_vars = {v for v in captured_vars if v in self.symbols}
-        captured_var_list = sorted(list(captured_vars))  # Sort for deterministic order
+        captured_var_list = sorted(list(captured_vars))
 
         # Build function signature
-        arg_types = []
-        arg_values = []
-
-        # Add lambda parameters
-        for i, param_name in enumerate(lambda_expr.params):
-            # Infer type from usage (default to f32)
-            param_type = IRType.F32  # TODO: Better type inference
-            arg_types.append(param_type)
-            arg_values.append(IRValue(name=f"%arg{i}", type=param_type))
-
-        # Add captured variables as additional parameters
-        for i, captured_var in enumerate(captured_var_list):
-            captured_val = self.symbols[captured_var]
-            param_idx = len(lambda_expr.params) + i
-            arg_types.append(captured_val.type)
-            arg_values.append(IRValue(name=f"%arg{param_idx}", type=captured_val.type))
+        arg_types, arg_values = self._build_lambda_signature(
+            lambda_expr.params, captured_var_list
+        )
 
         # Save current context
         saved_symbols = self.symbols.copy()
         saved_function = self.current_function
 
-        # Infer return type from body
-        # For now, we'll determine it after compiling the body
         # Create function with placeholder return type
         ir_func = self.builder.create_function(
-            name=lambda_name,
-            args=arg_values,
-            return_types=[]  # Will be set after compiling body
+            name=lambda_name, args=arg_values, return_types=[]
         )
-
-        # Store function
         self.functions[lambda_name] = ir_func
         self.current_function = lambda_name
-
-        # Create entry block
         self.builder.create_block(label="entry")
 
-        # Create new symbol table for lambda body
-        # Start with saved symbols to allow lambdas to reference other lambdas
+        # Set up symbol table for lambda body
         self.symbols = saved_symbols.copy()
-
-        # Override with lambda parameters
         for param_name, arg_value in zip(lambda_expr.params, arg_values[:len(lambda_expr.params)]):
             self.symbols[param_name] = arg_value
-
-        # Override captured variables to use their parameter slots
         for captured_var, arg_value in zip(captured_var_list, arg_values[len(lambda_expr.params):]):
             self.symbols[captured_var] = arg_value
 
         # Compile lambda body
         result = self.compile_expression(lambda_expr.body)
-
-        # Update function return type now that we know it
         ir_func.return_types = [result.type]
 
         # Add return statement
-        self.builder.add_operation(
-            "func.return",
-            operands=[result],
-            result_types=[]
-        )
+        self.builder.add_operation("func.return", operands=[result], result_types=[])
 
         # Restore context
         self.symbols = saved_symbols
         self.current_function = saved_function
 
-        # Create a lambda value that stores the function name and captured values
-        # For now, we'll store it as a special dictionary in the symbol table
-        # When the lambda is called, we'll look up this info
-        lambda_value = IRValue(
-            name=f"%{lambda_name}",
-            type=IRType.F32  # Placeholder type
-        )
-
-        # Store lambda metadata (function name and captured values)
-        lambda_value._lambda_meta = {
-            'function': lambda_name,
-            'captured_vars': captured_var_list,
-            'captured_values': [self.symbols[v] for v in captured_var_list]
-        }
-
-        return lambda_value
+        return self._create_lambda_value(lambda_name, captured_var_list)
 
     def compile_tuple(self, tuple_expr: Tuple) -> IRValue:
         """Compile tuple expression."""
         raise NotImplementedError("Tuple expressions")
+
+    # =========================================================================
+    # Flow Block Helpers
+    # =========================================================================
+
+    def _create_loop_bounds(self, num_steps_expr: IRValue) -> tuple:
+        """Create loop bounds (zero, end, one) for a for-loop.
+
+        Args:
+            num_steps_expr: Expression for number of iterations
+
+        Returns:
+            Tuple of (zero, end, one) IRValues of INDEX type
+        """
+        zero = self.builder.add_operation(
+            "arith.constant",
+            operands=[],
+            result_types=[IRType.INDEX],
+            attributes={"value": 0}
+        )[0]
+
+        one = self.builder.add_operation(
+            "arith.constant",
+            operands=[],
+            result_types=[IRType.INDEX],
+            attributes={"value": 1}
+        )[0]
+
+        # Convert num_steps to index type
+        if num_steps_expr.type in [IRType.I32, IRType.I64]:
+            end = self.builder.add_operation(
+                "arith.index_cast",
+                operands=[num_steps_expr],
+                result_types=[IRType.INDEX]
+            )[0]
+        else:
+            # Float: convert to int first
+            num_steps_int = self.builder.add_operation(
+                "arith.fptosi",
+                operands=[num_steps_expr],
+                result_types=[IRType.I32]
+            )[0]
+            end = self.builder.add_operation(
+                "arith.index_cast",
+                operands=[num_steps_int],
+                result_types=[IRType.INDEX]
+            )[0]
+
+        return zero, end, one
+
+    def _execute_flow_body(
+        self, loop, state_var_names: List[str], body: List[Statement], dt_value
+    ) -> None:
+        """Execute flow block body within a loop context.
+
+        Args:
+            loop: Loop context with iter_arg_values and yield_values
+            state_var_names: Names of state variables to thread through loop
+            body: List of statements to compile
+            dt_value: Optional dt value to add to symbols
+        """
+        saved_symbols = self.symbols.copy()
+
+        # Map iteration arguments to variable names
+        for i, var_name in enumerate(state_var_names):
+            self.symbols[var_name] = loop.iter_arg_values[i]
+
+        # Add dt to symbol table if present
+        if dt_value is not None:
+            self.symbols['dt'] = dt_value
+
+        # Compile body statements
+        for stmt in body:
+            self.compile_statement(stmt)
+
+        # Collect updated state variable values and yield
+        new_state_values = [self.symbols[var_name] for var_name in state_var_names]
+        loop.yield_values(new_state_values)
+
+        # Restore non-state symbols
+        for var_name in saved_symbols:
+            if var_name not in state_var_names:
+                self.symbols[var_name] = saved_symbols[var_name]
 
     def compile_flow_block(self, flow: Flow) -> None:
         """Compile flow block to scf.for loop (Phase 3).
@@ -1212,63 +1223,19 @@ class MLIRCompiler:
         """
         # Determine number of iterations
         if flow.steps is not None:
-            # Step-based flow: explicit number of steps
-            num_steps_expr = self.compile_expression(flow.steps)
-        elif flow.dt is not None and flow.steps is not None:
-            # Time-based flow would need duration, but current syntax uses explicit steps
             num_steps_expr = self.compile_expression(flow.steps)
         else:
             raise ValueError("Flow block must specify 'steps' parameter")
 
         # Compile dt if provided (for time-based flow)
-        dt_value = None
-        if flow.dt is not None:
-            dt_value = self.compile_expression(flow.dt)
+        dt_value = self.compile_expression(flow.dt) if flow.dt is not None else None
 
-        # Convert steps to index type for loop bounds
-        # Create loop bounds: for i = 0 to num_steps step 1
-        zero = self.builder.add_operation(
-            "arith.constant",
-            operands=[],
-            result_types=[IRType.INDEX],
-            attributes={"value": 0}
-        )[0]
+        # Create loop bounds
+        zero, end, one = self._create_loop_bounds(num_steps_expr)
 
-        one = self.builder.add_operation(
-            "arith.constant",
-            operands=[],
-            result_types=[IRType.INDEX],
-            attributes={"value": 1}
-        )[0]
-
-        # Convert num_steps to index type
-        if num_steps_expr.type in [IRType.I32, IRType.I64]:
-            end = self.builder.add_operation(
-                "arith.index_cast",
-                operands=[num_steps_expr],
-                result_types=[IRType.INDEX]
-            )[0]
-        else:
-            # If it's a float, convert to int first
-            num_steps_int = self.builder.add_operation(
-                "arith.fptosi",
-                operands=[num_steps_expr],
-                result_types=[IRType.I32]
-            )[0]
-            end = self.builder.add_operation(
-                "arith.index_cast",
-                operands=[num_steps_int],
-                result_types=[IRType.INDEX]
-            )[0]
-
-        # Identify state variables that need to be threaded through the loop
-        # For now, track all variables assigned in the body
+        # Identify and prepare state variables
         state_vars = self._identify_state_variables(flow.body)
-
-        # Prepare iteration arguments (initial values for state variables)
-        iter_args = []
-        iter_types = []
-        state_var_names = []
+        iter_args, iter_types, state_var_names = [], [], []
 
         for var_name in state_vars:
             if var_name in self.symbols:
@@ -1277,47 +1244,18 @@ class MLIRCompiler:
                 iter_types.append(var_value.type)
                 state_var_names.append(var_name)
 
-        # Handle substeps (nested loops)
+        # Handle substeps (nested loops) or single loop
         if flow.substeps is not None:
-            # Compile with nested loop structure
             self._compile_flow_with_substeps(
                 zero, end, one, flow.substeps,
                 iter_args, iter_types, state_var_names,
                 flow.body, dt_value
             )
         else:
-            # Single loop
             with self.builder.create_for_loop(zero, end, one, iter_args, iter_types) as loop:
-                # Save current symbol table
-                saved_symbols = self.symbols.copy()
+                self._execute_flow_body(loop, state_var_names, flow.body, dt_value)
 
-                # Map iteration arguments to variable names in loop body
-                for i, var_name in enumerate(state_var_names):
-                    self.symbols[var_name] = loop.iter_arg_values[i]
-
-                # Add dt to symbol table if present
-                if dt_value is not None:
-                    # dt is a loop-invariant value, use the compiled value
-                    self.symbols['dt'] = dt_value
-
-                # Compile body statements
-                new_state_values = []
-                for stmt in flow.body:
-                    self.compile_statement(stmt)
-
-                # Collect updated state variable values
-                for var_name in state_var_names:
-                    new_state_values.append(self.symbols[var_name])
-
-                # Yield updated values
-                loop.yield_values(new_state_values)
-
-            # Restore symbol table but keep final values of state variables
-            for var_name in saved_symbols:
-                if var_name not in state_var_names:
-                    self.symbols[var_name] = saved_symbols[var_name]
-
-            # Update symbol table with final values after loop
+            # Update symbol table with final loop values
             for i, var_name in enumerate(state_var_names):
                 self.symbols[var_name] = loop.result_values[i]
 
@@ -1354,52 +1292,17 @@ class MLIRCompiler:
             body: Flow body statements
             dt_value: Timestep value (if time-based)
         """
-        # Compile substeps expression
-        num_substeps_expr = self.compile_expression(substeps_expr)
-
-        # Convert to index type
-        if num_substeps_expr.type in [IRType.I32, IRType.I64]:
-            substeps_end = self.builder.add_operation(
-                "arith.index_cast",
-                operands=[num_substeps_expr],
-                result_types=[IRType.INDEX]
-            )[0]
-        else:
-            substeps_int = self.builder.add_operation(
-                "arith.fptosi",
-                operands=[num_substeps_expr],
-                result_types=[IRType.I32]
-            )[0]
-            substeps_end = self.builder.add_operation(
-                "arith.index_cast",
-                operands=[substeps_int],
-                result_types=[IRType.INDEX]
-            )[0]
-
-        zero_inner = self.builder.add_operation(
-            "arith.constant",
-            operands=[],
-            result_types=[IRType.INDEX],
-            attributes={"value": 0}
-        )[0]
-
-        one_inner = self.builder.add_operation(
-            "arith.constant",
-            operands=[],
-            result_types=[IRType.INDEX],
-            attributes={"value": 1}
-        )[0]
+        # Create inner loop bounds from substeps expression
+        num_substeps = self.compile_expression(substeps_expr)
+        zero_inner, substeps_end, one_inner = self._create_loop_bounds(num_substeps)
 
         # Outer loop (main steps)
         with self.builder.create_for_loop(start, end, step, iter_args, iter_types) as outer_loop:
-            # Save symbol table
             saved_symbols = self.symbols.copy()
 
-            # Map iteration arguments to variable names
+            # Map outer iteration arguments
             for i, var_name in enumerate(state_var_names):
                 self.symbols[var_name] = outer_loop.iter_arg_values[i]
-
-            # Add dt to symbol table if present
             if dt_value is not None:
                 self.symbols['dt'] = dt_value
 
@@ -1411,37 +1314,22 @@ class MLIRCompiler:
                 # Map inner iteration arguments
                 for i, var_name in enumerate(state_var_names):
                     self.symbols[var_name] = inner_loop.iter_arg_values[i]
-
-                # Keep dt in symbol table
                 if dt_value is not None:
                     self.symbols['dt'] = dt_value
 
-                # Compile body in inner loop
+                # Compile body and yield
                 for stmt in body:
                     self.compile_statement(stmt)
+                inner_loop.yield_values([self.symbols[v] for v in state_var_names])
 
-                # Collect updated values
-                inner_new_values = []
-                for var_name in state_var_names:
-                    inner_new_values.append(self.symbols[var_name])
-
-                # Yield from inner loop
-                inner_loop.yield_values(inner_new_values)
-
-            # After inner loop, use its results for outer loop yield
-            outer_new_values = inner_loop.result_values
-
-            # Yield from outer loop
-            outer_loop.yield_values(outer_new_values)
+            # Yield inner results to outer loop
+            outer_loop.yield_values(inner_loop.result_values)
 
             # Restore non-state variables
             for var_name in saved_symbols:
                 if var_name not in state_var_names:
                     self.symbols[var_name] = saved_symbols[var_name]
 
-        # Store outer loop results before exiting context
-        final_results = outer_loop.result_values
-
         # Update symbol table with final values
         for i, var_name in enumerate(state_var_names):
-            self.symbols[var_name] = final_results[i]
+            self.symbols[var_name] = outer_loop.result_values[i]

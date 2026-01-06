@@ -13,8 +13,7 @@ with NumPy/SciPy.
 
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Dict, Union
-from enum import Enum
+from typing import List, Optional, Tuple, Dict
 import warnings
 
 from morphogen.core.operator import operator, OpCategory
@@ -1023,6 +1022,34 @@ def generate_conformers(
     return conformers
 
 
+def _avg_cluster_distance(
+    dist_matrix: np.ndarray,
+    cluster_a: List[int],
+    cluster_b: List[int]
+) -> float:
+    """Compute average distance between two clusters."""
+    total = sum(dist_matrix[ci, cj] for ci in cluster_a for cj in cluster_b)
+    return total / (len(cluster_a) * len(cluster_b))
+
+
+def _find_closest_clusters(
+    clusters: List[List[int]],
+    dist_matrix: np.ndarray
+) -> Tuple[int, int, float]:
+    """Find the pair of clusters with minimum average distance."""
+    min_dist = float('inf')
+    merge_i, merge_j = 0, 1
+
+    for i in range(len(clusters)):
+        for j in range(i + 1, len(clusters)):
+            avg_dist = _avg_cluster_distance(dist_matrix, clusters[i], clusters[j])
+            if avg_dist < min_dist:
+                min_dist = avg_dist
+                merge_i, merge_j = i, j
+
+    return merge_i, merge_j, min_dist
+
+
 @operator(
     domain="molecular",
     category=OpCategory.TRANSFORM,
@@ -1061,29 +1088,9 @@ def cluster_conformers(
     clusters = [[i] for i in range(n)]
 
     while len(clusters) > 1:
-        # Find closest pair
-        min_dist = float('inf')
-        merge_i, merge_j = 0, 1
-
-        for i in range(len(clusters)):
-            for j in range(i + 1, len(clusters)):
-                # Average distance between clusters
-                dist_sum = 0
-                count = 0
-                for ci in clusters[i]:
-                    for cj in clusters[j]:
-                        dist_sum += dist_matrix[ci, cj]
-                        count += 1
-                avg_dist = dist_sum / count
-
-                if avg_dist < min_dist:
-                    min_dist = avg_dist
-                    merge_i, merge_j = i, j
-
+        merge_i, merge_j, min_dist = _find_closest_clusters(clusters, dist_matrix)
         if min_dist > threshold:
             break
-
-        # Merge clusters
         clusters[merge_i].extend(clusters[merge_j])
         clusters.pop(merge_j)
 
@@ -1406,6 +1413,28 @@ def diffusion_coefficient(trajectory: Trajectory) -> float:
         return 0.0
 
 
+def _accumulate_rdf_histogram(
+    hist: np.ndarray,
+    positions: np.ndarray,
+    indices_1: List[int],
+    indices_2: List[int],
+    r_max: float,
+    dr: float,
+    n_bins: int
+) -> None:
+    """Accumulate pairwise distances into histogram for one frame."""
+    for i in indices_1:
+        for j in indices_2:
+            if i == j:
+                continue
+            r = np.linalg.norm(positions[j] - positions[i])
+            if r >= r_max:
+                continue
+            bin_idx = int(r / dr)
+            if bin_idx < n_bins:
+                hist[bin_idx] += 1
+
+
 @operator(
     domain="molecular",
     category=OpCategory.QUERY,
@@ -1447,14 +1476,7 @@ def rdf(
 
     # Accumulate over trajectory
     for frame in trajectory.frames:
-        for i in indices_1:
-            for j in indices_2:
-                if i != j:
-                    r = np.linalg.norm(frame.positions[j] - frame.positions[i])
-                    if r < r_max:
-                        bin_idx = int(r / dr)
-                        if bin_idx < n_bins:
-                            hist[bin_idx] += 1
+        _accumulate_rdf_histogram(hist, frame.positions, indices_1, indices_2, r_max, dr, n_bins)
 
     # Normalize
     n_frames = trajectory.n_frames
@@ -1470,6 +1492,32 @@ def rdf(
     g_r = hist / (n_frames * n_pairs * density * volume_shell)
 
     return r, g_r
+
+
+def _is_hydrogen_bond(
+    positions: np.ndarray,
+    donor: int,
+    hydrogen: int,
+    acceptor: int,
+    donor_acceptor_distance: float,
+    angle_cutoff: float
+) -> bool:
+    """Check if a donor-hydrogen-acceptor triplet forms a valid hydrogen bond."""
+    d_h = np.linalg.norm(positions[hydrogen] - positions[donor])
+    if d_h >= 1.2:
+        return False
+
+    d_a = np.linalg.norm(positions[acceptor] - positions[donor])
+    if d_a >= donor_acceptor_distance:
+        return False
+
+    # Check angle (D-H...A should be close to 180°)
+    v1 = positions[hydrogen] - positions[donor]
+    v2 = positions[acceptor] - positions[hydrogen]
+    cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+    angle = np.arccos(np.clip(cos_angle, -1, 1)) * 180 / np.pi
+
+    return abs(angle - 180) < angle_cutoff
 
 
 @operator(
@@ -1496,9 +1544,7 @@ def hydrogen_bonds(
 
     Determinism: strict
     """
-    # Simplified: find O-H...O patterns
     hbonds = []
-
     frame = trajectory.frames[0]
 
     # Find O and H atoms
@@ -1508,21 +1554,11 @@ def hydrogen_bonds(
     for donor in O_indices:
         for hydrogen in H_indices:
             for acceptor in O_indices:
-                if donor != acceptor:
-                    d_h = np.linalg.norm(frame.positions[hydrogen] - frame.positions[donor])
-                    h_a = np.linalg.norm(frame.positions[acceptor] - frame.positions[hydrogen])
-                    d_a = np.linalg.norm(frame.positions[acceptor] - frame.positions[donor])
-
-                    if d_h < 1.2 and d_a < donor_acceptor_distance:
-                        # Check angle
-                        v1 = frame.positions[hydrogen] - frame.positions[donor]
-                        v2 = frame.positions[acceptor] - frame.positions[hydrogen]
-
-                        cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-                        angle = np.arccos(np.clip(cos_angle, -1, 1)) * 180 / np.pi
-
-                        if abs(angle - 180) < angle_cutoff:
-                            hbonds.append((donor, hydrogen, acceptor))
+                if donor == acceptor:
+                    continue
+                if _is_hydrogen_bond(frame.positions, donor, hydrogen, acceptor,
+                                     donor_acceptor_distance, angle_cutoff):
+                    hbonds.append((donor, hydrogen, acceptor))
 
     return hbonds
 

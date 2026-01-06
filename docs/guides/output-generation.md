@@ -1081,7 +1081,8 @@ That's when you know you've captured Morphogen's unique value.
 - **[Showcase Examples](../../examples/showcase/README.md)** - Advanced cross-domain demos
 - **[Visual API Reference](../../morphogen/stdlib/visual.py)** - Complete visual documentation
 - **[Audio API Reference](../../morphogen/stdlib/audio.py)** - Complete audio documentation
-- **[Cross-Domain API](../CROSS_DOMAIN_API.md)** - Integration patterns
+- **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Integration patterns
+- **[Domain Mesh Catalog](../reference/domain-mesh-catalog.md)** - Domain connectivity reference
 
 ---
 

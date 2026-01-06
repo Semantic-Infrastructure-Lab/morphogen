@@ -8,7 +8,7 @@ Supports A→B→C pipelines with caching and performance optimization.
 from typing import Any, List, Optional, Tuple, Dict, Callable
 from dataclasses import dataclass
 import numpy as np
-from .interface import DomainInterface
+from .base import DomainInterface
 from .registry import CrossDomainRegistry
 
 

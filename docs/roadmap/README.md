@@ -42,11 +42,10 @@ Comprehensive testing approach and coverage targets:
 
 ## Archived Roadmaps
 
-Historical roadmaps have been moved to [/docs/archive/planning/](../archive/planning/):
+Historical roadmaps have been moved to `~/Archive/morphogen/docs-archive/2025-12-06/planning/`:
 - `implementation-progress.md` - Domain implementation tracking (archived 2025-12-07)
 - `mvp.md` - Early MVP planning (removed - obsolete)
-
-See [archive/planning/README.md](../archive/planning/README.md) for historical planning documents.
+- And other historical planning documents
 
 ---
 

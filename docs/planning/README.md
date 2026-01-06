@@ -16,6 +16,22 @@ This directory contains active strategic planning documents for Morphogen.
 - **Last Updated**: 2025-12-07
 - **Use**: For all current planning, priorities, and execution tracking
 
+### 3D Visualization System
+**[3D_VISUALIZATION_SYSTEM_PLAN.md](3D_VISUALIZATION_SYSTEM_PLAN.md)** - Comprehensive 3D Viz Roadmap
+- **Status**: ✅ Active - Ready for implementation
+- **Scope**: Phase 1-5 implementation (12 weeks)
+- **Content**: Backend selection (PyVista), operator specs, chemistry integration, camera animation
+- **Created**: 2026-01-05 (session aerial-god-0105)
+- **Use**: For implementing 3D visualization capabilities (unlocks 20+ blocked viz types)
+
+### Performance & Infrastructure Research
+**[PERFORMANCE_INFRASTRUCTURE_RESEARCH.md](PERFORMANCE_INFRASTRUCTURE_RESEARCH.md)** - SIL Tech & Optimization Paths
+- **Status**: ✅ Complete - Reference document
+- **Scope**: MLIR, GPU acceleration, Pantheon/Prism integration
+- **Content**: Technology evaluation (Taichi, JAX, Mojo), Morphogen GPU-readiness analysis
+- **Created**: 2026-01-05 (session pearl-ray-0105)
+- **Use**: When optimizing 3D viz performance or integrating with SIL infrastructure
+
 ### Language Evolution Strategy
 **[KAIRO_2.0_STRATEGIC_ANALYSIS.md](KAIRO_2.0_STRATEGIC_ANALYSIS.md)** - v2.0+ Language Strategy
 - **Status**: 📚 Reference - Future planning
@@ -27,14 +43,13 @@ This directory contains active strategic planning documents for Morphogen.
 
 ## 📚 Archived Planning Documents
 
-Most historical planning documents have been moved to [../archive/planning/](../archive/planning/) including:
+Historical planning documents have been moved to `~/Archive/morphogen/docs-archive/2025-12-06/planning/` including:
 
 - `ROADMAP_2025_Q4.md` - Q4 2025 tactical plan (superseded)
 - `MORPHOGEN_RELEASE_PLAN.md` - Original v1.0 plan (consolidated)
 - `PATH_FORWARD_OVERVIEW.md` - Long-term vision (consolidated)
 - `DOMAIN_VALUE_ANALYSIS.md` - Domain ROI analysis (historical reference)
 - `ARCHITECTURAL_EVOLUTION_ROADMAP.md` - Architecture evolution (historical)
-- And more... see [archive/planning/README.md](../archive/planning/README.md)
 
 **Why archived**: Information consolidated into unified roadmap for maintainability.
 
@@ -52,7 +67,7 @@ Most historical planning documents have been moved to [../archive/planning/](../
 - **Current quarter**: Use [/docs/ROADMAP.md](../ROADMAP.md)
 - **Future features**: Check [../roadmap/](../roadmap/) (language-features.md, testing-strategy.md)
 - **Long-term vision**: See KAIRO_2.0_STRATEGIC_ANALYSIS.md
-- **Historical context**: Browse [../archive/planning/](../archive/planning/)
+- **Historical context**: See `~/Archive/morphogen/docs-archive/2025-12-06/planning/`
 
 ### For Project Maintainers
 - **ROADMAP.md is the single source of truth** for current planning
@@ -75,14 +90,16 @@ Most historical planning documents have been moved to [../archive/planning/](../
 **Directory Structure**:
 ```
 docs/planning/
-├── README.md                             ← You are here
-├── KAIRO_2.0_STRATEGIC_ANALYSIS.md      ← Active: v2.0+ language strategy
-└── (most planning docs moved to ../archive/planning/)
+├── README.md                                    ← You are here
+├── 3D_VISUALIZATION_SYSTEM_PLAN.md             ← Active: 3D viz implementation plan
+├── PERFORMANCE_INFRASTRUCTURE_RESEARCH.md       ← Active: Performance & SIL tech research
+├── KAIRO_2.0_STRATEGIC_ANALYSIS.md             ← Reference: v2.0+ language strategy
+└── (historical planning docs in ~/Archive/)
 ```
 
 **For the canonical roadmap**, see: [/docs/ROADMAP.md](../ROADMAP.md)
 
 ---
 
-*Last Updated: 2025-12-07*
+*Last Updated: 2026-01-05*
 *Canonical Roadmap: /docs/ROADMAP.md*

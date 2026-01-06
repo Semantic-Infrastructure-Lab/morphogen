@@ -439,7 +439,7 @@ Professional performers need this reliability.
 
 ### Relevant Documentation
 - **[Architecture](../architecture/)** - Multi-rate scheduling, domain coupling
-- **[CROSS_DOMAIN_API.md](../CROSS_DOMAIN_API.md)** - Audio → Visual → Physics translations
+- **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Audio → Visual → Physics translations
 - **[Examples](../examples/)** - Audiovisual demonstrations
 - **[Planning](../planning/)** - Audio domain evolution
 

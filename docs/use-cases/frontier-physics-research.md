@@ -417,7 +417,7 @@ With guarantees:
 ### Relevant Documentation
 - **[Physics](../physics/)** - Domain specifications
 - **[Architecture](../architecture/)** - Multi-domain coupling
-- **[CROSS_DOMAIN_API.md](../CROSS_DOMAIN_API.md)** - Domain translation mechanisms
+- **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Domain translation mechanisms
 - **[Planning](../planning/)** - Evolution roadmap
 
 ### Potential Workflows

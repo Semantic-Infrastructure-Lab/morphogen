@@ -403,7 +403,7 @@ This creates a **new research program** in PL design for computational science.
 ### Relevant Documentation
 - **[Philosophy](../philosophy/)** - Core principles and design rationale
 - **[Architecture](../architecture/)** - System design and MLIR integration
-- **[CROSS_DOMAIN_API.md](../CROSS_DOMAIN_API.md)** - Domain translation mechanisms
+- **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Domain translation mechanisms
 - **[Planning](../planning/)** - Evolution roadmap and architectural decisions
 
 ### Key Concepts to Explore
