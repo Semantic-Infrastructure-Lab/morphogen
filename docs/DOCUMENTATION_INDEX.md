@@ -255,7 +255,8 @@ Chemistry simulation framework across multiple domains
 - **visualization-ideas-by-domain.md** (56KB): Comprehensive visualization catalog
 - **advanced-visualizations.md**: Advanced visualization techniques
 - **audio-visualization-ideas.md**: Audio-reactive visuals
-- **visual-domain-quickref.md**: Visual domain quick reference
+- **visual-domain-quickref.md**: Visual domain quick reference (2D animations)
+- **visual3d-quickref.md** (NEW): 3D visualization API reference (PyVista-based)
 
 ### Theoretical Frameworks
 - **universal-domain-frameworks.md** (28KB): Mathematical foundations
@@ -317,7 +318,7 @@ Located in `docs/adr/`:
 - **README.md**: Roadmap directory guide
 
 ### docs/planning/
-- **3D_VISUALIZATION_SYSTEM_PLAN.md** ⭐: Critical path for v1.0 (PyVista, camera, lighting, scene graph)
+- **3D_VISUALIZATION_SYSTEM_PLAN.md** ✅: COMPLETE - 5 phases implemented (26 operators, 55 tests)
 - **PERFORMANCE_INFRASTRUCTURE_RESEARCH.md**: GPU optimization research
 - **README.md**: Planning directory guide
 

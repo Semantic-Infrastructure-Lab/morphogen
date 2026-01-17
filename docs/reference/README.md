@@ -53,7 +53,8 @@
 |----------|------|-------------|
 | [Procedural Graphics Domains](procedural-graphics-domains.md) | 14K | Noise, palettes, color theory, image operations |
 | [Visual Scene Domain](visual-scene-domain.md) | 18K | 3D scene representation, rendering, lighting |
-| [Visual Domain Quick Reference](visual-domain-quickref.md) | 8K | Quick reference for visual operations and types |
+| [Visual Domain Quick Reference](visual-domain-quickref.md) | 8K | Quick reference for 2D visual/animation operations |
+| [Visual3D Quick Reference](visual3d-quickref.md) ⭐ | 12K | **3D visualization API** - PyVista-based mesh, volume, molecular viz |
 
 **For complete domain specifications**, see [Specifications](../specifications/).
 
@@ -68,6 +69,7 @@
 | [Visualization Ideas by Domain](visualization-ideas-by-domain.md) ⭐ | 56K | **Comprehensive catalog** - Visualization concepts organized by domain (audio, physics, fields, agents, optimization, graphs, chemistry, etc.) |
 | [Audio Visualization Ideas](audio-visualization-ideas.md) ⭐ | 40K | **Sonification & audio-visual coupling** - Making computation audible through data sonification |
 | [Advanced Visualizations](advanced-visualizations.md) | 19K | Implemented visualization techniques (spectrograms, phase space, vector fields, particle systems) |
+| [Visual3D Quick Reference](visual3d-quickref.md) ⭐ | 12K | **3D visualization API** - Mesh, volume rendering, streamlines, molecular viz (PyVista) |
 
 **Key Features:**
 - Real-time visualization patterns
@@ -176,13 +178,13 @@ Specifications (detailed implementation)
 
 ## Statistics
 
-**Total Reference Documentation:** ~420KB across 18 documents
+**Total Reference Documentation:** ~432KB across 19 documents
 
 **Breakdown by Category:**
 - Operator Catalogs: ~154KB (5 docs)
-- Visualization/Sonification: ~115KB (3 docs)
+- Visualization/Sonification: ~127KB (4 docs)
 - Theoretical Frameworks: ~84KB (3 docs)
-- Domain Overviews: ~40KB (3 docs)
+- Domain Overviews: ~52KB (4 docs)
 - Patterns & Standards: ~72KB (2 docs)
 
 ---

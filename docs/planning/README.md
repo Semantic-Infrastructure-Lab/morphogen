@@ -18,11 +18,11 @@ This directory contains active strategic planning documents for Morphogen.
 
 ### 3D Visualization System
 **[3D_VISUALIZATION_SYSTEM_PLAN.md](3D_VISUALIZATION_SYSTEM_PLAN.md)** - Comprehensive 3D Viz Roadmap
-- **Status**: ✅ Active - Ready for implementation
-- **Scope**: Phase 1-5 implementation (12 weeks)
-- **Content**: Backend selection (PyVista), operator specs, chemistry integration, camera animation
-- **Created**: 2026-01-05 (session aerial-god-0105)
-- **Use**: For implementing 3D visualization capabilities (unlocks 20+ blocked viz types)
+- **Status**: ✅ COMPLETE - All phases implemented
+- **Scope**: Phases 1-5 complete (26 operators, 55 tests)
+- **Content**: PyVista backend, mesh/volume/molecular viz, camera animation, streamlines
+- **Completed**: 2026-01-05
+- **API Reference**: [visual3d-quickref.md](../reference/visual3d-quickref.md)
 
 ### Performance & Infrastructure Research
 **[PERFORMANCE_INFRASTRUCTURE_RESEARCH.md](PERFORMANCE_INFRASTRUCTURE_RESEARCH.md)** - SIL Tech & Optimization Paths
@@ -91,8 +91,8 @@ Historical planning documents have been moved to `~/Archive/morphogen/docs-archi
 ```
 docs/planning/
 ├── README.md                                    ← You are here
-├── 3D_VISUALIZATION_SYSTEM_PLAN.md             ← Active: 3D viz implementation plan
-├── PERFORMANCE_INFRASTRUCTURE_RESEARCH.md       ← Active: Performance & SIL tech research
+├── 3D_VISUALIZATION_SYSTEM_PLAN.md             ← COMPLETE: 3D viz (5 phases, 26 operators)
+├── PERFORMANCE_INFRASTRUCTURE_RESEARCH.md       ← Reference: Performance & SIL tech research
 ├── KAIRO_2.0_STRATEGIC_ANALYSIS.md             ← Reference: v2.0+ language strategy
 └── (historical planning docs in ~/Archive/)
 ```
