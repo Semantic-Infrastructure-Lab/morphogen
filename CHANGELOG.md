@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Covers: attractors, parameters, noise, time-scales, commitment events, constraints, cycles, coarse-graining
 - Status: Proposed (see `docs/adr/015-first-class-emergence-primitives.md`)
 
+#### Public/Private Documentation Separation (2026-01-22)
+- **Adopted `internal/` pattern**: Clean public/private boundary (inspired by reveal project)
+  - Created `internal/` directory (gitignored) for private docs
+  - Moved `docs/planning/` → `internal/planning/`
+  - Simplified `.gitignore`: one directory boundary vs 15+ fragile patterns
+- **Removed orphaned Philbrick docs**: `docs/analog-platform/` deleted (already in separate philbrick repo per ADR-011)
+- **Cleaned up redirect stubs**: Removed `docs/roadmap/`, `docs/music/` (just contained redirects)
+- **Updated cross-references**: Fixed broken links in CONTRIBUTING.md, STATUS.md, DOCUMENTATION_INDEX.md, guides
+- Result: Public docs in `docs/`, private docs in `internal/`, bulletproof separation
+
 #### Documentation Consolidation (2026-01-22)
 - **Merged `roadmap/` → `planning/`**: All planning documents now in single directory
   - `language-features.md`, `testing-strategy.md` moved to `planning/`

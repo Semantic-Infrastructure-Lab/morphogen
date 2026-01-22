@@ -27,7 +27,7 @@ Morphogen is building toward something transformative: a universal platform wher
 1. **Explore the architecture** — Read [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/domain-architecture.md](docs/architecture/domain-architecture.md)
 2. **Understand the vision** — Check [README.md](README.md) and [docs/philosophy/](docs/philosophy/)
 3. **Review existing work** — Look at [open issues](https://github.com/scottsen/morphogen/issues) and [pull requests](https://github.com/scottsen/morphogen/pulls)
-4. **Check the roadmap** — See [docs/roadmap/language-features.md](docs/roadmap/language-features.md) and [docs/planning/MORPHOGEN_RELEASE_PLAN.md](docs/planning/MORPHOGEN_RELEASE_PLAN.md)
+4. **Check the status** — See [STATUS.md](STATUS.md) for current implementation status
 
 ## Development Setup
 

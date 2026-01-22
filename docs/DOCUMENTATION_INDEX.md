@@ -312,14 +312,7 @@ Located in `docs/adr/`:
 
 **⭐ Primary**: [docs/ROADMAP.md](ROADMAP.md) - Unified roadmap (v0.12.0 → v1.0)
 
-### docs/planning/
-- **language-features.md**: Language evolution plan (v0.12-v1.0 features)
-- **testing-strategy.md**: Comprehensive testing approach
-- **PERFORMANCE_INFRASTRUCTURE_RESEARCH.md**: GPU optimization research
-- **README.md**: Planning directory guide
-- *(3D_VISUALIZATION_SYSTEM_PLAN.md archived 2026-01-22 - implementation complete)*
-
-*Note: docs/roadmap/ consolidated into docs/planning/ (2026-01-22)*
+*Note: Planning docs moved to `internal/planning/` (private, not in git) - 2026-01-22*
 
 ---
 

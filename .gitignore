@@ -1,38 +1,24 @@
 # ============================================================
-# TIA Session Artifacts (belong in ~/src/tia/projects/morphogen/)
+# Private Documentation (all private docs go in internal/)
 # ============================================================
 
-# Session documentation patterns
-*_SUMMARY.md
-*_COMPLETE.md
-*_ANALYSIS.md
-*_ASSESSMENT_*.md
-*_PLAN.md
-*_PROGRESS.md
-*_REPORT.md
-*_STATUS_REPORT.md
-*_IMPLEMENTATION_*.md
-*_FINDINGS.md
-*_RESULTS.md
-*_SESSION_*.md
+# The internal/ directory contains all private documentation:
+#   internal/planning/   - Roadmaps, future work, research
+#   internal/research/   - Explorations, experiments
+#   internal/sessions/   - TIA session artifacts
+# This replaces fragile pattern-based filtering with a clean directory boundary.
+internal/
 
-# Internal planning docs
-NEXT_STEPS.md
-INTERNAL_*.md
-MEETING_*.md
-DRAFT_*.md
-
-# TIA directories (never commit these)
+# TIA system directories
 .tia/
 .beth/
-analysis/
-research/
-sessions/
-internal/
-/planning/
 
 # TIA project metadata
 project.yaml
+
+# Legacy patterns (catch stragglers in project root)
+NEXT_STEPS.md
+DRAFT_*.md
 
 # ============================================================
 # Development Environment
@@ -114,5 +100,3 @@ examples/outputs/
 CODEBASE_ANALYSIS.md
 QUICK_REFERENCE.txt
 *.backup
-
-# Note: claude.md is NOT ignored (project-specific AI instructions are kept)

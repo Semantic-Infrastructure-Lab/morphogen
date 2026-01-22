@@ -297,7 +297,6 @@ Real-time layout with live feedback:
 ### Relevant Documentation
 - **Architecture**: [Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)
 - **Circuit Domain**: [CIRCUIT_DOMAIN_IMPLEMENTATION.md](../CIRCUIT_DOMAIN_IMPLEMENTATION.md)
-- **Planning**: [docs/planning/](../planning/)
 
 ### Potential Workflow
 

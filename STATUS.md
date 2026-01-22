@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-12-12
 **Current Version:** v0.12.0 (December 2025) → v1.0 (2026-Q2)
-**Status:** 39 Production Domains | 606 Operators | Migration Complete ✅ | [**v1.0 Release Plan →**](docs/planning/MORPHOGEN_RELEASE_PLAN.md)
+**Status:** 39 Production Domains | 606 Operators | Migration Complete ✅
 **Detailed Analysis:** [DOMAIN_STATUS_ANALYSIS.md](DOMAIN_STATUS_ANALYSIS.md) | **Migration History:** [docs/guides/DOMAIN_MIGRATION_GUIDE.md](docs/guides/DOMAIN_MIGRATION_GUIDE.md)
 
 ---
@@ -1163,4 +1163,4 @@ The foundation is solid, the architecture is sound, and the path forward is clea
 **Current Status:** Production-Ready - 40 Domains, 500+ Operators, 900+ Tests
 **Target:** v1.0 (2026-Q2)
 
-🚀 **[View v1.0 Release Plan](docs/planning/MORPHOGEN_RELEASE_PLAN.md)** - 24-week roadmap to production release
+🚀 **v1.0 Target:** 2026-Q2
