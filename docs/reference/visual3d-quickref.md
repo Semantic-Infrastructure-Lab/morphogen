@@ -2,7 +2,7 @@
 
 Quick reference for Morphogen's 3D visualization module (`visual3d.py`).
 
-See [3D_VISUALIZATION_SYSTEM_PLAN.md](../planning/3D_VISUALIZATION_SYSTEM_PLAN.md) for architecture documentation.
+**Implementation Status:** Complete (26 operators, 55 tests)
 
 ---
 
@@ -442,7 +442,6 @@ pip install pyvista imageio scipy
 
 ## See Also
 
-- [3D Visualization System Plan](../planning/3D_VISUALIZATION_SYSTEM_PLAN.md) - Architecture documentation
 - [Visual Domain Quick Reference](./visual-domain-quickref.md) - 2D visualization/animation
 - [Advanced Visualizations](./advanced-visualizations.md) - Spectrogram, graph, phase space
 - [Chemistry Specification](../specifications/chemistry.md) - Molecular domain

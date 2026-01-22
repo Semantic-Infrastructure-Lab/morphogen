@@ -2022,9 +2022,9 @@ def test_long_form_stability():
 - [Cross-Domain Examples](../examples/README.md)
 
 **Reference Materials:**
-- [Audio Visualization Ideas](../reference/audio-visualization-ideas.md) - Sonification patterns
+- [Sonification Cookbook](../reference/sonification-cookbook.md) - Sonification patterns
 - [Mathematical Music Frameworks](../reference/mathematical-music-frameworks.md) - Theoretical foundations
-- [Visualization Ideas by Domain](../reference/visualization-ideas-by-domain.md) - Visual representation patterns
+- [Visualization Cookbook](../reference/visualization-cookbook.md) - Visual representation patterns
 
 **Archived:**
 - [AUDIO_SPECIFICATION.md](../../archive/root-level-docs/AUDIO_SPECIFICATION.md) - Historical audio spec (archived)

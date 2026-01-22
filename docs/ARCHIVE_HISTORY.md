@@ -1,6 +1,6 @@
 # Morphogen Documentation Archive History
 
-**Last Updated:** 2026-01-05
+**Last Updated:** 2026-01-22
 
 This document tracks historical documentation that has been moved from the active morphogen repository to `~/Archive/morphogen/` for preservation without cluttering the active codebase.
 
@@ -160,12 +160,10 @@ docs/
 ├── architecture/                 ← System architecture (ACTIVE)
 ├── examples/                     ← Working examples (ACTIVE)
 ├── guides/                       ← Implementation guides (ACTIVE)
-├── music/                        ← Music domain documentation (ACTIVE)
+├── music/                        ← REDIRECT (consolidated 2026-01-22)
 ├── philosophy/                   ← Core principles (ACTIVE)
-├── physics/                      ← Physics domain specs (ACTIVE)
-├── planning/                     ← Strategic planning (ACTIVE)
+├── planning/                     ← Strategic planning & roadmaps (ACTIVE)
 ├── reference/                    ← Reference docs (ACTIVE)
-├── roadmap/                      ← Feature roadmaps (ACTIVE)
 ├── specifications/               ← Technical specs (ACTIVE)
 │   └── (Note: Research specs marked with 🔬 status badges)
 └── use-cases/                    ← Application patterns (ACTIVE)
@@ -241,6 +239,23 @@ ls -R  # Browse archived content
 - Archived aspirational/future specs to `~/Archive/morphogen/docs-archive/2026-01-05/`
 - Added implementation status badges to remaining research specs
 - Removed duplicate operator-registry-expansion.md (consolidated into operator-registry.md)
+
+### Session 4 (rupejo-0122, 2026-01-22)
+**Document Reduction**: 117 → 116 docs (-1 doc, -1 directory)
+**Focus**: Cleanup of completed planning docs, directory consolidation
+
+**Archived to `~/Archive/morphogen/docs-archive/2026-01-22/`**:
+- `planning/3D_VISUALIZATION_SYSTEM_PLAN.md` → Implementation complete (26 operators, 55 tests)
+
+**Directory Consolidation**:
+- Removed `docs/physics/` (single-file directory)
+- Moved `superconductivity-computational-strategy.md` → `use-cases/`
+
+**Index Improvements**:
+- Expanded `specifications/README.md` with full categorized index (25 specs)
+- Added missing `domain-mesh-catalog.md` to `reference/README.md`
+- Fixed outdated "Critical Blocker" in ROADMAP.md (3D viz is complete)
+- Fixed 5 broken references to archived/moved files
 
 **Impact:**
 - Reduced documentation load for new contributors

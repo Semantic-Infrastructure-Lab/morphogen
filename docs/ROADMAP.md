@@ -65,11 +65,10 @@
 
 ### Remaining Gaps ⚠️
 
-**Critical Blocker - 3D Visualization** ⭐:
-- Blocks chemistry visualization (molecular structures, protein rendering)
-- Blocks volumetric data display (isosurfaces, scalar fields)
-- See [3D Visualization System Plan](planning/3D_VISUALIZATION_SYSTEM_PLAN.md) for implementation details
-- Estimated effort: 12 weeks (PyVista integration, camera, lighting, scene graph)
+**3D Visualization** ✅ COMPLETE (2026-01-05):
+- 26 operators implemented in `visual3d.py`
+- 55 tests passing
+- See [Visual3D Quick Reference](reference/visual3d-quickref.md) for API
 
 **Incomplete Molecular Features**:
 - Geometry optimization not implemented (`tests/test_molecular.py:195`)
@@ -337,7 +336,6 @@
 - [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Full doc index
 
 ### Planning
-- [3D Visualization Plan](planning/3D_VISUALIZATION_SYSTEM_PLAN.md) - Critical path for v1.0
 - [Performance Research](planning/PERFORMANCE_INFRASTRUCTURE_RESEARCH.md) - GPU optimization
 - [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) - Historical documents moved to `~/Archive/morphogen/`
 

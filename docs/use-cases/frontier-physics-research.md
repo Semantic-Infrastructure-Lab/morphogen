@@ -415,7 +415,8 @@ With guarantees:
 ## Getting Started
 
 ### Relevant Documentation
-- **[Physics](../physics/)** - Domain specifications
+- **[Physics Domains](../specifications/physics-domains.md)** - Domain specifications
+- **[Superconductivity Strategy](superconductivity-computational-strategy.md)** - Computational approach
 - **[Architecture](../architecture/)** - Multi-domain coupling
 - **[Cross-Domain Patterns](../adr/002-cross-domain-architectural-patterns.md)** - Domain translation mechanisms
 - **[Planning](../planning/)** - Evolution roadmap

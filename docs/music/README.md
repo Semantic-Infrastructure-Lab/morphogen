@@ -1,26 +1,21 @@
 # Music Documentation
 
-**Comprehensive music system documentation for Morphogen**
+> **This directory has been consolidated.**
 
-## Quick Links
+Music documentation has been moved to appropriate locations by type:
 
-- **[Music Documentation Index](MUSIC_DOCUMENTATION_INDEX.md)** - Complete index of all music-related documentation
-- **[Music Implementation Roadmap](MUSIC_IMPLEMENTATION_ROADMAP.md)** - Phase-by-phase implementation plan
+- **Implementation Roadmap**: [planning/music-implementation-roadmap.md](../planning/music-implementation-roadmap.md)
+- **Documentation Index**: [reference/music-documentation-index.md](../reference/music-documentation-index.md)
 
-## Architecture Documents
+**Specifications** remain in `specifications/`:
+- [Ambient Music](../specifications/ambient-music.md)
+- [Audio Synthesis](../specifications/audio-synthesis.md)
+- [Acoustics](../specifications/acoustics.md)
+- [Timbre Extraction](../specifications/timbre-extraction.md)
 
-See main documentation for core architecture:
-- [Music Semantic Layers](../architecture/MUSIC_SEMANTIC_LAYERS.md) - 7-layer architecture (Physical → Compositional)
-- [ADR-013: Music Stack Consolidation](../adr/013-music-stack-consolidation.md) - Decision rationale
-- [Mathematical Music Frameworks](../reference/mathematical-music-frameworks.md) - Theoretical foundations
-
-## Related Specifications
-
-- [Ambient Music](../specifications/ambient-music.md) - Ambient music domain specification
-- [Audio Synthesis](../specifications/audio-synthesis.md) - Audio synthesis specification
-- [Acoustics](../specifications/acoustics.md) - Acoustic modeling
-- [Timbre Extraction](../specifications/timbre-extraction.md) - Timbre analysis
+**Architecture** in `architecture/`:
+- [Music Semantic Layers](../architecture/MUSIC_SEMANTIC_LAYERS.md)
 
 ---
 
-**For detailed navigation, see [MUSIC_DOCUMENTATION_INDEX.md](MUSIC_DOCUMENTATION_INDEX.md)**
+*Consolidated: 2026-01-22*

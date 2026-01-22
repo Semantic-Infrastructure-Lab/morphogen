@@ -19,7 +19,7 @@ This document provides pedagogical metaphors and intuitive frameworks for unders
 **See Also:**
 - [Transform Specification](../specifications/transform.md) - Technical implementation
 - [Advanced Visualizations](./advanced-visualizations.md) - Visualization techniques
-- [Visualization Ideas by Domain](./visualization-ideas-by-domain.md) - Application examples
+- [Visualization Cookbook](./visualization-cookbook.md) - Application examples
 
 ---
 

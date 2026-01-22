@@ -97,7 +97,7 @@ These documents define the fundamental music architecture:
 | **Audio Synthesis Spec** | `morphogen/docs/specifications/audio-synthesis.md` | Synthesis domain specification | ✅ Complete |
 | **Timbre Extraction Spec** | `morphogen/docs/specifications/timbre-extraction.md` | Physical modeling analysis | ✅ Complete |
 | **ADR-009: Ambient Music** | `morphogen/docs/adr/009-ambient-music-generative-domains.md` | Generative audio domains | ✅ Complete |
-| **Audio Visualization Ideas** | `morphogen/docs/reference/audio-visualization-ideas.md` | Cross-domain sonification | ✅ Complete |
+| **Sonification Cookbook** | `morphogen/docs/reference/sonification-cookbook.md` | Cross-domain sonification | ✅ Complete |
 
 ---
 

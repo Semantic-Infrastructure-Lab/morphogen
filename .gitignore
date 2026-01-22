@@ -29,7 +29,7 @@ analysis/
 research/
 sessions/
 internal/
-planning/
+/planning/
 
 # TIA project metadata
 project.yaml

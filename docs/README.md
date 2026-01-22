@@ -138,7 +138,7 @@ Specific real-world applications
 
 **Quick links:**
 - [Multiphysics Success Patterns](reference/multiphysics-success-patterns.md) ⭐ - 12 battle-tested patterns
-- [Visualization Ideas by Domain](reference/visualization-ideas-by-domain.md) ⭐ - Comprehensive catalog (56K)
+- [Visualization Cookbook](reference/visualization-cookbook.md) ⭐ - Comprehensive visualization techniques catalog (56K)
 - [Universal Domain Frameworks](reference/universal-domain-frameworks.md) ⭐ - Mathematical foundations (28K)
 - [Mathematical Transformation Metaphors](reference/math-transformation-metaphors.md) - Intuitive understanding (25K)
 
@@ -146,12 +146,10 @@ Specific real-world applications
 
 **Primary**: **[ROADMAP.md](ROADMAP.md)** ⭐ — Unified development roadmap (v0.12.0 → v1.0)
 
-**Feature-Specific**: [roadmap/](roadmap/)
-- [Language Features](roadmap/language-features.md) — Language evolution roadmap
-- [Testing Strategy](roadmap/testing-strategy.md) — Testing approach
-
-**Strategic Planning**: [planning/](planning/)
-- [KAIRO_2.0_STRATEGIC_ANALYSIS.md](planning/KAIRO_2.0_STRATEGIC_ANALYSIS.md) — v2.0+ language strategy
+**Planning & Strategy**: [planning/](planning/)
+- [Language Features](planning/language-features.md) — Language evolution roadmap
+- [Testing Strategy](planning/testing-strategy.md) — Testing approach
+- [Performance Research](planning/PERFORMANCE_INFRASTRUCTURE_RESEARCH.md) — GPU/MLIR optimization paths
 - See [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) for historical planning documents
 
 ### 📦 [Archive History](ARCHIVE_HISTORY.md) ⭐ NEW
@@ -181,14 +179,14 @@ Documentation of archived materials and their locations
 - **Understand Morphogen's architecture** → Start with [Architecture Overview](architecture/overview.md), then [Domain Architecture](architecture/domain-architecture.md)
 - **Understand transformations intuitively** → Read [Mathematical Transformation Metaphors](reference/math-transformation-metaphors.md)
 - **See the complete ecosystem** → Check [ECOSYSTEM_MAP.md](architecture/ECOSYSTEM_MAP.md) for all domains and roadmap
-- **Understand language roadmap** → Read [Language Features Roadmap](roadmap/language-features.md) ⭐ — Path to 1.0, finalized vs planned features
+- **Understand language roadmap** → Read [Language Features Roadmap](planning/language-features.md) ⭐ — Path to 1.0, finalized vs planned features
 - **Understand cross-domain type safety** → Check [Level 3 Type System](specifications/level-3-type-system.md)
 - **Implement a new domain** → Read [Domain Implementation Guide](guides/domain-implementation.md) and relevant [ADRs](adr/)
 - **Learn about a specific domain** → Check [Specifications](specifications/) for the domain spec, then related [ADRs](adr/)
 - **See Morphogen in action** → Browse [Examples](examples/) and [Use Cases](use-cases/)
 - **Find specific operators** → Search [Reference](reference/) for operator catalogs
 - **Understand a design decision** → Look in [ADRs](adr/)
-- **Track project progress** → See [Roadmap](roadmap/)
+- **Track project progress** → See [Planning](planning/)
 - **Debug an issue** → Start with [Troubleshooting](troubleshooting.md)
 
 ---
@@ -201,7 +199,7 @@ Documentation of archived materials and their locations
   - Moved type system spec to `docs/specifications/level-3-type-system.md`
   - Consolidated archives: moved `archive/historical/` and `archive/root-level-docs/` to `docs/archive/`
   - All documentation now properly organized in `docs/` subdirectories
-- ✅ **Language Features Roadmap** ⭐ **NEW** - Created comprehensive [Language Features Roadmap](roadmap/language-features.md):
+- ✅ **Language Features Roadmap** ⭐ **NEW** - Created comprehensive [Language Features Roadmap](planning/language-features.md):
   - Clear path to language 1.0 (target: 2026 Q2)
   - Production-ready vs planned features (physical units, cross-domain types, MLIR optimization)
   - Features under discussion (macros, effect system, ownership, pattern matching)

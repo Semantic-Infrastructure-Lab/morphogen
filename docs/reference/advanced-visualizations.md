@@ -775,7 +775,7 @@ While Morphogen provides built-in spectral analysis (`spectrogram`, `fft`, `stft
 ### Related Documentation
 - **[Analysis and Visualization Guide](../guides/analysis-visualization.md)** ⭐ NEW - Complete guide to analyzing Morphogen simulations
 - [Mathematical Transformation Metaphors](./math-transformation-metaphors.md) - Intuitive frameworks for understanding transforms
-- [Visualization Ideas by Domain](./visualization-ideas-by-domain.md) - Comprehensive visualization catalog
+- [Visualization Cookbook](./visualization-cookbook.md) - Comprehensive visualization catalog
 - [Transform Specification](../specifications/transform.md) - Technical transform details
 
 ### Domain Documentation

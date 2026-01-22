@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Documentation
+
+#### ADR-015: First-Class Emergence Primitives
+- New architectural decision record proposing promotion of emergence concepts to first-class primitives
+- Covers: attractors, parameters, noise, time-scales, commitment events, constraints, cycles, coarse-graining
+- Status: Proposed (see `docs/adr/015-first-class-emergence-primitives.md`)
+
+#### Documentation Consolidation (2026-01-22)
+- **Merged `roadmap/` → `planning/`**: All planning documents now in single directory
+  - `language-features.md`, `testing-strategy.md` moved to `planning/`
+- **Consolidated `music/`**: Split by document type
+  - `MUSIC_IMPLEMENTATION_ROADMAP.md` → `planning/music-implementation-roadmap.md`
+  - `MUSIC_DOCUMENTATION_INDEX.md` → `reference/music-documentation-index.md`
+- **Renamed for clarity**:
+  - `visualization-ideas-by-domain.md` → `visualization-cookbook.md`
+  - `audio-visualization-ideas.md` → `sonification-cookbook.md`
+- **Fixed**: `.gitignore` now allows `docs/planning/` (was blocking new files)
+- Result: Cleaner organization by document type, all cross-references updated
+
+---
+
 ## [0.11.0] - 2025-11-20
 
 ### 🎉 MAJOR: Project Renamed to Morphogen

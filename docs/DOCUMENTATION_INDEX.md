@@ -252,9 +252,9 @@ Chemistry simulation framework across multiple domains
 - **optimization-algorithms.md**: Optimization operators
 
 ### Visualization & Sonification
-- **visualization-ideas-by-domain.md** (56KB): Comprehensive visualization catalog
+- **visualization-cookbook.md** (56KB): Comprehensive visualization techniques catalog
 - **advanced-visualizations.md**: Advanced visualization techniques
-- **audio-visualization-ideas.md**: Audio-reactive visuals
+- **sonification-cookbook.md** (40KB): Cross-domain sonification patterns
 - **visual-domain-quickref.md**: Visual domain quick reference (2D animations)
 - **visual3d-quickref.md** (NEW): 3D visualization API reference (PyVista-based)
 
@@ -312,15 +312,14 @@ Located in `docs/adr/`:
 
 **⭐ Primary**: [docs/ROADMAP.md](ROADMAP.md) - Unified roadmap (v0.12.0 → v1.0)
 
-### docs/roadmap/
+### docs/planning/
 - **language-features.md**: Language evolution plan (v0.12-v1.0 features)
 - **testing-strategy.md**: Comprehensive testing approach
-- **README.md**: Roadmap directory guide
-
-### docs/planning/
-- **3D_VISUALIZATION_SYSTEM_PLAN.md** ✅: COMPLETE - 5 phases implemented (26 operators, 55 tests)
 - **PERFORMANCE_INFRASTRUCTURE_RESEARCH.md**: GPU optimization research
 - **README.md**: Planning directory guide
+- *(3D_VISUALIZATION_SYSTEM_PLAN.md archived 2026-01-22 - implementation complete)*
+
+*Note: docs/roadmap/ consolidated into docs/planning/ (2026-01-22)*
 
 ---
 
@@ -472,6 +471,22 @@ done
 ---
 
 ## 🧹 Documentation Consolidation
+
+### 2026-01-22: Directory Consolidation (117 → 121 docs)
+
+**Merged directories by document type:**
+- **Merged**: `roadmap/` → `planning/` (language-features.md, testing-strategy.md moved)
+- **Consolidated**: `music/` → split by type:
+  - `music/MUSIC_IMPLEMENTATION_ROADMAP.md` → `planning/music-implementation-roadmap.md`
+  - `music/MUSIC_DOCUMENTATION_INDEX.md` → `reference/music-documentation-index.md`
+- **Updated**: All cross-references to point to new locations
+- **Left**: Redirect READMEs in `roadmap/` and `music/` for backwards compatibility
+
+**Renamed for clarity:**
+- `visualization-ideas-by-domain.md` → `visualization-cookbook.md`
+- `audio-visualization-ideas.md` → `sonification-cookbook.md`
+
+**Result**: Cleaner organization by document type rather than domain. All roadmaps in `planning/`, all reference docs in `reference/`.
 
 ### 2026-01-05: Research Spec Cleanup (117 docs)
 **Final document count: 117** (from original 156, -25% reduction)

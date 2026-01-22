@@ -34,8 +34,29 @@ Decision to support chemistry and chemical engineering workflows.
 ### [ADR-007: GPU-First Domains](007-gpu-first-domains.md)
 Major paradigm shift: GPU-first execution for certain domains (BI domain).
 
-### [ADR-008: Procedural Generation Domain](008-procedural-generation.md)
+### [ADR-008: Procedural Generation Domain](008-procedural-generation-domain.md)
 Adds procedural content generation as a core domain.
+
+### [ADR-009: Ambient Music / Generative Domains](009-ambient-music-generative-domains.md)
+Adds ambient music generation and generative audio domains.
+
+### [ADR-010: Ecosystem Branding & Naming Strategy](010-ecosystem-branding-naming-strategy.md)
+Establishes naming conventions and branding for the Morphogen ecosystem.
+
+### [ADR-011: Project Renaming - Morphogen & Philbrick](011-project-renaming-morphogen-philbrick.md)
+Renames Kairo → Morphogen (honoring Turing's morphogenesis work) and establishes Philbrick as the analog hardware sister project.
+
+### [ADR-012: Universal Domain Translation](012-universal-domain-translation.md)
+Defines patterns for translating concepts between domains.
+
+### [ADR-013: Music Stack Consolidation](013-music-stack-consolidation.md)
+Consolidates audio/music domains into unified architecture.
+
+### [ADR-014: Complexity Refactoring Plan](014-complexity-refactoring-plan.md)
+Addresses technical debt and complexity in the codebase.
+
+### [ADR-015: First-Class Emergence Primitives](015-first-class-emergence-primitives.md) *(Proposed)*
+Promotes attractors, constraints, time-scales, noise typing, and phase transitions to first-class status. Establishes the design principle: "Promote to first-class whatever the system stabilizes into—and whatever constrains what can stabilize."
 
 ---
 

@@ -51,10 +51,12 @@
 
 | Overview | Size | Description |
 |----------|------|-------------|
+| [Cross-Domain Mesh Catalog](domain-mesh-catalog.md) | 8K | Domain connectivity map, transformation paths between domains |
 | [Procedural Graphics Domains](procedural-graphics-domains.md) | 14K | Noise, palettes, color theory, image operations |
 | [Visual Scene Domain](visual-scene-domain.md) | 18K | 3D scene representation, rendering, lighting |
 | [Visual Domain Quick Reference](visual-domain-quickref.md) | 8K | Quick reference for 2D visual/animation operations |
 | [Visual3D Quick Reference](visual3d-quickref.md) ⭐ | 12K | **3D visualization API** - PyVista-based mesh, volume, molecular viz |
+| [Music Documentation Index](music-documentation-index.md) | 10K | Cross-project music docs navigation (Morphogen + RiffStack) |
 
 **For complete domain specifications**, see [Specifications](../specifications/).
 
@@ -66,8 +68,8 @@
 
 | Resource | Size | Description |
 |----------|------|-------------|
-| [Visualization Ideas by Domain](visualization-ideas-by-domain.md) ⭐ | 56K | **Comprehensive catalog** - Visualization concepts organized by domain (audio, physics, fields, agents, optimization, graphs, chemistry, etc.) |
-| [Audio Visualization Ideas](audio-visualization-ideas.md) ⭐ | 40K | **Sonification & audio-visual coupling** - Making computation audible through data sonification |
+| [Visualization Cookbook](visualization-cookbook.md) ⭐ | 56K | **Comprehensive catalog** - Visualization techniques organized by domain (audio, physics, fields, agents, optimization, graphs, chemistry, etc.) |
+| [Sonification Cookbook](sonification-cookbook.md) ⭐ | 40K | **Sonification & audio-visual coupling** - Making computation audible through data sonification |
 | [Advanced Visualizations](advanced-visualizations.md) | 19K | Implemented visualization techniques (spectrograms, phase space, vector fields, particle systems) |
 | [Visual3D Quick Reference](visual3d-quickref.md) ⭐ | 12K | **3D visualization API** - Mesh, volume rendering, streamlines, molecular viz (PyVista) |
 
