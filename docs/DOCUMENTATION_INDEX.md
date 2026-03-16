@@ -33,6 +33,20 @@
 
 ---
 
+### docs/STRATEGY.md
+**Purpose**: Strategic path to v1.0 — honest assessment of what's real vs. aspirational, what to work on, what to defer, and the post-v1.0 vision
+**Key Sections**:
+- The Honest Assessment (what's solid, aspirational, broken)
+- The Strategic Choice (Python API-first vs DSL-first)
+- What v1.0 Should Actually Be (5 concrete success criteria)
+- Immediate Work (fix broken demos, PyPI, canonical examples)
+- What NOT to Work On Before v1.0
+- Post-v1.0 Vision (symbolic execution, MLIR, category-theoretic optimization, Philbrick)
+
+**Navigate**: `reveal docs/STRATEGY.md`
+
+---
+
 ### docs/PITCH.md
 **Purpose**: 2-minute overview of what Morphogen is and why it matters — the entry point for new visitors
 **Key Sections**:

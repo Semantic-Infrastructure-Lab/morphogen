@@ -431,6 +431,7 @@ flow(dt=1.0, steps=10000) {
 ### Getting Started
 
 - **[2-Minute Pitch](docs/PITCH.md)** - What Morphogen is and why it matters
+- **[Strategic Path to v1.0](docs/STRATEGY.md)** - What's real, what to build next, post-v1.0 vision
 - **[Getting Started Guide](docs/getting-started.md)** - Installation, first program, core concepts
 - **[Domain Catalog](docs/DOMAINS.md)** - Complete catalog of all 40+ domains with examples
 - **[docs/README.md](docs/README.md)** - Documentation navigation and index
