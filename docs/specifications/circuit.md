@@ -1090,14 +1090,15 @@ circuit TubeScreamer {
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Linear components (R, L, C)** | ❌ Planned | Phase 1 |
-| **DC operating point** | ❌ Planned | Phase 1 |
-| **AC sweep** | ❌ Planned | Phase 1 |
-| **Transient (Euler, trapezoidal)** | ❌ Planned | Phase 1 |
-| **Nonlinear components (diode, BJT, MOSFET)** | ❌ Planned | Phase 2 |
-| **Op-amp models** | ❌ Planned | Phase 2 |
-| **Newton-Raphson solver** | ❌ Planned | Phase 2 |
-| **Audio integration** | ❌ Planned | Phase 3 |
+| **Linear components (R, L, C)** | ✅ Done | `add_resistor`, `add_inductor`, `add_capacitor` |
+| **DC operating point** | ✅ Done | `dc_analysis` — MNA direct solve |
+| **AC sweep** | ✅ Done | `ac_analysis` — complex impedance at each frequency |
+| **Transient (backward Euler)** | ✅ Done | `transient_analysis` — companion models for C, L; op-amps supported |
+| **Diode (Shockley model)** | ✅ Done | `add_diode` — Is, n_factor; forward/reverse validated against Brent |
+| **Newton-Raphson solver** | ✅ Done | `_solve_newton_raphson` — 100 iter, 1e-8V tol, clamped companion |
+| **Op-amp models** | ✅ Done | `add_opamp` — finite gain, MNA stamp; DC, AC, transient |
+| **Audio integration** | ✅ Done | `process_audio` — transient stepping per sample; RC/LC/diode memory |
+| **Nonlinear BJT, MOSFET** | ❌ Planned | Phase 2 |
 | **Tube models** | ❌ Planned | Phase 3 |
 | **PCB geometry integration** | ❌ Planned | Phase 4 |
 | **Parasitic extraction** | ❌ Planned | Phase 4 |

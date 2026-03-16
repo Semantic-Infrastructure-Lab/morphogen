@@ -225,8 +225,8 @@ class TestTransientAnalysis:
     """Tests for time-domain transient analysis."""
 
     def test_rc_step_response(self):
-        """Test RC circuit step response (charging)."""
-        # R=1kΩ, C=100µF, V=5V -> τ = RC = 0.1s
+        """Test RC circuit step response (charging): V_cap → V_source with τ = RC."""
+        # R=1kΩ, C=100µF, V=5V -> τ = RC = 0.1s, dt=1e-4 → 1000 steps per τ
         c = circuit.create(num_nodes=3, dt=1e-4)
         c = circuit.add_voltage_source(c, node_pos=1, node_neg=0, voltage=5.0, name="V1")
         c = circuit.add_resistor(c, node1=1, node2=2, resistance=1000.0, name="R1")
@@ -235,9 +235,14 @@ class TestTransientAnalysis:
         duration = 0.5  # 5 time constants
         time_points, voltage_history = circuit.transient_analysis(c, duration)
 
-        # Check that capacitor voltage approaches source voltage
-        final_voltage = voltage_history[-1, 1]  # Node 2 (capacitor voltage)
-        assert final_voltage > 4.5  # Should be close to 5V after 5τ
+        # After 5τ (duration=0.5s), capacitor voltage (node 2) should be close to 5V
+        final_voltage = voltage_history[-1, 2]  # Node 2 is the capacitor terminal
+        assert final_voltage > 4.5, f"Expected V_cap > 4.5V after 5τ, got {final_voltage:.4f}V"
+
+        # At 1τ (1000 steps), should be ~63% of 5V = ~3.15V
+        tau_steps = int(1000.0 * 100e-6 * 1e4)  # R*C*sr = 1000*100e-6/1e-4 = 1000
+        v_at_tau = voltage_history[tau_steps, 2]
+        assert 2.5 < v_at_tau < 4.0, f"Expected ~3.15V (63%) at 1τ, got {v_at_tau:.4f}V"
 
     def test_rl_step_response(self):
         """Test RL circuit step response (current rise)."""
@@ -631,6 +636,149 @@ class TestDiodeCircuits:
         c = circuit.add_capacitor(c, 1, 0, cap, "C1")
         z = circuit.get_impedance(c, 1, 0, frequency=freq)
         assert abs(abs(z) - expected_magnitude) < 5.0  # within 5 Ω
+
+
+class TestProcessAudio:
+    """Tests for process_audio: circuit-audio integration."""
+
+    def _make_audio_buffer(self, data, sample_rate=48000):
+        from morphogen.stdlib.audio import AudioBuffer
+        return AudioBuffer(np.array(data, dtype=float), sample_rate)
+
+    def test_process_audio_resistive_divider_gain(self):
+        """Resistive divider scales signal; no capacitor memory needed."""
+        sr = 48000
+        c = circuit.create(num_nodes=3, dt=1.0 / sr)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 2, 1000.0, "R1")
+        c = circuit.add_resistor(c, 2, 0, 1000.0, "R2")
+
+        signal = np.array([1.0, -1.0, 0.5, -0.5])
+        audio_in = self._make_audio_buffer(signal, sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=2)
+
+        expected = signal * 0.5  # voltage divider
+        np.testing.assert_allclose(out.data, expected, atol=1e-6)
+
+    def test_process_audio_output_sample_rate_preserved(self):
+        """Output sample rate matches input."""
+        sr = 44100
+        c = circuit.create(num_nodes=2, dt=1.0 / sr)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 0, 1000.0, "R1")
+
+        audio_in = self._make_audio_buffer([0.1, 0.2], sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=1)
+        assert out.sample_rate == sr
+
+    def test_process_audio_rc_lowpass_has_memory(self):
+        """RC lowpass: step input should cause exponential rise, not instant response.
+
+        If process_audio used dc_analysis each sample, the capacitor would be
+        invisible and output would equal input immediately. With transient stepping,
+        the output rises toward the input with time constant RC.
+        """
+        sr = 10000
+        R = 1000.0
+        C = 100e-6  # RC = 0.1 s → tau = 0.1 s, step to ~63% after 1000 samples
+        dt = 1.0 / sr
+
+        c = circuit.create(num_nodes=3, dt=dt)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 2, R, "R1")
+        c = circuit.add_capacitor(c, 2, 0, C, "C1")
+
+        # Step from 0 → 1V; output node 2 (across capacitor)
+        num_samples = int(0.5 * sr)  # 0.5 seconds
+        step = np.ones(num_samples)
+        audio_in = self._make_audio_buffer(step, sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=2)
+
+        # After 1 tau (1000 samples), should be ~63% of final value
+        tau_idx = int(R * C * sr)
+        v_at_tau = out.data[tau_idx]
+        assert 0.55 < v_at_tau < 0.72, (
+            f"RC step response at 1 tau should be ~0.63, got {v_at_tau:.4f}. "
+            "Likely dc_analysis bug: capacitor has no memory."
+        )
+
+        # Output should NOT be instant (dc_analysis would give ~1.0 immediately)
+        assert out.data[10] < 0.5, (
+            f"Output too fast after 10 samples ({out.data[10]:.4f}), "
+            "suggests no capacitor memory (dc_analysis bug)."
+        )
+
+    def test_process_audio_rc_final_value(self):
+        """After many tau, RC output converges to input voltage."""
+        sr = 10000
+        R = 100.0
+        C = 100e-6  # RC = 0.01 s → 5 tau = 0.05 s = 500 samples
+
+        c = circuit.create(num_nodes=3, dt=1.0 / sr)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 2, R, "R1")
+        c = circuit.add_capacitor(c, 2, 0, C, "C1")
+
+        step = np.ones(int(0.2 * sr))  # 0.2 s >> 5 tau
+        audio_in = self._make_audio_buffer(step, sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=2)
+
+        assert out.data[-1] > 0.99, f"Expected convergence to ~1V, got {out.data[-1]:.4f}"
+
+    def test_process_audio_opamp_gain(self):
+        """Op-amp inverting amplifier via process_audio: output = -gain * input."""
+        sr = 48000
+        gain = 5.0
+        c = circuit.create(num_nodes=4, dt=1.0 / sr)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 2, 1000.0, "Rin")
+        c = circuit.add_opamp(c, node_in_pos=0, node_in_neg=2, node_out=3, name="U1")
+        c = circuit.add_resistor(c, 2, 3, gain * 1000.0, "Rfb")
+
+        signal = np.array([0.1, -0.2, 0.3])
+        audio_in = self._make_audio_buffer(signal, sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=3)
+
+        # Inverting amplifier: V_out = -gain * V_in
+        np.testing.assert_allclose(out.data, -gain * signal, rtol=5e-3,
+                                   err_msg="Op-amp transient gain wrong (opamp not stamped in _build_transient_matrices)")
+
+    def test_transient_opamp_gain(self):
+        """Op-amp gain works in transient_analysis (was broken: opamps silently dropped)."""
+        dt = 1e-5
+        gain = 3.0
+        c = circuit.create(num_nodes=4, dt=dt)
+        c = circuit.add_voltage_source(c, 1, 0, 1.0, "Vs")
+        c = circuit.add_resistor(c, 1, 2, 1000.0, "Rin")
+        c = circuit.add_opamp(c, node_in_pos=0, node_in_neg=2, node_out=3, name="U1")
+        c = circuit.add_resistor(c, 2, 3, gain * 1000.0, "Rfb")
+
+        _, v_hist = circuit.transient_analysis(c, duration=5 * dt)
+
+        # Steady state: V3 = -gain * V1 = -3V
+        v_out = v_hist[-1, 3]
+        assert abs(v_out - (-gain)) < 0.01, (
+            f"Op-amp transient gain wrong: expected {-gain}V, got {v_out:.4f}V. "
+            "Likely opamps not stamped in _build_transient_matrices."
+        )
+
+    def test_process_audio_diode_clipping(self):
+        """Diode + resistor: clips positive half above ~0.6V, passes negative."""
+        sr = 10000
+        c = circuit.create(num_nodes=3, dt=1.0 / sr)
+        c = circuit.add_voltage_source(c, 1, 0, 0.0, "Vin")
+        c = circuit.add_resistor(c, 1, 2, 1000.0, "R1")
+        c = circuit.add_diode(c, node_anode=2, node_cathode=0, name="D1")
+
+        # Sweep +/- amplitudes
+        amps = [0.1, 0.3, 0.7, 1.0, 2.0]
+        signal = np.array(amps)
+        audio_in = self._make_audio_buffer(signal, sr)
+        out = circuit.process_audio(c, audio_in, input_node=1, output_node=2)
+
+        # Forward-biased: all outputs should be clamped below ~0.75V (diode drop)
+        for v in out.data:
+            assert v < 0.75, f"Diode should clamp output, got {v:.4f}V"
 
 
 if __name__ == "__main__":

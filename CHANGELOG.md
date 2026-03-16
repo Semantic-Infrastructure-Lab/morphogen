@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (juceje-0315, 2026-03-15)
+- **`process_audio` transient bug**: was calling `dc_analysis` per sample — capacitors and inductors had no memory across samples. Now uses proper backward Euler transient stepping (matches `transient_analysis` logic). Maintained `voltages` and `inductor_currents` state across all samples.
+- **Capacitor companion model sign bug**: `_build_transient_matrices` had `i_eq = -C*v_old/dt` — wrong sign, Norton current fought the charge instead of maintaining it. Fixed to `i_eq = +C*v_old/dt`. Previously masked by a test checking the wrong node.
+- **Op-amps invisible in transient analysis**: `_build_transient_matrices` had no `OPAMP` case — op-amps were silently dropped, creating a singular/under-constrained matrix. Added op-amp stamping identical to DC path. `n` in both `transient_analysis` and `process_audio` now includes `num_opamps`.
+- **`test_rc_step_response` checked wrong node**: was asserting `voltage_history[-1, 1]` (the input node, forced to source voltage) instead of `voltage_history[-1, 2]` (the capacitor terminal). Fixed with correct node + meaningful tau assertion.
+
+### Added (juceje-0315, 2026-03-15)
+- **Tube Screamer example**: `examples/circuit/guitar_distortion_pedal.py` now demos two circuits: (1) op-amp overdrive with tone control RC filter, (2) Tube Screamer soft clipper with antiparallel diodes in parallel with Rfb — clips to ±0.57V regardless of drive gain
+
+### Tests (juceje-0315, 2026-03-15)
+- `test_circuit`: 43 → 50 tests — `process_audio` with RC memory (validates transient fix), final value convergence, op-amp gain via `process_audio`, op-amp gain via `transient_analysis`, diode clipping via `process_audio`
+
+### Documentation (juceje-0315, 2026-03-15)
+- `docs/specifications/circuit.md` §12 Implementation Status: updated all implemented features from "❌ Planned" to "✅ Done" with notes (R/L/C, DC, AC, transient, diode/NR, op-amp, audio integration)
+
 ### Added (scorching-thunder-0315, 2026-03-15)
 - **Diode component**: `circuit.add_diode(circuit, node_anode, node_cathode, Is=1e-14, n_factor=1.0)` — Shockley model
 - **Newton-Raphson nonlinear solver**: `_solve_newton_raphson`, `_build_mna_matrices_nonlinear` — invoked automatically by `dc_analysis` and `transient_analysis` when diodes are present; linear circuits unchanged

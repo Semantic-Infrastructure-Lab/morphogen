@@ -708,16 +708,17 @@ class CircuitOperations:
         A = np.zeros((n, n))
         b = np.zeros(n)
         vsource_idx = 0
+        opamp_idx = 0
 
         for comp in circuit.components:
             if comp.comp_type == ComponentType.RESISTOR:
                 g = 1.0 / comp.value if comp.value != 0 else 1e-12
                 CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, g)
             elif comp.comp_type == ComponentType.CAPACITOR:
-                # Backward Euler companion: g_eq = C/dt, i_eq = -C*v_old/dt
+                # Backward Euler companion: g_eq = C/dt, i_norton = C*v_old/dt (into n1)
                 g_eq = comp.value / circuit.dt
                 v_old = voltages[comp.node1] - voltages[comp.node2]
-                i_eq = -comp.value * v_old / circuit.dt
+                i_eq = comp.value * v_old / circuit.dt
                 CircuitOperations._stamp_companion_element(
                     A, b, comp.node1, comp.node2, g_eq, i_eq)
             elif comp.comp_type == ComponentType.INDUCTOR:
@@ -733,6 +734,11 @@ class CircuitOperations:
                 CircuitOperations._stamp_voltage_source(
                     A, b, comp.node1, comp.node2, vsource_row, comp.value)
                 vsource_idx += 1
+            elif comp.comp_type == ComponentType.OPAMP:
+                opamp_row = circuit.num_nodes - 1 + num_vsources + opamp_idx
+                CircuitOperations._stamp_opamp(
+                    A, comp.node1, comp.node2, comp.node3, opamp_row, comp.value)
+                opamp_idx += 1
 
         return A, b
 
@@ -768,7 +774,9 @@ class CircuitOperations:
 
         num_vsources = sum(1 for c in circuit.components
                           if c.comp_type == ComponentType.VOLTAGE_SOURCE)
-        n = circuit.num_nodes - 1 + num_vsources
+        num_opamps = sum(1 for c in circuit.components
+                        if c.comp_type == ComponentType.OPAMP)
+        n = circuit.num_nodes - 1 + num_vsources + num_opamps
         voltage_history = np.zeros((num_steps, circuit.num_nodes))
 
         nonlinear = CircuitOperations._has_nonlinear(circuit)
@@ -865,17 +873,45 @@ class CircuitOperations:
         if input_source is None:
             raise ValueError(f"Input component '{input_component}' not found in circuit")
 
-        # Process each sample
+        # Initialize transient state
+        voltages = np.zeros(circuit.num_nodes)
+        inductor_currents: Dict[str, float] = {}
+        for comp in circuit.components:
+            if comp.comp_type == ComponentType.INDUCTOR:
+                inductor_currents[comp.name] = 0.0
+
+        num_vsources = sum(1 for c in circuit.components
+                          if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        num_opamps = sum(1 for c in circuit.components
+                        if c.comp_type == ComponentType.OPAMP)
+        n = circuit.num_nodes - 1 + num_vsources + num_opamps
+        nonlinear = CircuitOperations._has_nonlinear(circuit)
+
+        # Process each sample using proper transient stepping (backward Euler)
         for i in range(num_samples):
-            # Set input voltage from audio sample
             input_source.value = float(audio_data[i])
 
-            # Run one transient step (backward Euler integration)
-            # This is a simplified single-step DC analysis with reactive components
-            circuit = CircuitOperations.dc_analysis(circuit)
+            if nonlinear:
+                voltages, x = CircuitOperations._solve_newton_raphson(
+                    circuit, voltages, inductor_currents)
+            else:
+                A, b = CircuitOperations._build_transient_matrices(
+                    circuit, n, num_vsources, voltages, inductor_currents)
+                try:
+                    x = np.linalg.solve(A, b)
+                except np.linalg.LinAlgError:
+                    x = np.linalg.lstsq(A, b, rcond=None)[0]
+                voltages = np.zeros(circuit.num_nodes)
+                voltages[1:] = x[:circuit.num_nodes - 1]
 
-            # Read output voltage
-            output_data[i] = CircuitOperations.get_node_voltage(circuit, output_node)
+            # Update inductor state (backward Euler)
+            for comp in circuit.components:
+                if comp.comp_type == ComponentType.INDUCTOR:
+                    v = voltages[comp.node1] - voltages[comp.node2]
+                    inductor_currents[comp.name] = (
+                        inductor_currents.get(comp.name, 0.0) + v * circuit.dt / comp.value)
+
+            output_data[i] = voltages[output_node]
 
         # Create output AudioBuffer
         from morphogen.stdlib.audio import AudioBuffer
