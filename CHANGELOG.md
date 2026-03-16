@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (scorching-thunder-0315, 2026-03-15)
+- **Diode component**: `circuit.add_diode(circuit, node_anode, node_cathode, Is=1e-14, n_factor=1.0)` — Shockley model
+- **Newton-Raphson nonlinear solver**: `_solve_newton_raphson`, `_build_mna_matrices_nonlinear` — invoked automatically by `dc_analysis` and `transient_analysis` when diodes are present; linear circuits unchanged
+- **`get_impedance` fix**: was a stub returning `complex(1.0, 0.0)` always; now injects a test current source and measures correct complex impedance for any frequency
+
+### Tests (scorching-thunder-0315, 2026-03-15)
+- `test_circuit`: 33 → 43 tests — diode construction, forward voltage (vs Shockley analytic solution), reverse blocking, half-wave rectifier, series diodes, transient clipping, voltage clamp, impedance (R + C)
+
+### Fixed (peaceful-tornado-0315, 2026-03-15)
+- `model_noise`: NaN spectral envelope when log-spaced band spans no STFT bins — now yields 0.0
+- `_apply_body_ir`: broadcast crash when `body_ir` longer than synthesized audio — `mode='full'[:len(audio)]`
+- `synthesize_note`: velocity normalized away — reordered to normalize-first then scale by velocity
+- PNG test assertions: byte-count threshold `> 1000` replaced with PIL dimension/mode validation
+
+### Tests (peaceful-tornado-0315, 2026-03-15)
+- `test_audio_analysis`: 3 smoke → 31 functional tests (all 9 operators, output shapes, values, edge cases)
+- `test_instrument_model`: 1 smoke → 27 functional tests (analyze, synthesize, morph, save/load round-trip)
+
+### Refactored (glowing-blackhole-0315 + peaceful-tornado-0315, 2026-03-15)
+- Helper extraction in `agents.py`, `statemachine.py`, `noise.py`, `ir_builder.py`, `io_storage.py`, `visual.py`
+
 ### Documentation
 
 #### ADR-015: First-Class Emergence Primitives

@@ -4,7 +4,8 @@ This module provides circuit analysis and simulation capabilities including:
 - DC analysis using Modified Nodal Analysis (MNA)
 - AC analysis for frequency response
 - Transient analysis for time-domain simulation
-- Support for basic components: resistors, capacitors, inductors, voltage/current sources
+- Nonlinear analysis via Newton-Raphson iteration (diodes)
+- Support for: resistors, capacitors, inductors, voltage/current sources, op-amps, diodes
 """
 
 from typing import Dict, List, Tuple, Optional, Callable
@@ -24,6 +25,9 @@ except ImportError:
     AUDIO_AVAILABLE = False
 
 
+_Vt = 0.02585  # Thermal voltage at 300K (kT/q), in volts
+
+
 class ComponentType(Enum):
     """Types of circuit components."""
     RESISTOR = "resistor"
@@ -32,6 +36,7 @@ class ComponentType(Enum):
     VOLTAGE_SOURCE = "voltage_source"
     CURRENT_SOURCE = "current_source"
     OPAMP = "opamp"
+    DIODE = "diode"
     GROUND = "ground"
 
 
@@ -57,6 +62,7 @@ class Component:
     node3: Optional[int] = None  # For op-amps (output node)
     node4: Optional[int] = None  # For op-amps (vcc - optional)
     node5: Optional[int] = None  # For op-amps (vee - optional)
+    params: Dict = field(default_factory=dict)  # Extra params (e.g. diode ideality factor)
 
     def __post_init__(self):
         if not self.name:
@@ -289,6 +295,53 @@ class CircuitOperations:
         circuit.components.append(comp)
         return circuit
 
+    @staticmethod
+    @operator(
+        domain="circuit",
+        category=OpCategory.MUTATE,
+        signature="(circuit: Circuit, node_anode: int, node_cathode: int, Is: float, n_factor: float, name: str) -> Circuit",
+        deterministic=True,
+        doc="Add a diode to the circuit (Shockley model, solved via Newton-Raphson)"
+    )
+    def add_diode(circuit: Circuit, node_anode: int, node_cathode: int,
+                  Is: float = 1e-14, n_factor: float = 1.0, name: str = "") -> Circuit:
+        """Add a diode to the circuit using the Shockley diode model.
+
+        I_D = Is * (exp(V_D / (n * Vt)) - 1)
+
+        Diodes require the Newton-Raphson solver, which is invoked automatically
+        by dc_analysis and transient_analysis when nonlinear components are present.
+
+        Args:
+            circuit: Circuit to modify
+            node_anode: Anode node (positive terminal, current flows in)
+            node_cathode: Cathode node (negative terminal, current flows out)
+            Is: Saturation current in amperes (default: 1e-14 A, silicon)
+            n_factor: Ideality factor (default: 1.0; Schottky ~1, silicon ~1-2)
+            name: Component name
+
+        Returns:
+            Modified circuit
+
+        Example:
+            # Half-wave rectifier
+            c = circuit.create(num_nodes=3)
+            c = circuit.add_voltage_source(c, 1, 0, 5.0, "Vin")
+            c = circuit.add_diode(c, 1, 2, name="D1")       # anode=1, cathode=2
+            c = circuit.add_resistor(c, 2, 0, 1000.0, "Rload")
+            c = circuit.dc_analysis(c)  # ~4.4V at node 2 (5V - 0.6V drop)
+        """
+        comp = Component(
+            comp_type=ComponentType.DIODE,
+            node1=node_anode,
+            node2=node_cathode,
+            value=Is,
+            name=name,
+            params={'n_factor': n_factor}
+        )
+        circuit.components.append(comp)
+        return circuit
+
     # --- MNA Stamp Helpers ---
 
     @staticmethod
@@ -356,6 +409,129 @@ class CircuitOperations:
             b[n2-1] -= i_eq
 
     @staticmethod
+    def _has_nonlinear(circuit: Circuit) -> bool:
+        """Return True if circuit contains nonlinear components (e.g. diodes)."""
+        return any(c.comp_type == ComponentType.DIODE for c in circuit.components)
+
+    @staticmethod
+    def _diode_current(vd: float, Is: float, n_factor: float) -> float:
+        """Shockley equation with clamping for numerical stability."""
+        vd_clamped = np.clip(vd, -40 * _Vt, 40 * _Vt)
+        return Is * (np.exp(vd_clamped / (n_factor * _Vt)) - 1.0)
+
+    @staticmethod
+    def _diode_conductance(vd: float, Is: float, n_factor: float) -> float:
+        """Small-signal conductance dI/dV, clamped to a minimum for stability."""
+        vd_clamped = np.clip(vd, -40 * _Vt, 40 * _Vt)
+        return max(Is / (n_factor * _Vt) * np.exp(vd_clamped / (n_factor * _Vt)), 1e-12)
+
+    @staticmethod
+    def _build_mna_matrices_nonlinear(
+        circuit: Circuit,
+        voltages: np.ndarray,
+        inductor_currents: Optional[Dict[str, float]] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Build MNA matrices with diodes linearized (companion model) at current voltages.
+
+        When inductor_currents is None: DC mode (caps=open, inductors=short).
+        When inductor_currents is a dict: transient mode (backward Euler companions).
+        """
+        num_vsources = sum(1 for c in circuit.components if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        num_opamps = sum(1 for c in circuit.components if c.comp_type == ComponentType.OPAMP)
+        n = circuit.num_nodes - 1 + num_vsources + num_opamps
+
+        A = np.zeros((n, n))
+        b = np.zeros(n)
+        vsource_idx = 0
+        opamp_idx = 0
+
+        for comp in circuit.components:
+            if comp.comp_type == ComponentType.RESISTOR:
+                g = 1.0 / comp.value if comp.value != 0 else 1e-12
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, g)
+
+            elif comp.comp_type == ComponentType.CAPACITOR:
+                if inductor_currents is not None:
+                    g_eq = comp.value / circuit.dt
+                    v_old = voltages[comp.node1] - voltages[comp.node2]
+                    i_eq = -comp.value * v_old / circuit.dt
+                    CircuitOperations._stamp_companion_element(A, b, comp.node1, comp.node2, g_eq, i_eq)
+                # DC: capacitor = open circuit (omit)
+
+            elif comp.comp_type == ComponentType.INDUCTOR:
+                if inductor_currents is not None:
+                    g_eq = circuit.dt / comp.value
+                    i_eq = inductor_currents.get(comp.name, 0.0)
+                    CircuitOperations._stamp_companion_element(A, b, comp.node1, comp.node2, g_eq, i_eq)
+                else:
+                    CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, 1e12)
+
+            elif comp.comp_type == ComponentType.CURRENT_SOURCE:
+                CircuitOperations._stamp_current_source(b, comp.node1, comp.node2, comp.value)
+
+            elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
+                vsource_row = circuit.num_nodes - 1 + vsource_idx
+                CircuitOperations._stamp_voltage_source(A, b, comp.node1, comp.node2, vsource_row, comp.value)
+                vsource_idx += 1
+
+            elif comp.comp_type == ComponentType.OPAMP:
+                opamp_row = circuit.num_nodes - 1 + num_vsources + opamp_idx
+                CircuitOperations._stamp_opamp(A, comp.node1, comp.node2, comp.node3, opamp_row, comp.value)
+                opamp_idx += 1
+
+            elif comp.comp_type == ComponentType.DIODE:
+                Is = comp.value
+                n_factor = comp.params.get('n_factor', 1.0)
+                vd = voltages[comp.node1] - voltages[comp.node2]
+                # Use clamped operating point for ALL companion model quantities so
+                # the linearization is consistent: i_norton = I_D(vd_op) - g_D(vd_op)*vd_op
+                vd_op = np.clip(vd, -40 * _Vt, 40 * _Vt)
+                g_d = CircuitOperations._diode_conductance(vd_op, Is, n_factor)
+                i_d = CircuitOperations._diode_current(vd_op, Is, n_factor)
+                i_norton = i_d - g_d * vd_op
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, g_d)
+                CircuitOperations._stamp_current_source(b, comp.node1, comp.node2, i_norton)
+
+        return A, b
+
+    @staticmethod
+    def _solve_newton_raphson(
+        circuit: Circuit,
+        voltages_init: np.ndarray,
+        inductor_currents: Optional[Dict[str, float]] = None,
+        max_iter: int = 100,
+        tol: float = 1e-8
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Solve nonlinear MNA using Newton-Raphson iteration.
+
+        Returns:
+            (node_voltages, full_x) where full_x includes vsource/opamp currents
+        """
+        voltages = voltages_init.copy()
+        num_vsources = sum(1 for c in circuit.components if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        num_opamps = sum(1 for c in circuit.components if c.comp_type == ComponentType.OPAMP)
+        n = circuit.num_nodes - 1 + num_vsources + num_opamps
+        x = np.zeros(n)
+
+        for _ in range(max_iter):
+            A, b = CircuitOperations._build_mna_matrices_nonlinear(circuit, voltages, inductor_currents)
+            try:
+                x_new = np.linalg.solve(A, b)
+            except np.linalg.LinAlgError:
+                x_new = np.linalg.lstsq(A, b, rcond=None)[0]
+
+            new_voltages = np.zeros(circuit.num_nodes)
+            new_voltages[1:] = x_new[:circuit.num_nodes - 1]
+
+            max_change = np.max(np.abs(new_voltages - voltages))
+            voltages = new_voltages
+            x = x_new
+            if max_change < tol:
+                break
+
+        return voltages, x
+
+    @staticmethod
     def _build_mna_matrices_dc(circuit: Circuit) -> Tuple[np.ndarray, np.ndarray]:
         """Build Modified Nodal Analysis matrices for DC analysis.
 
@@ -414,22 +590,22 @@ class CircuitOperations:
         Returns:
             Circuit with updated node_voltages and branch_currents
         """
-        # Build MNA matrices
-        A, b = CircuitOperations._build_mna_matrices_dc(circuit)
-
-        # Solve system
-        try:
-            x = np.linalg.solve(A, b)
-        except np.linalg.LinAlgError:
-            # Singular matrix - use least squares
-            x = np.linalg.lstsq(A, b, rcond=None)[0]
-
-        # Extract node voltages (ground is 0V)
+        # Choose linear or Newton-Raphson path
         num_vsources = sum(1 for c in circuit.components
                           if c.comp_type == ComponentType.VOLTAGE_SOURCE)
 
-        node_voltages = np.zeros(circuit.num_nodes)
-        node_voltages[1:] = x[:circuit.num_nodes-1]
+        if CircuitOperations._has_nonlinear(circuit):
+            voltages_init = (circuit.node_voltages if circuit.node_voltages is not None
+                             else np.zeros(circuit.num_nodes))
+            node_voltages, x = CircuitOperations._solve_newton_raphson(circuit, voltages_init)
+        else:
+            A, b = CircuitOperations._build_mna_matrices_dc(circuit)
+            try:
+                x = np.linalg.solve(A, b)
+            except np.linalg.LinAlgError:
+                x = np.linalg.lstsq(A, b, rcond=None)[0]
+            node_voltages = np.zeros(circuit.num_nodes)
+            node_voltages[1:] = x[:circuit.num_nodes-1]
 
         # Extract voltage source currents
         vsource_currents = x[circuit.num_nodes-1:]
@@ -595,15 +771,21 @@ class CircuitOperations:
         n = circuit.num_nodes - 1 + num_vsources
         voltage_history = np.zeros((num_steps, circuit.num_nodes))
 
+        nonlinear = CircuitOperations._has_nonlinear(circuit)
+
         for step_idx, t in enumerate(time_points):
             circuit.time = t
-            A, b = CircuitOperations._build_transient_matrices(
-                circuit, n, num_vsources, voltages, inductor_currents)
 
-            try:
-                x = np.linalg.solve(A, b)
-            except np.linalg.LinAlgError:
-                x = np.linalg.lstsq(A, b, rcond=None)[0]
+            if nonlinear:
+                voltages, x = CircuitOperations._solve_newton_raphson(
+                    circuit, voltages, inductor_currents)
+            else:
+                A, b = CircuitOperations._build_transient_matrices(
+                    circuit, n, num_vsources, voltages, inductor_currents)
+                try:
+                    x = np.linalg.solve(A, b)
+                except np.linalg.LinAlgError:
+                    x = np.linalg.lstsq(A, b, rcond=None)[0]
 
             voltages[0] = 0.0
             voltages[1:] = x[:circuit.num_nodes-1]
@@ -817,20 +999,27 @@ class CircuitOperations:
         Returns:
             Complex impedance in ohms
         """
-        # Perform AC analysis at the given frequency
-        results = CircuitOperations.ac_analysis(circuit, np.array([frequency]))
-
-        # Get voltage difference
-        voltages = results['node_voltages'][0]
-        v_diff = voltages[node1] - voltages[node2]
-
-        # Add a test current source and re-analyze to find impedance
-        # This is a simplified approach
-        # Z = V / I where I is a known test current
-
-        # For now, return a placeholder - full implementation would require
-        # adding test current and measuring response
-        return complex(1.0, 0.0)
+        # Inject a 1A test current source from node2 → node1, measure V_node1 - V_node2.
+        # Z = V_test / I_test = (V1 - V2) / 1A
+        import copy
+        test_circuit = copy.deepcopy(circuit)
+        test_circuit.components.append(Component(
+            comp_type=ComponentType.CURRENT_SOURCE,
+            node1=node2, node2=node1, value=1.0,
+            name="_z_test_src"
+        ))
+        omega = 2 * np.pi * frequency
+        num_vsources = sum(1 for c in test_circuit.components
+                           if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        n = test_circuit.num_nodes - 1 + num_vsources
+        A, b = CircuitOperations._build_ac_matrices_at_freq(test_circuit, omega, n, num_vsources)
+        try:
+            x = np.linalg.solve(A, b)
+        except np.linalg.LinAlgError:
+            x = np.linalg.lstsq(A, b, rcond=None)[0]
+        node_v = np.zeros(test_circuit.num_nodes, dtype=complex)
+        node_v[1:] = x[:test_circuit.num_nodes - 1]
+        return node_v[node1] - node_v[node2]
 
 
 # Singleton instance for DSL access
@@ -844,6 +1033,7 @@ add_inductor = CircuitOperations.add_inductor
 add_voltage_source = CircuitOperations.add_voltage_source
 add_current_source = CircuitOperations.add_current_source
 add_opamp = CircuitOperations.add_opamp
+add_diode = CircuitOperations.add_diode
 dc_analysis = CircuitOperations.dc_analysis
 ac_analysis = CircuitOperations.ac_analysis
 transient_analysis = CircuitOperations.transient_analysis
