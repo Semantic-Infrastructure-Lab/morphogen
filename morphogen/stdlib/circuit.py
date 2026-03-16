@@ -342,6 +342,33 @@ class CircuitOperations:
         circuit.components.append(comp)
         return circuit
 
+    @staticmethod
+    @operator(
+        domain="circuit",
+        category=OpCategory.MUTATE,
+        signature="(circuit: Circuit, node: int, voltage: float) -> Circuit",
+        deterministic=True,
+        doc="Set initial node voltage (used as initial conditions for transient analysis)"
+    )
+    def set_node_voltage(circuit: Circuit, node: int, voltage: float) -> Circuit:
+        """Set the initial voltage on a node for transient analysis.
+
+        Use this to pre-charge capacitors, set initial conditions, or model
+        circuits that start in a non-zero state.
+
+        Args:
+            circuit: Circuit to modify
+            node: Node index (0 = ground, always 0V)
+            voltage: Initial voltage in volts
+
+        Returns:
+            Modified circuit
+        """
+        if circuit.node_voltages is None:
+            circuit.node_voltages = np.zeros(circuit.num_nodes)
+        circuit.node_voltages[node] = voltage
+        return circuit
+
     # --- MNA Stamp Helpers ---
 
     @staticmethod
@@ -454,14 +481,14 @@ class CircuitOperations:
                 if inductor_currents is not None:
                     g_eq = comp.value / circuit.dt
                     v_old = voltages[comp.node1] - voltages[comp.node2]
-                    i_eq = -comp.value * v_old / circuit.dt
+                    i_eq = comp.value * v_old / circuit.dt  # positive: history maintains voltage
                     CircuitOperations._stamp_companion_element(A, b, comp.node1, comp.node2, g_eq, i_eq)
                 # DC: capacitor = open circuit (omit)
 
             elif comp.comp_type == ComponentType.INDUCTOR:
                 if inductor_currents is not None:
                     g_eq = circuit.dt / comp.value
-                    i_eq = inductor_currents.get(comp.name, 0.0)
+                    i_eq = -inductor_currents.get(comp.name, 0.0)  # negative: history draws current from n1
                     CircuitOperations._stamp_companion_element(A, b, comp.node1, comp.node2, g_eq, i_eq)
                 else:
                     CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, 1e12)
@@ -722,9 +749,12 @@ class CircuitOperations:
                 CircuitOperations._stamp_companion_element(
                     A, b, comp.node1, comp.node2, g_eq, i_eq)
             elif comp.comp_type == ComponentType.INDUCTOR:
-                # Backward Euler companion: g_eq = dt/L, i_eq = i_old
+                # Backward Euler companion: g_eq = dt/L
+                # History source i_old flows FROM n1 TO n2 (same direction as inductor current),
+                # so it REMOVES current from n1 → negate before passing to _stamp_companion_element
+                # (which injects INTO n1). Opposite sign to capacitor.
                 g_eq = circuit.dt / comp.value
-                i_eq = inductor_currents.get(comp.name, 0.0)
+                i_eq = -inductor_currents.get(comp.name, 0.0)
                 CircuitOperations._stamp_companion_element(
                     A, b, comp.node1, comp.node2, g_eq, i_eq)
             elif comp.comp_type == ComponentType.CURRENT_SOURCE:
@@ -765,7 +795,9 @@ class CircuitOperations:
         num_steps = int(duration / circuit.dt)
         time_points = np.linspace(0, duration, num_steps)
 
-        voltages = np.zeros(circuit.num_nodes)
+        # Use circuit.node_voltages as initial conditions if set (supports pre-charged capacitors etc.)
+        voltages = circuit.node_voltages.copy() if circuit.node_voltages is not None else np.zeros(circuit.num_nodes)
+        voltages[0] = 0.0  # ground always zero
         inductor_currents: Dict[str, float] = {}
 
         for comp in circuit.components:

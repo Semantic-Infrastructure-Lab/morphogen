@@ -245,23 +245,80 @@ class TestTransientAnalysis:
         assert 2.5 < v_at_tau < 4.0, f"Expected ~3.15V (63%) at 1τ, got {v_at_tau:.4f}V"
 
     def test_rl_step_response(self):
-        """Test RL circuit step response (current rise)."""
+        """Test RL circuit step response (current rise).
+
+        Circuit: V=10V, R=100Ω, L=10mH in series.
+        τ = L/R = 10mH/100Ω = 100µs
+        V_L(t) = V * e^(-t/τ)   (voltage decays across inductor as current builds)
+        I_L(t) = (V/R) * (1 - e^(-t/τ))
+        """
         c = circuit.create(num_nodes=3, dt=1e-6)
         c = circuit.add_voltage_source(c, node_pos=1, node_neg=0, voltage=10.0, name="V1")
         c = circuit.add_resistor(c, node1=1, node2=2, resistance=100.0, name="R1")
         c = circuit.add_inductor(c, node1=2, node2=0, inductance=10e-3, name="L1")
 
-        duration = 1e-3  # 1ms
+        # τ = L/R = 100µs, simulate for 10τ to see full response
+        tau = 10e-3 / 100.0  # 100µs
+        duration = 10 * tau  # 1ms
         time_points, voltage_history = circuit.transient_analysis(c, duration)
 
-        # Current should rise exponentially with τ = L/R = 100µs
         assert len(time_points) > 0
 
+        # node 2 = voltage across inductor = V * e^(-t/τ)
+        # At t=τ: V_L ≈ 10 * e^-1 ≈ 3.68V
+        step_at_tau = int(tau / c.dt)
+        v_L_at_tau = voltage_history[step_at_tau, 2]
+        expected = 10.0 * np.exp(-1)
+        assert abs(v_L_at_tau - expected) / expected < 0.05, (
+            f"V_L at τ: {v_L_at_tau:.4f}V, expected ~{expected:.4f}V")
+
+        # At t=5τ: V_L ≈ 10 * e^-5 ≈ 0.067V (most voltage across R, inductor acts as short)
+        step_at_5tau = int(5 * tau / c.dt)
+        v_L_at_5tau = voltage_history[step_at_5tau, 2]
+        assert v_L_at_5tau < 0.5, (
+            f"V_L at 5τ: {v_L_at_5tau:.4f}V, should be near zero (inductor fully 'charged')")
+
     def test_rc_discharge(self):
-        """Test RC discharge (requires initial conditions - future feature)."""
-        # This test would require setting initial capacitor voltage
-        # Current implementation starts from zero
-        pass
+        """Test RC discharge from pre-charged capacitor.
+
+        Circuit: C=1µF pre-charged to 5V, discharges through R=1kΩ.
+        τ = RC = 1kΩ * 1µF = 1ms
+        V_C(t) = V0 * e^(-t/τ)
+        """
+        # Node 1: top of capacitor (initially at 5V), Node 2: junction, Node 0: ground
+        # R between node 1 and ground, C between node 1 and ground
+        # Actually simplest: R in series with pre-charged C
+        # Nodes: 1=top of R/C series, 2=junction between R and C
+        # But with no source we need a closed loop: R from node 1 to 0, C from node 1 to 0
+        # Pre-charge node 1 to 5V → discharges through R
+        R = 1000.0   # 1kΩ
+        C = 1e-6     # 1µF
+        tau = R * C  # 1ms
+        V0 = 5.0
+
+        c = circuit.create(num_nodes=2, dt=1e-6)
+        c = circuit.add_resistor(c, node1=1, node2=0, resistance=R, name="R1")
+        c = circuit.add_capacitor(c, node1=1, node2=0, capacitance=C, name="C1")
+        c = circuit.set_node_voltage(c, node=1, voltage=V0)
+
+        duration = 5 * tau  # simulate for 5τ
+        time_points, voltage_history = circuit.transient_analysis(c, duration)
+
+        # At t=0: V_C = V0 = 5V
+        assert abs(voltage_history[0, 1] - V0) < 0.1, (
+            f"Initial voltage: {voltage_history[0, 1]:.4f}V, expected {V0}V")
+
+        # At t=τ: V_C ≈ V0 * e^-1 ≈ 1.84V (within 5%)
+        step_at_tau = int(tau / c.dt)
+        v_at_tau = voltage_history[step_at_tau, 1]
+        expected = V0 * np.exp(-1)
+        assert abs(v_at_tau - expected) / expected < 0.05, (
+            f"V_C at τ: {v_at_tau:.4f}V, expected ~{expected:.4f}V")
+
+        # At t=5τ: V_C < 5% of V0 (nearly fully discharged)
+        v_final = voltage_history[-1, 1]
+        assert v_final < 0.05 * V0, (
+            f"V_C at 5τ: {v_final:.4f}V, should be nearly zero")
 
 
 class TestQueryOperations:

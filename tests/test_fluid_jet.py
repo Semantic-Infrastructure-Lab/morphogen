@@ -9,7 +9,13 @@ class TestJetCreation:
     """Test jet construction operators."""
 
     def test_jet_from_tube_basic(self):
-        """Test basic jet creation from tube exit conditions."""
+        """Test basic jet creation from tube exit conditions.
+
+        Expected velocity: v = m_dot / (rho * A)
+        rho = 101325/(287*300) ≈ 1.177 kg/m³
+        A = π*(0.025)² ≈ 1.963e-3 m²
+        v ≈ 0.1 / (1.177 * 1.963e-3) ≈ 43.3 m/s
+        """
         jet = fluid_jet.jet_from_tube(
             tube_diameter=0.05,  # 50mm
             tube_position=(0.0, 0.0, 0.0),
@@ -21,7 +27,11 @@ class TestJetCreation:
         assert jet is not None
         assert hasattr(jet, 'position')
         assert hasattr(jet, 'velocity')
-        assert jet.velocity > 0.0
+        rho_expected = 101325.0 / (287.0 * 300.0)
+        area_expected = np.pi * (0.025)**2
+        v_expected = 0.1 / (rho_expected * area_expected)
+        assert jet.velocity == pytest.approx(v_expected, rel=0.01), (
+            f"velocity={jet.velocity:.3f} m/s, expected {v_expected:.3f} m/s")
 
     def test_jet_from_tube_with_density(self):
         """Test jet creation with explicit density."""
@@ -82,12 +92,22 @@ class TestJetQueries:
         )
 
     def test_jet_reynolds(self):
-        """Test Reynolds number calculation."""
+        """Test Reynolds number calculation: Re = rho*v*D/mu.
+
+        Jet: D=0.05m, m_dot=0.1 kg/s, T=300K
+        rho = 101325/(287*300) ≈ 1.177 kg/m³
+        A = pi*(0.025)^2 ≈ 1.963e-3 m²
+        v = 0.1/(1.177*1.963e-3) ≈ 43.3 m/s
+        Re = 1.177 * 43.3 * 0.05 / 1.8e-5 ≈ 141,400
+        """
         re = fluid_jet.jet_reynolds(self.jet)
 
         assert re > 0.0
-        # Typical jet Reynolds numbers are turbulent (>2300)
-        assert re > 100.0
+        rho = 101325.0 / (287.0 * self.jet.temperature)
+        expected_re = rho * self.jet.velocity * self.jet.diameter / 1.8e-5
+        assert re == pytest.approx(expected_re, rel=0.01), (
+            f"Re={re:.0f}, expected {expected_re:.0f}")
+        assert re > 2300, f"Expected turbulent flow (Re>2300), got Re={re:.0f}"
 
     def test_jet_reynolds_custom_viscosity(self):
         """Test Reynolds number with custom viscosity."""

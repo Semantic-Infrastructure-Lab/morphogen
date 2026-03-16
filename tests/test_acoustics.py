@@ -157,7 +157,12 @@ class TestWaveguidePropagation:
         assert np.allclose(p_bwd_new, 0.0)
 
     def test_waveguide_step_with_excitation(self):
-        """Test waveguide step with impulse excitation."""
+        """Test waveguide step with impulse excitation.
+
+        After injecting 1.0 at position 0, the forward wave is at segment 0
+        (injection appended after propagation shift). No backward wave yet —
+        the impulse hasn't reached the far end to reflect.
+        """
         pipe = create_pipe(diameter=0.025, length=0.5)
         wg = acoustics.waveguide_from_geometry(pipe, discretization=0.01)
         reflections = acoustics.reflection_coefficients(wg)
@@ -165,18 +170,27 @@ class TestWaveguidePropagation:
         p_fwd = np.zeros(wg.num_segments)
         p_bwd = np.zeros(wg.num_segments)
 
-        # Inject impulse
         excitation = np.array([1.0])
         p_fwd_new, p_bwd_new = acoustics.waveguide_step(
             p_fwd, p_bwd, wg, reflections,
             excitation=excitation, excitation_pos=0
         )
 
-        # Should have non-zero values after excitation
-        assert np.sum(np.abs(p_fwd_new)) > 0
+        # Impulse should be at entry segment (injected after propagation shift)
+        assert p_fwd_new[0] == pytest.approx(1.0, abs=0.01), (
+            f"Impulse expected at segment 0, got p_fwd[0]={p_fwd_new[0]:.4f}")
+        # No backward wave yet — reflection hasn't been reached
+        assert np.allclose(p_bwd_new, 0.0), (
+            f"No backward wave expected on first step, got max={np.max(np.abs(p_bwd_new)):.4f}")
 
     def test_waveguide_propagation_multiple_steps(self):
-        """Test multiple steps of waveguide propagation."""
+        """Test multiple steps of waveguide propagation.
+
+        After injecting at position 0 then propagating N more steps, the impulse
+        peak in the forward wave should be at segment N (one shift per step).
+        The open end is at segment 49 — far enough that no reflection arrives
+        in 10 steps.
+        """
         pipe = create_pipe(diameter=0.025, length=0.5)
         wg = acoustics.waveguide_from_geometry(pipe, discretization=0.01)
         reflections = acoustics.reflection_coefficients(wg, end_condition="open")
@@ -184,21 +198,24 @@ class TestWaveguidePropagation:
         p_fwd = np.zeros(wg.num_segments)
         p_bwd = np.zeros(wg.num_segments)
 
-        # Inject impulse
+        # Step 1: inject impulse (ends up at segment 0)
         excitation = np.array([1.0])
         p_fwd, p_bwd = acoustics.waveguide_step(
             p_fwd, p_bwd, wg, reflections,
             excitation=excitation, excitation_pos=0
         )
 
-        # Propagate for a few steps
+        # Propagate 10 more steps — impulse should be at segment 10
         for _ in range(10):
             p_fwd, p_bwd = acoustics.waveguide_step(
                 p_fwd, p_bwd, wg, reflections
             )
 
-        # Energy should propagate through waveguide
-        assert np.sum(np.abs(p_fwd)) > 0 or np.sum(np.abs(p_bwd)) > 0
+        # Impulse should be at exactly segment 10 in the forward wave (no losses in uniform pipe)
+        assert p_fwd[10] > 0.9, (
+            f"Impulse expected at segment 10, p_fwd[10]={p_fwd[10]:.4f}")
+        assert np.argmax(p_fwd) == 10, (
+            f"Peak expected at segment 10, got segment {np.argmax(p_fwd)}")
 
     def test_total_pressure(self):
         """Test total pressure calculation."""
@@ -340,11 +357,10 @@ class TestTransferFunction:
         # Should find at least one resonance
         assert len(resonances) > 0
 
-        # First resonance should be near 171.5 Hz (allow 50% tolerance due to numerical approx)
+        # First resonance should be near 171.5 Hz (open-open: f = c/2L)
         expected_f1 = SPEED_OF_SOUND / (2 * 1.0)
-        if len(resonances) > 0:
-            # Check if any resonance is reasonably close
-            assert any(abs(f - expected_f1) / expected_f1 < 0.5 for f in resonances)
+        assert any(abs(f - expected_f1) / expected_f1 < 0.2 for f in resonances), (
+            f"Expected resonance near {expected_f1:.1f}Hz (±20%), got: {resonances}")
 
 
 class TestResonantFrequencies:
@@ -406,8 +422,13 @@ class TestIntegration:
 
         output = np.array(output)
 
-        # Should have non-zero response
-        assert np.sum(np.abs(output)) > 0
+        # For a 1m pipe with 50 segments (0.02m each), the impulse travels
+        # 49 segments to the end. The output at the last segment should be
+        # non-zero well before step 100, and zero in the first few steps.
+        assert np.max(np.abs(output[:5])) < 0.1, (
+            "No output expected in first 5 steps — impulse hasn't reached end yet")
+        assert np.max(np.abs(output)) > 0.5, (
+            f"Expected strong response when impulse arrives at output, max={np.max(np.abs(output)):.4f}")
 
     def test_expansion_chamber_simulation(self):
         """Test simulation of expansion chamber (muffler)."""
