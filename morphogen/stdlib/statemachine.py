@@ -140,6 +140,34 @@ class BehaviorStatus(Enum):
     RUNNING = "running"
 
 
+def _get_timeout_transition(fsm: "StateMachine"):
+    """Return the highest-priority elapsed timeout transition, or None."""
+    candidates = [
+        t for t in fsm.transitions
+        if t.from_state == fsm.current_state
+        and t.transition_type == TransitionType.TIMEOUT
+        and fsm.time_in_state >= t.timeout
+    ]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda t: t.priority, reverse=True)
+    return candidates[0]
+
+
+def _get_triggered_auto_transition(fsm: "StateMachine"):
+    """Return the first passing automatic transition (by priority), or None."""
+    candidates = [
+        t for t in fsm.transitions
+        if t.from_state == fsm.current_state
+        and t.transition_type == TransitionType.AUTOMATIC
+    ]
+    candidates.sort(key=lambda t: t.priority, reverse=True)
+    for trans in candidates:
+        if trans.guard is None or trans.guard(fsm.context):
+            return trans
+    return None
+
+
 class StateMachineOperations:
     """State machine operations"""
 
@@ -264,39 +292,17 @@ class StateMachineOperations:
         if not result.current_state:
             return result
 
-        # Call on_update for current state
         current = result.states.get(result.current_state)
         if current and current.on_update:
             current.on_update(result.context, dt)
 
-        # Check for timeout transitions
-        timeout_transitions = [
-            t for t in result.transitions
-            if t.from_state == result.current_state
-            and t.transition_type == TransitionType.TIMEOUT
-            and result.time_in_state >= t.timeout
-        ]
-
-        if timeout_transitions:
-            # Take highest priority timeout transition
-            timeout_transitions.sort(key=lambda t: t.priority, reverse=True)
-            trans = timeout_transitions[0]
+        trans = _get_timeout_transition(result)
+        if trans:
             return StateMachineOperations._execute_transition(result, trans)
 
-        # Check for automatic transitions
-        auto_transitions = [
-            t for t in result.transitions
-            if t.from_state == result.current_state
-            and t.transition_type == TransitionType.AUTOMATIC
-        ]
-
-        # Sort by priority
-        auto_transitions.sort(key=lambda t: t.priority, reverse=True)
-
-        for trans in auto_transitions:
-            # Check guard condition
-            if trans.guard is None or trans.guard(result.context):
-                return StateMachineOperations._execute_transition(result, trans)
+        trans = _get_triggered_auto_transition(result)
+        if trans:
+            return StateMachineOperations._execute_transition(result, trans)
 
         return result
 

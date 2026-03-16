@@ -23,6 +23,21 @@ from morphogen.core.operator import operator, OpCategory
 # IMAGE I/O
 # ============================================================================
 
+def _detect_image_mode(data: "np.ndarray"):
+    """Return (data, PIL mode) for a 2D or 3D numpy array."""
+    if data.ndim == 2:
+        return data, 'L'
+    if data.ndim == 3:
+        ch = data.shape[2]
+        if ch == 1:
+            return data.squeeze(axis=2), 'L'
+        if ch == 3:
+            return data, 'RGB'
+        if ch == 4:
+            return data, 'RGBA'
+        raise ValueError(f"Unsupported number of channels: {ch}")
+    raise ValueError(f"Expected 2D or 3D array, got shape {data.shape}")
+
 @operator(
     domain="io_storage",
     category=OpCategory.CONSTRUCT,
@@ -127,24 +142,7 @@ def save_image(
         )
 
     path = Path(path)
-
-    # Validate shape
-    if data.ndim == 2:
-        # Grayscale
-        mode = 'L'
-    elif data.ndim == 3:
-        if data.shape[2] == 1:
-            # Single-channel, squeeze to 2D
-            data = data.squeeze(axis=2)
-            mode = 'L'
-        elif data.shape[2] == 3:
-            mode = 'RGB'
-        elif data.shape[2] == 4:
-            mode = 'RGBA'
-        else:
-            raise ValueError(f"Unsupported number of channels: {data.shape[2]}")
-    else:
-        raise ValueError(f"Expected 2D or 3D array, got shape {data.shape}")
+    data, mode = _detect_image_mode(data)
 
     # Denormalize if needed
     if denormalize and data.dtype in [np.float32, np.float64]:

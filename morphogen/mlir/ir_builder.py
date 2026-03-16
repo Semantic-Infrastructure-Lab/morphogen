@@ -13,6 +13,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
+def _format_ir_attrs(attributes: dict) -> str:
+    """Format an IR attributes dict as MLIR-style key=value pairs."""
+    parts = []
+    for key, value in attributes.items():
+        parts.append(f'{key}="{value}"' if isinstance(value, str) else f'{key}={value}')
+    return ', '.join(parts)
+
+
 class IRType(Enum):
     """IR type enumeration."""
     F32 = "f32"
@@ -55,41 +63,23 @@ class IROperation:
         """Generate MLIR-like textual representation."""
         parts = []
 
-        # Results (if any)
         if self.results:
-            result_strs = [r.name for r in self.results]
-            parts.append(f"{', '.join(result_strs)} = ")
+            parts.append(f"{', '.join(r.name for r in self.results)} = ")
 
-        # Opcode
         parts.append(self.opcode)
 
-        # Operands
         if self.operands:
-            operand_strs = [o.name for o in self.operands]
-            parts.append(f"({', '.join(operand_strs)})")
+            parts.append(f"({', '.join(o.name for o in self.operands)})")
 
-        # Attributes
         if self.attributes:
-            attr_strs = []
-            for key, value in self.attributes.items():
-                if isinstance(value, str):
-                    attr_strs.append(f'{key}="{value}"')
-                else:
-                    attr_strs.append(f'{key}={value}')
-            parts.append(f" {{ {', '.join(attr_strs)} }}")
+            parts.append(f" {{ {_format_ir_attrs(self.attributes)} }}")
 
-        # Type signature
         if self.results:
             type_strs = [r.type.value if isinstance(r.type, IRType) else r.type
                         for r in self.results]
             parts.append(f" : {', '.join(type_strs)}")
 
-        # Regions (blocks)
-        region_str = ""
-        if self.regions:
-            for region in self.regions:
-                region_str += f"\n{region}"
-
+        region_str = "".join(f"\n{region}" for region in self.regions)
         return ''.join(parts) + region_str
 
 

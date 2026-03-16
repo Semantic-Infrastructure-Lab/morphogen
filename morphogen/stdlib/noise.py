@@ -64,6 +64,37 @@ class NoiseField3D:
         return f"NoiseField3D(shape={self.shape}, scale={self.scale})"
 
 
+def _worley_compute_distances(coords, points, num_points, h, w, distance_metric):
+    """Compute per-point distances for Worley noise."""
+    distances = np.zeros((h, w, num_points), dtype=np.float32)
+    for i, point in enumerate(points):
+        dy = coords[:, :, 0] - point[0]
+        dx = coords[:, :, 1] - point[1]
+        if distance_metric == "euclidean":
+            distances[:, :, i] = np.sqrt(dx**2 + dy**2)
+        elif distance_metric == "manhattan":
+            distances[:, :, i] = np.abs(dx) + np.abs(dy)
+        elif distance_metric == "chebyshev":
+            distances[:, :, i] = np.maximum(np.abs(dx), np.abs(dy))
+        else:
+            raise ValueError(f"Unknown distance metric: {distance_metric}")
+    return distances
+
+
+def _worley_extract_feature(distances_sorted, feature, num_points):
+    """Extract F1, F2, or F2-F1 feature from sorted Worley distances."""
+    f1 = distances_sorted[:, :, 0]
+    f2 = distances_sorted[:, :, 1] if num_points > 1 else f1
+    if feature == "F1":
+        return f1
+    elif feature == "F2":
+        return f2
+    elif feature == "F2-F1":
+        return f2 - f1
+    else:
+        raise ValueError(f"Unknown feature: {feature}")
+
+
 class NoiseOperations:
     """Namespace for noise operations (accessed as 'noise' in DSL)."""
 
@@ -352,35 +383,11 @@ class NoiseOperations:
         y, x = np.mgrid[0:h, 0:w].astype(np.float32)
         coords = np.stack([y, x], axis=-1)
 
-        # Compute distances to all points
-        distances = np.zeros((h, w, num_points), dtype=np.float32)
-        for i, point in enumerate(points):
-            dy = coords[:, :, 0] - point[0]
-            dx = coords[:, :, 1] - point[1]
-
-            if distance_metric == "euclidean":
-                distances[:, :, i] = np.sqrt(dx**2 + dy**2)
-            elif distance_metric == "manhattan":
-                distances[:, :, i] = np.abs(dx) + np.abs(dy)
-            elif distance_metric == "chebyshev":
-                distances[:, :, i] = np.maximum(np.abs(dx), np.abs(dy))
-            else:
-                raise ValueError(f"Unknown distance metric: {distance_metric}")
-
-        # Sort distances
-        distances_sorted = np.sort(distances, axis=2)
-
-        # Extract feature
-        if feature == "F1":
-            result = distances_sorted[:, :, 0]
-        elif feature == "F2":
-            result = distances_sorted[:, :, 1] if num_points > 1 else distances_sorted[:, :, 0]
-        elif feature == "F2-F1":
-            f1 = distances_sorted[:, :, 0]
-            f2 = distances_sorted[:, :, 1] if num_points > 1 else distances_sorted[:, :, 0]
-            result = f2 - f1
-        else:
-            raise ValueError(f"Unknown feature: {feature}")
+        distances_sorted = np.sort(
+            _worley_compute_distances(coords, points, num_points, h, w, distance_metric),
+            axis=2
+        )
+        result = _worley_extract_feature(distances_sorted, feature, num_points)
 
         # Normalize to approximately [0, 1]
         result = result / np.max(result) if np.max(result) > 0 else result

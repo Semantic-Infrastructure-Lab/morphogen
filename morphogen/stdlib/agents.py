@@ -142,6 +142,24 @@ class Agents:
         return f"Agents(count={self.alive_count}/{self.count}, properties=[{props}])"
 
 
+def _merge_property_arrays(agents_list: list, prop_name: str, total_count: int) -> "np.ndarray":
+    """Build a merged array for one property across all agent collections."""
+    sample_prop = next(a.properties[prop_name] for a in agents_list if prop_name in a.properties)
+    if len(sample_prop.shape) == 1:
+        merged = np.zeros(total_count, dtype=np.float32)
+    else:
+        merged = np.zeros((total_count, *sample_prop.shape[1:]), dtype=np.float32)
+
+    offset = 0
+    for a in agents_list:
+        if prop_name in a.properties:
+            merged[offset:offset + a.count] = a.properties[prop_name]
+        else:
+            merged[offset:offset + a.count] = np.nan if len(merged.shape) > 1 else 0.0
+        offset += a.count
+    return merged
+
+
 class AgentOperations:
     """Namespace for agent operations (accessed as 'agents' in DSL)."""
 
@@ -1036,39 +1054,11 @@ class AgentOperations:
         total_count = sum(a.count for a in agents_list)
 
         # Build merged properties
-        merged_props = {}
-        for prop_name in all_properties:
-            # Determine shape from first agent that has this property
-            sample_prop = None
-            for a in agents_list:
-                if prop_name in a.properties:
-                    sample_prop = a.properties[prop_name]
-                    break
-
-            if sample_prop is None:
-                continue
-
-            # Determine shape
-            if len(sample_prop.shape) == 1:
-                merged_array = np.zeros(total_count, dtype=np.float32)
-            else:
-                merged_array = np.zeros((total_count, *sample_prop.shape[1:]), dtype=np.float32)
-
-            # Fill in values
-            offset = 0
-            for a in agents_list:
-                if prop_name in a.properties:
-                    merged_array[offset:offset + a.count] = a.properties[prop_name]
-                else:
-                    # Fill with default value (0 for scalars, NaN for structured)
-                    if len(merged_array.shape) > 1:
-                        merged_array[offset:offset + a.count] = np.nan
-                    else:
-                        merged_array[offset:offset + a.count] = 0.0
-
-                offset += a.count
-
-            merged_props[prop_name] = merged_array
+        merged_props = {
+            prop_name: _merge_property_arrays(agents_list, prop_name, total_count)
+            for prop_name in all_properties
+            if any(prop_name in a.properties for a in agents_list)
+        }
 
         merged = Agents(count=total_count, properties=merged_props)
 

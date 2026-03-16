@@ -275,6 +275,17 @@ def _compute_text_position(position: str, width: int, height: int,
     return positions[position]
 
 
+def _render_raster_char(img: "np.ndarray", char_x: int, y_pos: int,
+                        char_width: float, char_height: float,
+                        text_color: tuple, height: int, width: int) -> None:
+    """Paint a simple dot-matrix character glyph into img."""
+    for dy in range(int(char_height)):
+        for dx in range(int(char_width * 0.8)):
+            px, py = char_x + dx, y_pos + dy
+            if 0 <= py < height and 0 <= px < width and (dy % 2 == 0 or dx % 2 == 0):
+                img[py, px] = text_color
+
+
 def _collect_frames(frames, max_frames) -> list:
     """Collect Visual frames from a callable generator or list, with validation."""
     if callable(frames):
@@ -1413,11 +1424,8 @@ class VisualOperations:
                 if char == ' ':
                     continue
                 char_x = x_pos + int(char_idx * char_width)
-                for dy in range(int(char_height)):
-                    for dx in range(int(char_width * 0.8)):
-                        px, py = char_x + dx, y_pos + dy
-                        if 0 <= py < height and 0 <= px < width and (dy % 2 == 0 or dx % 2 == 0):
-                            img[py, px] = text_color
+                _render_raster_char(img, char_x, y_pos, char_width, char_height,
+                                    text_color, height, width)
 
         return result
 
