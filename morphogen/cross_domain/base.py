@@ -187,8 +187,4 @@ class DomainTransform:
         TransformInterface.__name__ = f"{self.source}To{self.target.capitalize()}Transform"
         TransformInterface.__doc__ = self.description
 
-        # Register in global registry (lazy import to break circular dependency)
-        from .registry import CrossDomainRegistry
-        CrossDomainRegistry.register(self.source, self.target, TransformInterface)
-
         return fn

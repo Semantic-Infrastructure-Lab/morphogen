@@ -496,6 +496,44 @@ class VisualOperations:
             y_offset += 22
 
     @staticmethod
+    def _validate_display_args(frame_generator, target_fps, scale):
+        """Raise TypeError/ValueError for invalid display() arguments."""
+        if not callable(frame_generator):
+            raise TypeError(f"frame_generator must be callable, got {type(frame_generator)}")
+        if not isinstance(target_fps, int) or target_fps <= 0:
+            raise ValueError(f"target_fps must be positive integer, got {target_fps}")
+        if not isinstance(scale, int) or scale <= 0:
+            raise ValueError(f"scale must be positive integer, got {scale}")
+
+    @staticmethod
+    def _handle_display_keydown(key, paused, current_fps, frame_generator):
+        """Handle a KEYDOWN event; return (running, paused, current_fps, step_frame_or_none)."""
+        import pygame
+        new_frame = None
+        running = True
+        if key == pygame.K_SPACE:
+            paused = not paused
+        elif key == pygame.K_RIGHT and paused:
+            new_frame = frame_generator()
+        elif key == pygame.K_UP:
+            current_fps = min(current_fps + 5, 120)
+        elif key == pygame.K_DOWN:
+            current_fps = max(current_fps - 5, 1)
+        elif key in (pygame.K_q, pygame.K_ESCAPE):
+            running = False
+        return running, paused, current_fps, new_frame
+
+    @staticmethod
+    def _render_to_screen(screen, visual, scale, width, height):
+        """Blit a Visual frame to the pygame screen, scaling if needed."""
+        import pygame
+        srgb = VisualOperations._linear_to_srgb(visual.data)
+        surf = pygame.surfarray.make_surface(np.transpose((srgb * 255).astype(np.uint8), (1, 0, 2)))
+        if scale != 1:
+            surf = pygame.transform.scale(surf, (width, height))
+        screen.blit(surf, (0, 0))
+
+    @staticmethod
     @operator(
         domain="visual",
         category=OpCategory.TRANSFORM,
@@ -509,20 +547,9 @@ class VisualOperations:
                 scale: int = 2) -> None:
         """Display simulation in real-time interactive window.
 
-        Args:
-            frame_generator: Callable that generates frames. Should return Visual or None to quit.
-            title: Window title
-            target_fps: Target frames per second
-            scale: Scale factor for display (1 = native resolution)
-
         Controls: SPACE (pause), RIGHT (step), UP/DOWN (speed), Q/ESC (quit)
         """
-        if not callable(frame_generator):
-            raise TypeError(f"frame_generator must be callable, got {type(frame_generator)}")
-        if not isinstance(target_fps, int) or target_fps <= 0:
-            raise ValueError(f"target_fps must be positive integer, got {target_fps}")
-        if not isinstance(scale, int) or scale <= 0:
-            raise ValueError(f"scale must be positive integer, got {scale}")
+        VisualOperations._validate_display_args(frame_generator, target_fps, scale)
 
         try:
             import pygame
@@ -541,7 +568,6 @@ class VisualOperations:
         pygame.display.set_caption(title)
         clock, font = pygame.time.Clock(), pygame.font.Font(None, 24)
 
-        # State variables
         paused, current_fps = False, target_fps
         fps_frame_count, total_frames = 0, 0
         fps_timer, actual_fps = time.time(), 0.0
@@ -550,25 +576,15 @@ class VisualOperations:
         try:
             running = True
             while running:
-                # Handle events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
                     elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:
-                            paused = not paused
-                        elif event.key == pygame.K_RIGHT and paused:
-                            new_frame = frame_generator()
-                            if new_frame is not None:
-                                current_visual, total_frames, fps_frame_count = new_frame, total_frames + 1, fps_frame_count + 1
-                        elif event.key == pygame.K_UP:
-                            current_fps = min(current_fps + 5, 120)
-                        elif event.key == pygame.K_DOWN:
-                            current_fps = max(current_fps - 5, 1)
-                        elif event.key in (pygame.K_q, pygame.K_ESCAPE):
-                            running = False
+                        running, paused, current_fps, step_frame = VisualOperations._handle_display_keydown(
+                            event.key, paused, current_fps, frame_generator)
+                        if step_frame is not None:
+                            current_visual, total_frames, fps_frame_count = step_frame, total_frames + 1, fps_frame_count + 1
 
-                # Generate next frame (if not paused)
                 if not paused:
                     new_frame = frame_generator()
                     if new_frame is None:
@@ -576,20 +592,12 @@ class VisualOperations:
                         continue
                     current_visual, total_frames, fps_frame_count = new_frame, total_frames + 1, fps_frame_count + 1
 
-                # Render frame
-                srgb = VisualOperations._linear_to_srgb(current_visual.data)
-                rgb_8bit = (srgb * 255).astype(np.uint8)
-                surf = pygame.surfarray.make_surface(np.transpose(rgb_8bit, (1, 0, 2)))
-                if scale != 1:
-                    surf = pygame.transform.scale(surf, (width, height))
-                screen.blit(surf, (0, 0))
+                VisualOperations._render_to_screen(screen, current_visual, scale, width, height)
 
-                # Update FPS counter
                 now = time.time()
                 if now - fps_timer >= 1.0:
                     actual_fps, fps_frame_count, fps_timer = fps_frame_count / (now - fps_timer), 0, now
 
-                # Draw status overlay
                 VisualOperations._render_status_overlay(screen, font, actual_fps, current_fps, total_frames, paused)
                 pygame.display.flip()
                 clock.tick(current_fps)

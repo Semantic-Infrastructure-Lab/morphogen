@@ -289,6 +289,72 @@ class CircuitOperations:
         circuit.components.append(comp)
         return circuit
 
+    # --- MNA Stamp Helpers ---
+
+    @staticmethod
+    def _stamp_admittance(A: np.ndarray, n1: int, n2: int, y) -> None:
+        """Stamp a two-terminal admittance (1/impedance) into the MNA conductance matrix."""
+        if n1 == 0 and n2 == 0:
+            return
+        if n1 != 0:
+            A[n1-1, n1-1] += y
+            if n2 != 0:
+                A[n1-1, n2-1] -= y
+        if n2 != 0:
+            A[n2-1, n2-1] += y
+            if n1 != 0:
+                A[n2-1, n1-1] -= y
+
+    @staticmethod
+    def _stamp_current_source(b: np.ndarray, n1: int, n2: int, value: float) -> None:
+        """Stamp a current source (flowing from n1 to n2) into the b vector."""
+        if n1 != 0:
+            b[n1-1] -= value
+        if n2 != 0:
+            b[n2-1] += value
+
+    @staticmethod
+    def _stamp_voltage_source(A: np.ndarray, b: np.ndarray, n1: int, n2: int,
+                               vsource_row: int, value: float) -> None:
+        """Stamp a voltage source (V_n1 - V_n2 = value) into the MNA matrices."""
+        if n1 != 0:
+            A[n1-1, vsource_row] += 1
+            A[vsource_row, n1-1] += 1
+        if n2 != 0:
+            A[n2-1, vsource_row] -= 1
+            A[vsource_row, n2-1] -= 1
+        b[vsource_row] = value
+
+    @staticmethod
+    def _stamp_opamp(A: np.ndarray, n_in_pos: int, n_in_neg: int, n_out: int,
+                     opamp_row: int, gain: float) -> None:
+        """Stamp an ideal op-amp (V_out = gain*(V_in+ - V_in-)) into the MNA matrix."""
+        if n_out != 0:
+            A[n_out-1, opamp_row] += 1
+            A[opamp_row, n_out-1] += 2  # current equation (+1) + voltage equation (+1)
+        if n_in_pos != 0:
+            A[opamp_row, n_in_pos-1] -= gain
+        if n_in_neg != 0:
+            A[opamp_row, n_in_neg-1] += gain
+
+    @staticmethod
+    def _stamp_companion_element(A: np.ndarray, b: np.ndarray, n1: int, n2: int,
+                                  g_eq: float, i_eq: float) -> None:
+        """Stamp a companion model (conductance + current source) for reactive elements.
+
+        Used in transient analysis. i_eq is the equivalent current flowing into n1.
+        """
+        if n1 != 0:
+            A[n1-1, n1-1] += g_eq
+            if n2 != 0:
+                A[n1-1, n2-1] -= g_eq
+            b[n1-1] += i_eq
+        if n2 != 0:
+            A[n2-1, n2-1] += g_eq
+            if n1 != 0:
+                A[n2-1, n1-1] -= g_eq
+            b[n2-1] -= i_eq
+
     @staticmethod
     def _build_mna_matrices_dc(circuit: Circuit) -> Tuple[np.ndarray, np.ndarray]:
         """Build Modified Nodal Analysis matrices for DC analysis.
@@ -296,117 +362,34 @@ class CircuitOperations:
         Returns:
             Tuple of (A_matrix, b_vector) where A*x = b
         """
-        # Count voltage sources and op-amps to determine matrix size
-        # Both add extra variables (branch currents)
         num_vsources = sum(1 for c in circuit.components
                           if c.comp_type == ComponentType.VOLTAGE_SOURCE)
         num_opamps = sum(1 for c in circuit.components
                         if c.comp_type == ComponentType.OPAMP)
-
-        # Matrix size: (num_nodes - 1) + num_vsources + num_opamps
-        # We exclude ground (node 0) from the equations
         n = circuit.num_nodes - 1 + num_vsources + num_opamps
 
         A = np.zeros((n, n))
         b = np.zeros(n)
-
         vsource_idx = 0
         opamp_idx = 0
 
         for comp in circuit.components:
             if comp.comp_type == ComponentType.RESISTOR:
-                # Conductance stamp for resistor
                 g = 1.0 / comp.value if comp.value != 0 else 1e-12
-
-                n1, n2 = comp.node1, comp.node2
-
-                # Skip if both nodes are ground
-                if n1 == 0 and n2 == 0:
-                    continue
-
-                if n1 != 0:
-                    A[n1-1, n1-1] += g
-                    if n2 != 0:
-                        A[n1-1, n2-1] -= g
-
-                if n2 != 0:
-                    A[n2-1, n2-1] += g
-                    if n1 != 0:
-                        A[n2-1, n1-1] -= g
-
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, g)
             elif comp.comp_type == ComponentType.INDUCTOR:
-                # Inductor is a short circuit in DC (treat as very small resistor)
-                g = 1e12  # Very high conductance ≈ short circuit
-
-                n1, n2 = comp.node1, comp.node2
-
-                # Skip if both nodes are ground
-                if n1 == 0 and n2 == 0:
-                    continue
-
-                if n1 != 0:
-                    A[n1-1, n1-1] += g
-                    if n2 != 0:
-                        A[n1-1, n2-1] -= g
-
-                if n2 != 0:
-                    A[n2-1, n2-1] += g
-                    if n1 != 0:
-                        A[n2-1, n1-1] -= g
-
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, 1e12)
             elif comp.comp_type == ComponentType.CURRENT_SOURCE:
-                # Current source stamp
-                n1, n2 = comp.node1, comp.node2
-
-                if n1 != 0:
-                    b[n1-1] -= comp.value  # Current entering node
-                if n2 != 0:
-                    b[n2-1] += comp.value  # Current leaving node
-
+                CircuitOperations._stamp_current_source(b, comp.node1, comp.node2, comp.value)
             elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
-                # Voltage source stamp
-                n1, n2 = comp.node1, comp.node2
                 vsource_row = circuit.num_nodes - 1 + vsource_idx
-
-                # Add equations for voltage source
-                if n1 != 0:
-                    A[n1-1, vsource_row] += 1
-                    A[vsource_row, n1-1] += 1
-
-                if n2 != 0:
-                    A[n2-1, vsource_row] -= 1
-                    A[vsource_row, n2-1] -= 1
-
-                b[vsource_row] = comp.value
+                CircuitOperations._stamp_voltage_source(
+                    A, b, comp.node1, comp.node2, vsource_row, comp.value)
                 vsource_idx += 1
-
             elif comp.comp_type == ComponentType.OPAMP:
-                # Op-amp stamp (voltage-controlled voltage source)
-                # V_out = gain * (V_in+ - V_in-)
-                n_in_pos = comp.node1  # Non-inverting input
-                n_in_neg = comp.node2  # Inverting input
-                n_out = comp.node3     # Output
-                gain = comp.value
-
                 opamp_row = circuit.num_nodes - 1 + num_vsources + opamp_idx
-
-                # Add equations for op-amp output current (like voltage source)
-                if n_out != 0:
-                    A[n_out-1, opamp_row] += 1
-                    A[opamp_row, n_out-1] += 1
-
-                # Controlled voltage equation: V_out = gain * (V_in+ - V_in-)
-                # Rearranged: V_out - gain*V_in+ + gain*V_in- = 0
-                if n_out != 0:
-                    A[opamp_row, n_out-1] += 1
-
-                if n_in_pos != 0:
-                    A[opamp_row, n_in_pos-1] -= gain
-
-                if n_in_neg != 0:
-                    A[opamp_row, n_in_neg-1] += gain
-
-                # b[opamp_row] = 0 (already zero-initialized)
+                CircuitOperations._stamp_opamp(
+                    A, comp.node1, comp.node2, comp.node3, opamp_row, comp.value)
                 opamp_idx += 1
 
         return A, b
@@ -470,6 +453,34 @@ class CircuitOperations:
         return circuit
 
     @staticmethod
+    def _build_ac_matrices_at_freq(circuit: Circuit, omega: float,
+                                    n: int, num_vsources: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Build complex MNA matrices for AC analysis at a single angular frequency."""
+        A = np.zeros((n, n), dtype=complex)
+        b = np.zeros(n, dtype=complex)
+        vsource_idx = 0
+
+        for comp in circuit.components:
+            if comp.comp_type == ComponentType.RESISTOR:
+                y = 1.0 / comp.value if comp.value != 0 else 1e-12
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, y)
+            elif comp.comp_type == ComponentType.CAPACITOR:
+                CircuitOperations._stamp_admittance(
+                    A, comp.node1, comp.node2, 1j * omega * comp.value)
+            elif comp.comp_type == ComponentType.INDUCTOR:
+                y = 1e12 if omega == 0 else 1.0 / (1j * omega * comp.value)
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, y)
+            elif comp.comp_type == ComponentType.CURRENT_SOURCE:
+                CircuitOperations._stamp_current_source(b, comp.node1, comp.node2, comp.value)
+            elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
+                vsource_row = circuit.num_nodes - 1 + vsource_idx
+                CircuitOperations._stamp_voltage_source(
+                    A, b, comp.node1, comp.node2, vsource_row, comp.value)
+                vsource_idx += 1
+
+        return A, b
+
+    @staticmethod
     @operator(
         domain="circuit",
         category=OpCategory.TRANSFORM,
@@ -487,6 +498,10 @@ class CircuitOperations:
         Returns:
             Dictionary with 'frequencies', 'node_voltages' (complex), 'impedances'
         """
+        num_vsources = sum(1 for c in circuit.components
+                          if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        n = circuit.num_nodes - 1 + num_vsources
+
         results = {
             'frequencies': frequencies,
             'node_voltages': [],
@@ -495,112 +510,55 @@ class CircuitOperations:
 
         for freq in frequencies:
             omega = 2 * np.pi * freq
+            A, b = CircuitOperations._build_ac_matrices_at_freq(circuit, omega, n, num_vsources)
 
-            # Build MNA matrices with complex impedances
-            num_vsources = sum(1 for c in circuit.components
-                              if c.comp_type == ComponentType.VOLTAGE_SOURCE)
-            n = circuit.num_nodes - 1 + num_vsources
-
-            A = np.zeros((n, n), dtype=complex)
-            b = np.zeros(n, dtype=complex)
-
-            vsource_idx = 0
-
-            for comp in circuit.components:
-                if comp.comp_type == ComponentType.RESISTOR:
-                    # Resistance (real impedance)
-                    y = 1.0 / comp.value if comp.value != 0 else 1e-12
-
-                    n1, n2 = comp.node1, comp.node2
-                    if n1 == 0 and n2 == 0:
-                        continue
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += y
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= y
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += y
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= y
-
-                elif comp.comp_type == ComponentType.CAPACITOR:
-                    # Capacitive impedance: Z = 1/(jwC), Y = jwC
-                    y = 1j * omega * comp.value
-
-                    n1, n2 = comp.node1, comp.node2
-                    if n1 == 0 and n2 == 0:
-                        continue
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += y
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= y
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += y
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= y
-
-                elif comp.comp_type == ComponentType.INDUCTOR:
-                    # Inductive impedance: Z = jwL, Y = 1/(jwL)
-                    if omega == 0:
-                        y = 1e12  # DC: inductor is short circuit
-                    else:
-                        y = 1.0 / (1j * omega * comp.value)
-
-                    n1, n2 = comp.node1, comp.node2
-                    if n1 == 0 and n2 == 0:
-                        continue
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += y
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= y
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += y
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= y
-
-                elif comp.comp_type == ComponentType.CURRENT_SOURCE:
-                    n1, n2 = comp.node1, comp.node2
-                    if n1 != 0:
-                        b[n1-1] -= comp.value
-                    if n2 != 0:
-                        b[n2-1] += comp.value
-
-                elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
-                    n1, n2 = comp.node1, comp.node2
-                    vsource_row = circuit.num_nodes - 1 + vsource_idx
-
-                    if n1 != 0:
-                        A[n1-1, vsource_row] += 1
-                        A[vsource_row, n1-1] += 1
-
-                    if n2 != 0:
-                        A[n2-1, vsource_row] -= 1
-                        A[vsource_row, n2-1] -= 1
-
-                    b[vsource_row] = comp.value
-                    vsource_idx += 1
-
-            # Solve system
             try:
                 x = np.linalg.solve(A, b)
             except np.linalg.LinAlgError:
                 x = np.linalg.lstsq(A, b, rcond=None)[0]
 
-            # Extract results
             node_v = np.zeros(circuit.num_nodes, dtype=complex)
             node_v[1:] = x[:circuit.num_nodes-1]
-
             results['node_voltages'].append(node_v)
 
         results['node_voltages'] = np.array(results['node_voltages'])
-
         return results
+
+    @staticmethod
+    def _build_transient_matrices(circuit: Circuit, n: int, num_vsources: int,
+                                   voltages: np.ndarray,
+                                   inductor_currents: Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]:
+        """Build MNA matrices for one timestep of transient analysis using companion models."""
+        A = np.zeros((n, n))
+        b = np.zeros(n)
+        vsource_idx = 0
+
+        for comp in circuit.components:
+            if comp.comp_type == ComponentType.RESISTOR:
+                g = 1.0 / comp.value if comp.value != 0 else 1e-12
+                CircuitOperations._stamp_admittance(A, comp.node1, comp.node2, g)
+            elif comp.comp_type == ComponentType.CAPACITOR:
+                # Backward Euler companion: g_eq = C/dt, i_eq = -C*v_old/dt
+                g_eq = comp.value / circuit.dt
+                v_old = voltages[comp.node1] - voltages[comp.node2]
+                i_eq = -comp.value * v_old / circuit.dt
+                CircuitOperations._stamp_companion_element(
+                    A, b, comp.node1, comp.node2, g_eq, i_eq)
+            elif comp.comp_type == ComponentType.INDUCTOR:
+                # Backward Euler companion: g_eq = dt/L, i_eq = i_old
+                g_eq = circuit.dt / comp.value
+                i_eq = inductor_currents.get(comp.name, 0.0)
+                CircuitOperations._stamp_companion_element(
+                    A, b, comp.node1, comp.node2, g_eq, i_eq)
+            elif comp.comp_type == ComponentType.CURRENT_SOURCE:
+                CircuitOperations._stamp_current_source(b, comp.node1, comp.node2, comp.value)
+            elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
+                vsource_row = circuit.num_nodes - 1 + vsource_idx
+                CircuitOperations._stamp_voltage_source(
+                    A, b, comp.node1, comp.node2, vsource_row, comp.value)
+                vsource_idx += 1
+
+        return A, b
 
     @staticmethod
     @operator(
@@ -625,143 +583,40 @@ class CircuitOperations:
         num_steps = int(duration / circuit.dt)
         time_points = np.linspace(0, duration, num_steps)
 
-        # Initialize state
         voltages = np.zeros(circuit.num_nodes)
-        capacitor_charges = {}
-        inductor_currents = {}
+        inductor_currents: Dict[str, float] = {}
 
-        # Initialize capacitor and inductor states
         for comp in circuit.components:
-            if comp.comp_type == ComponentType.CAPACITOR:
-                capacitor_charges[comp.name] = 0.0
-            elif comp.comp_type == ComponentType.INDUCTOR:
+            if comp.comp_type == ComponentType.INDUCTOR:
                 inductor_currents[comp.name] = 0.0
 
+        num_vsources = sum(1 for c in circuit.components
+                          if c.comp_type == ComponentType.VOLTAGE_SOURCE)
+        n = circuit.num_nodes - 1 + num_vsources
         voltage_history = np.zeros((num_steps, circuit.num_nodes))
 
         for step_idx, t in enumerate(time_points):
             circuit.time = t
+            A, b = CircuitOperations._build_transient_matrices(
+                circuit, n, num_vsources, voltages, inductor_currents)
 
-            # Build system with companion models for reactive elements
-            num_vsources = sum(1 for c in circuit.components
-                              if c.comp_type == ComponentType.VOLTAGE_SOURCE)
-            n = circuit.num_nodes - 1 + num_vsources
-
-            A = np.zeros((n, n))
-            b = np.zeros(n)
-
-            vsource_idx = 0
-
-            for comp in circuit.components:
-                if comp.comp_type == ComponentType.RESISTOR:
-                    g = 1.0 / comp.value if comp.value != 0 else 1e-12
-                    n1, n2 = comp.node1, comp.node2
-
-                    if n1 == 0 and n2 == 0:
-                        continue
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += g
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= g
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += g
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= g
-
-                elif comp.comp_type == ComponentType.CAPACITOR:
-                    # Backward Euler: C*dv/dt ≈ C*(v_new - v_old)/dt
-                    # Companion model: current_eq = g_eq * v + i_eq
-                    # where g_eq = C/dt, i_eq = -C*v_old/dt
-                    g_eq = comp.value / circuit.dt
-                    v_old = voltages[comp.node1] - voltages[comp.node2]
-                    i_eq = -comp.value * v_old / circuit.dt
-
-                    n1, n2 = comp.node1, comp.node2
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += g_eq
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= g_eq
-                        b[n1-1] += i_eq
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += g_eq
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= g_eq
-                        b[n2-1] -= i_eq
-
-                elif comp.comp_type == ComponentType.INDUCTOR:
-                    # Backward Euler: L*di/dt ≈ L*(i_new - i_old)/dt
-                    # Companion model: voltage = g_eq * i + v_eq
-                    # Rearranged: i = (v - v_eq) / r_eq where r_eq = L/dt
-                    r_eq = comp.value / circuit.dt
-                    g_eq = 1.0 / r_eq
-                    i_old = inductor_currents.get(comp.name, 0.0)
-                    v_eq = -comp.value * i_old / circuit.dt
-
-                    n1, n2 = comp.node1, comp.node2
-
-                    if n1 != 0:
-                        A[n1-1, n1-1] += g_eq
-                        if n2 != 0:
-                            A[n1-1, n2-1] -= g_eq
-                        b[n1-1] -= v_eq * g_eq
-
-                    if n2 != 0:
-                        A[n2-1, n2-1] += g_eq
-                        if n1 != 0:
-                            A[n2-1, n1-1] -= g_eq
-                        b[n2-1] += v_eq * g_eq
-
-                elif comp.comp_type == ComponentType.CURRENT_SOURCE:
-                    # Time-varying sources could be added here
-                    n1, n2 = comp.node1, comp.node2
-                    if n1 != 0:
-                        b[n1-1] -= comp.value
-                    if n2 != 0:
-                        b[n2-1] += comp.value
-
-                elif comp.comp_type == ComponentType.VOLTAGE_SOURCE:
-                    n1, n2 = comp.node1, comp.node2
-                    vsource_row = circuit.num_nodes - 1 + vsource_idx
-
-                    if n1 != 0:
-                        A[n1-1, vsource_row] += 1
-                        A[vsource_row, n1-1] += 1
-
-                    if n2 != 0:
-                        A[n2-1, vsource_row] -= 1
-                        A[vsource_row, n2-1] -= 1
-
-                    # Time-varying sources could be added here
-                    b[vsource_row] = comp.value
-                    vsource_idx += 1
-
-            # Solve system
             try:
                 x = np.linalg.solve(A, b)
             except np.linalg.LinAlgError:
                 x = np.linalg.lstsq(A, b, rcond=None)[0]
 
-            # Extract voltages
-            voltages[0] = 0.0  # Ground
+            voltages[0] = 0.0
             voltages[1:] = x[:circuit.num_nodes-1]
 
-            # Update inductor currents
             for comp in circuit.components:
                 if comp.comp_type == ComponentType.INDUCTOR:
                     v = voltages[comp.node1] - voltages[comp.node2]
-                    i_old = inductor_currents.get(comp.name, 0.0)
-                    i_new = i_old + (v * circuit.dt / comp.value)
-                    inductor_currents[comp.name] = i_new
+                    inductor_currents[comp.name] = (
+                        inductor_currents.get(comp.name, 0.0) + v * circuit.dt / comp.value)
 
             voltage_history[step_idx] = voltages.copy()
 
-        # Update circuit state
         circuit.node_voltages = voltages
-
         return time_points, voltage_history
 
     @staticmethod

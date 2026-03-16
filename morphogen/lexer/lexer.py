@@ -87,6 +87,37 @@ class Token:
 class Lexer:
     """Lexical analyzer for the DSL."""
 
+    _TWO_CHAR_OPS = {
+        ('=', '='): (TokenType.EQ, '=='),
+        ('!', '='): (TokenType.NE, '!='),
+        ('<', '='): (TokenType.LE, '<='),
+        ('>', '='): (TokenType.GE, '>='),
+        ('-', '>'): (TokenType.ARROW, '->'),
+    }
+
+    _SINGLE_CHAR_OPS = {
+        '+': TokenType.PLUS,
+        '-': TokenType.MINUS,
+        '*': TokenType.STAR,
+        '/': TokenType.SLASH,
+        '%': TokenType.PERCENT,
+        '=': TokenType.ASSIGN,
+        '<': TokenType.LT,
+        '>': TokenType.GT,
+        '.': TokenType.DOT,
+        ',': TokenType.COMMA,
+        ':': TokenType.COLON,
+        ';': TokenType.SEMICOLON,
+        '(': TokenType.LPAREN,
+        ')': TokenType.RPAREN,
+        '{': TokenType.LBRACE,
+        '}': TokenType.RBRACE,
+        '[': TokenType.LBRACKET,
+        ']': TokenType.RBRACKET,
+        '@': TokenType.AT,
+        '|': TokenType.PIPE,
+    }
+
     KEYWORDS = {
         "step": TokenType.STEP,
         "substep": TokenType.SUBSTEP,
@@ -237,131 +268,39 @@ class Lexer:
 
         return Token(token_type, value, start_line, start_column)
 
+    def _scan_operator(self, char: str, line: int, column: int) -> Token:
+        """Scan a one- or two-character operator/delimiter token."""
+        two_char = self._TWO_CHAR_OPS.get((char, self.peek_char()))
+        if two_char:
+            tok_type, lexeme = two_char
+            self.advance()
+            self.advance()
+            return Token(tok_type, lexeme, line, column)
+        if char in self._SINGLE_CHAR_OPS:
+            self.advance()
+            return Token(self._SINGLE_CHAR_OPS[char], char, line, column)
+        raise ValueError(f"Unexpected character '{char}' at {line}:{column}")
+
     def tokenize(self) -> List[Token]:
         """Tokenize the entire source."""
         while self.current_char():
             self.skip_whitespace()
-
             if not self.current_char():
                 break
-
-            # Comments
-            if self.current_char() == '#':
-                self.skip_comment()
-                continue
-
-            # Newlines
-            if self.current_char() == '\n':
-                token = Token(TokenType.NEWLINE, '\n', self.line, self.column)
-                self.tokens.append(token)
-                self.advance()
-                continue
-
-            # Numbers
-            if self.current_char().isdigit():
-                self.tokens.append(self.read_number())
-                continue
-
-            # Strings
-            if self.current_char() in '"\'':
-                self.tokens.append(self.read_string())
-                continue
-
-            # Identifiers and keywords
-            if self.current_char().isalpha() or self.current_char() == '_':
-                self.tokens.append(self.read_identifier())
-                continue
-
-            # Operators and delimiters
             char = self.current_char()
-            line = self.line
-            column = self.column
-
-            # Two-character operators
-            if char == '=' and self.peek_char() == '=':
+            if char == '#':
+                self.skip_comment()
+            elif char == '\n':
+                self.tokens.append(Token(TokenType.NEWLINE, '\n', self.line, self.column))
                 self.advance()
-                self.advance()
-                self.tokens.append(Token(TokenType.EQ, '==', line, column))
-            elif char == '!' and self.peek_char() == '=':
-                self.advance()
-                self.advance()
-                self.tokens.append(Token(TokenType.NE, '!=', line, column))
-            elif char == '<' and self.peek_char() == '=':
-                self.advance()
-                self.advance()
-                self.tokens.append(Token(TokenType.LE, '<=', line, column))
-            elif char == '>' and self.peek_char() == '=':
-                self.advance()
-                self.advance()
-                self.tokens.append(Token(TokenType.GE, '>=', line, column))
-            elif char == '-' and self.peek_char() == '>':
-                self.advance()
-                self.advance()
-                self.tokens.append(Token(TokenType.ARROW, '->', line, column))
-            # Single-character operators
-            elif char == '+':
-                self.advance()
-                self.tokens.append(Token(TokenType.PLUS, '+', line, column))
-            elif char == '-':
-                self.advance()
-                self.tokens.append(Token(TokenType.MINUS, '-', line, column))
-            elif char == '*':
-                self.advance()
-                self.tokens.append(Token(TokenType.STAR, '*', line, column))
-            elif char == '/':
-                self.advance()
-                self.tokens.append(Token(TokenType.SLASH, '/', line, column))
-            elif char == '%':
-                self.advance()
-                self.tokens.append(Token(TokenType.PERCENT, '%', line, column))
-            elif char == '=':
-                self.advance()
-                self.tokens.append(Token(TokenType.ASSIGN, '=', line, column))
-            elif char == '<':
-                self.advance()
-                self.tokens.append(Token(TokenType.LT, '<', line, column))
-            elif char == '>':
-                self.advance()
-                self.tokens.append(Token(TokenType.GT, '>', line, column))
-            elif char == '.':
-                self.advance()
-                self.tokens.append(Token(TokenType.DOT, '.', line, column))
-            elif char == ',':
-                self.advance()
-                self.tokens.append(Token(TokenType.COMMA, ',', line, column))
-            elif char == ':':
-                self.advance()
-                self.tokens.append(Token(TokenType.COLON, ':', line, column))
-            elif char == ';':
-                self.advance()
-                self.tokens.append(Token(TokenType.SEMICOLON, ';', line, column))
-            elif char == '(':
-                self.advance()
-                self.tokens.append(Token(TokenType.LPAREN, '(', line, column))
-            elif char == ')':
-                self.advance()
-                self.tokens.append(Token(TokenType.RPAREN, ')', line, column))
-            elif char == '{':
-                self.advance()
-                self.tokens.append(Token(TokenType.LBRACE, '{', line, column))
-            elif char == '}':
-                self.advance()
-                self.tokens.append(Token(TokenType.RBRACE, '}', line, column))
-            elif char == '[':
-                self.advance()
-                self.tokens.append(Token(TokenType.LBRACKET, '[', line, column))
-            elif char == ']':
-                self.advance()
-                self.tokens.append(Token(TokenType.RBRACKET, ']', line, column))
-            elif char == '@':
-                self.advance()
-                self.tokens.append(Token(TokenType.AT, '@', line, column))
-            elif char == '|':
-                self.advance()
-                self.tokens.append(Token(TokenType.PIPE, '|', line, column))
+            elif char.isdigit():
+                self.tokens.append(self.read_number())
+            elif char in '"\'':
+                self.tokens.append(self.read_string())
+            elif char.isalpha() or char == '_':
+                self.tokens.append(self.read_identifier())
             else:
-                raise ValueError(f"Unexpected character '{char}' at {line}:{column}")
+                self.tokens.append(self._scan_operator(char, self.line, self.column))
 
-        # Add EOF token
         self.tokens.append(Token(TokenType.EOF, None, self.line, self.column))
         return self.tokens

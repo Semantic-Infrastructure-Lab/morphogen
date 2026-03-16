@@ -10,7 +10,6 @@ Tests cover:
 
 import pytest
 import tempfile
-import json
 from pathlib import Path
 
 from .core import (

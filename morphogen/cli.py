@@ -89,6 +89,43 @@ def main():
         sys.exit(1)
 
 
+def _apply_params(context, param_list):
+    """Parse and apply key=value parameter overrides to the execution context."""
+    for param_str in param_list:
+        key, value = param_str.split("=", 1)
+        try:
+            value = float(value)
+            if value.is_integer():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string
+        context.set_config(key, value)
+
+
+def _has_visual_output(step_blocks):
+    """Return True if any step block contains visual.output or visual.display calls."""
+    for step_block in step_blocks:
+        step_str = str(step_block)
+        if 'visual.output' in step_str or 'visual.display' in step_str:
+            return True
+    return False
+
+
+def _run_steps(runtime, step_blocks, max_steps):
+    """Execute step blocks up to max_steps times; return the step count reached."""
+    step_count = 0
+    try:
+        while step_count < max_steps:
+            if step_count % 10 == 0:
+                print(f"Step {step_count + 1}...")
+            for step_block in step_blocks:
+                runtime.execute_step(step_block)
+            step_count += 1
+    except KeyboardInterrupt:
+        print(f"\nInterrupted after {step_count} steps")
+    return step_count
+
+
 def cmd_run(args):
     """Run a DSL program."""
     if not args.file.exists():
@@ -103,94 +140,41 @@ def cmd_run(args):
         from morphogen.runtime.runtime import Runtime, ExecutionContext
         from morphogen.ast.nodes import Step
 
-        # 1. Parse source file
         source = args.file.read_text()
         program = parse(source)
 
-        # 2. Type check (optional but recommended)
         checker = TypeChecker()
         checker.visit(program)
-
         if checker.errors:
             print("\nType errors found:")
             for error in checker.errors:
                 print(f"  - {error}")
             print("\nContinuing execution anyway...")
 
-        # 3. Execute with NumPy backend (MLIR deferred to post-MVP)
         context = ExecutionContext(global_seed=args.seed)
         context.set_config("profile", args.profile)
-
-        # Override parameters if provided
         if args.param:
-            for param_str in args.param:
-                key, value = param_str.split("=", 1)
-                try:
-                    # Try to parse as number
-                    value = float(value)
-                    if value.is_integer():
-                        value = int(value)
-                except ValueError:
-                    pass  # Keep as string
-                context.set_config(key, value)
+            _apply_params(context, args.param)
 
         runtime = Runtime(context)
 
-        # Separate initialization and step blocks
-        init_statements = []
-        step_blocks = []
-        for stmt in program.statements:
-            if isinstance(stmt, Step):
-                step_blocks.append(stmt)
-            else:
-                init_statements.append(stmt)
+        init_statements = [s for s in program.statements if not isinstance(s, Step)]
+        step_blocks = [s for s in program.statements if isinstance(s, Step)]
 
-        # Execute initialization statements once
         print("Initializing...")
         for stmt in init_statements:
             runtime.execute_statement(stmt)
 
-        # If there are step blocks, run them repeatedly
         if step_blocks:
             if len(step_blocks) > 1:
                 print("Warning: Multiple step blocks found, executing all sequentially")
-
-            # Determine execution mode
             max_steps = args.steps if args.steps else float('inf')
-
-            # Check if program uses visual.output for static output
-            # or should use interactive display
-            has_visual_output = False
-            for step_block in step_blocks:
-                # Simple check for visual.output calls (not perfect but works for MVP)
-                step_str = str(step_block)
-                if 'visual.output' in step_str or 'visual.display' in step_str:
-                    has_visual_output = True
-                    break
-
-            if max_steps == float('inf') and not has_visual_output:
+            if max_steps == float('inf') and not _has_visual_output(step_blocks):
                 print("Error: Infinite loop without visual output. Use --steps or add visual.output()")
                 sys.exit(1)
-
-            # Execute step blocks
-            step_count = 0
-            try:
-                while step_count < max_steps:
-                    if step_count % 10 == 0:  # Print progress every 10 steps
-                        print(f"Step {step_count + 1}...")
-
-                    for step_block in step_blocks:
-                        runtime.execute_step(step_block)
-
-                    step_count += 1
-
-            except KeyboardInterrupt:
-                print(f"\nInterrupted after {step_count} steps")
-
+            step_count = _run_steps(runtime, step_blocks, max_steps)
             print(f"\nExecution completed ({step_count} steps)")
-
         else:
-            # No step blocks, just run once
             print("No step blocks found, executing program once")
 
         print("Done!")

@@ -509,8 +509,9 @@ class ImageOperations:
         if img_a.shape != img_b.shape:
             raise ValueError(f"Images must have same dimensions: {img_a.shape} vs {img_b.shape}")
 
-        # Import color operations for blend modes
-        from . import color
+        # Import color operations for blend modes (sys.modules avoids package __init__ cycle)
+        import sys
+        color = sys.modules["morphogen.stdlib.color"]
 
         # Extract RGB channels (ignore alpha for blending logic)
         rgb_a = img_a.data[:, :, :3]
@@ -666,7 +667,8 @@ class ImageOperations:
         elif channel == "b":
             values = img.data[:, :, 2]
         elif channel == "saturation":
-            from . import color
+            import sys
+            color = sys.modules["morphogen.stdlib.color"]
             hsv = color.rgb_to_hsv(img.data[:, :, :3])
             values = hsv[:, :, 1]
         else:

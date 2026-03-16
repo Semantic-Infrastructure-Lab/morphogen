@@ -11,8 +11,6 @@ from typing import Dict, List, Set, Optional, Any
 from .ir_builder import (
     IRModule, IRFunction, IRBlock, IROperation, IRValue, IRType, IRRegion
 )
-from ..ast.nodes import Literal
-
 
 class OptimizationPass:
     """Base class for optimization passes."""

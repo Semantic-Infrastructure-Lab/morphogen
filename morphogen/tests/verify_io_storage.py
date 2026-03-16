@@ -5,7 +5,6 @@ Tests all I/O operations without external test frameworks.
 
 import numpy as np
 import tempfile
-import shutil
 from pathlib import Path
 import sys
 

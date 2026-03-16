@@ -155,6 +155,59 @@ class OperatorExecutor:
         # Operator state management
         self._operator_state: Dict[str, Dict[str, Any]] = {}
 
+    def _build_op_args(self, sig, audio_inputs, parsed_params, node_state, rate_hz, num_samples):
+        """Match operator function parameters to available inputs, params, and state."""
+        from morphogen.stdlib.audio import AudioBuffer
+        op_args = {}
+        for param_name in sig.parameters:
+            if param_name in audio_inputs:
+                op_args[param_name] = audio_inputs[param_name]
+            elif param_name in parsed_params:
+                op_args[param_name] = parsed_params[param_name]
+            elif param_name == "sample_rate":
+                op_args[param_name] = int(rate_hz)
+            elif param_name == "duration":
+                op_args[param_name] = num_samples / rate_hz
+            elif param_name in EXECUTOR_MANAGED_STATE:
+                if param_name not in node_state:
+                    node_state[param_name] = 0.0
+                op_args[param_name] = node_state[param_name]
+            elif param_name in OPERATOR_MANAGED_STATE:
+                if param_name not in node_state:
+                    state_size = OPERATOR_MANAGED_STATE[param_name]
+                    node_state[param_name] = AudioBuffer(
+                        data=np.zeros(state_size), sample_rate=int(rate_hz)
+                    )
+                op_args[param_name] = node_state[param_name]
+        return op_args
+
+    def _update_phase_state(self, node_state, parsed_params, op_args, sig, rate_hz, num_samples):
+        """Advance and persist oscillator phase for phase continuity."""
+        if "freq" in parsed_params and "phase" in EXECUTOR_MANAGED_STATE and "phase" in sig.parameters:
+            freq = parsed_params["freq"]
+            phase_advance = (2.0 * np.pi * freq * num_samples / rate_hz) % (2.0 * np.pi)
+            node_state["phase"] = (op_args.get("phase", 0.0) + phase_advance) % (2.0 * np.pi)
+
+    @staticmethod
+    def _convert_result(result, num_samples) -> Dict[str, np.ndarray]:
+        """Convert an operator return value to a port→ndarray output dict."""
+        from morphogen.stdlib.audio import AudioBuffer
+        if isinstance(result, AudioBuffer):
+            return {"out": result.data[:num_samples]}
+        if isinstance(result, np.ndarray):
+            return {"out": result[:num_samples]}
+        if isinstance(result, dict):
+            outputs = {}
+            for port_name, value in result.items():
+                if isinstance(value, AudioBuffer):
+                    outputs[port_name] = value.data[:num_samples]
+                elif isinstance(value, np.ndarray):
+                    outputs[port_name] = value[:num_samples]
+                else:
+                    outputs[port_name] = np.array([value] * num_samples)
+            return outputs
+        return {"out": np.array([result] * num_samples)}
+
     def execute(
         self,
         operator_name: str,
@@ -164,120 +217,33 @@ class OperatorExecutor:
         num_samples: int,
         rate_hz: float,
     ) -> Dict[str, np.ndarray]:
-        """
-        Execute an operator.
-
-        Args:
-            operator_name: Operator name (e.g., "sine")
-            node_id: Unique node ID (for state management)
-            params: Operator parameters from GraphIR
-            inputs: Input buffers (port_name → np.ndarray)
-            num_samples: Number of samples to generate
-            rate_hz: Execution rate in Hz
-
-        Returns:
-            Output buffers (port_name → np.ndarray)
-        """
-        # Get operator function
+        """Execute an operator and return output buffers (port_name → np.ndarray)."""
         op_func = self.registry.get(operator_name)
         if op_func is None:
-            # Operator not found - return zeros
             return {"out": np.zeros(num_samples)}
 
-        # Convert inputs to AudioBuffer if needed
         from morphogen.stdlib.audio import AudioBuffer
-        audio_inputs = {}
-        for port_name, buffer in inputs.items():
-            audio_inputs[port_name] = AudioBuffer(data=buffer, sample_rate=int(rate_hz))
-
-        # Parse parameters
+        audio_inputs = {
+            port: AudioBuffer(data=buf, sample_rate=int(rate_hz))
+            for port, buf in inputs.items()
+        }
         parsed_params = self._parse_params(params, rate_hz, num_samples)
-
-        # Build operator arguments
-        op_args = {}
         sig = inspect.signature(op_func)
 
-        # Initialize node state if needed
         if node_id not in self._operator_state:
             self._operator_state[node_id] = {}
         node_state = self._operator_state[node_id]
 
-        # Match parameters to function signature
-        for param_name in sig.parameters:
-            if param_name in audio_inputs:
-                # Use input buffer
-                op_args[param_name] = audio_inputs[param_name]
-            elif param_name in parsed_params:
-                # Use parsed parameter
-                op_args[param_name] = parsed_params[param_name]
-            elif param_name == "sample_rate":
-                # Provide sample rate
-                op_args[param_name] = int(rate_hz)
-            elif param_name == "duration":
-                # Calculate duration from num_samples
-                op_args[param_name] = num_samples / rate_hz
-            elif param_name in EXECUTOR_MANAGED_STATE:
-                # Executor-managed state (e.g., phase)
-                # Executor calculates state after execution
-                if param_name not in node_state:
-                    node_state[param_name] = 0.0  # Initialize to zero
-                op_args[param_name] = node_state[param_name]
-            elif param_name in OPERATOR_MANAGED_STATE:
-                # Operator-managed state (e.g., filter_state)
-                # Operator updates state via in-place AudioBuffer modification
-                if param_name not in node_state:
-                    # Create AudioBuffer state with appropriate size
-                    state_size = OPERATOR_MANAGED_STATE[param_name]
-                    node_state[param_name] = AudioBuffer(
-                        data=np.zeros(state_size),
-                        sample_rate=int(rate_hz)
-                    )
-                # Inject state - operator will update it automatically
-                op_args[param_name] = node_state[param_name]
+        op_args = self._build_op_args(sig, audio_inputs, parsed_params, node_state, rate_hz, num_samples)
 
-        # Execute operator
         try:
             result = op_func(**op_args)
         except Exception as e:
             print(f"Error executing operator '{operator_name}': {e}")
             return {"out": np.zeros(num_samples)}
 
-        # Update executor-managed state (phase continuity for oscillators)
-        # Note: Operator-managed state (filter_state) is updated automatically by operators
-        if "freq" in parsed_params and "phase" in EXECUTOR_MANAGED_STATE and "phase" in sig.parameters:
-            # Calculate final phase for phase continuity
-            freq = parsed_params["freq"]
-            duration = num_samples / rate_hz
-            phase_advance = (2.0 * np.pi * freq * duration) % (2.0 * np.pi)
-            current_phase = op_args.get("phase", 0.0)
-            final_phase = (current_phase + phase_advance) % (2.0 * np.pi)
-
-            # Save state for next execution
-            node_state["phase"] = final_phase
-
-        # Convert result to output dict
-        outputs = {}
-
-        if isinstance(result, AudioBuffer):
-            # Single AudioBuffer output
-            outputs["out"] = result.data[:num_samples]
-        elif isinstance(result, np.ndarray):
-            # Raw numpy array
-            outputs["out"] = result[:num_samples]
-        elif isinstance(result, dict):
-            # Dictionary of outputs
-            for port_name, value in result.items():
-                if isinstance(value, AudioBuffer):
-                    outputs[port_name] = value.data[:num_samples]
-                elif isinstance(value, np.ndarray):
-                    outputs[port_name] = value[:num_samples]
-                else:
-                    outputs[port_name] = np.array([value] * num_samples)
-        else:
-            # Scalar or other - convert to constant buffer
-            outputs["out"] = np.array([result] * num_samples)
-
-        return outputs
+        self._update_phase_state(node_state, parsed_params, op_args, sig, rate_hz, num_samples)
+        return self._convert_result(result, num_samples)
 
     def _parse_params(
         self,

@@ -1110,6 +1110,47 @@ class Visual3DOperations:
             color=color,
         )
 
+    # CPK/Jmol element colors and van der Waals radii — shared by molecule helpers
+    _ELEMENT_COLORS = {
+        'H': (1.0, 1.0, 1.0), 'C': (0.5, 0.5, 0.5), 'N': (0.0, 0.0, 1.0),
+        'O': (1.0, 0.0, 0.0), 'F': (0.0, 1.0, 0.0), 'Cl': (0.0, 1.0, 0.0),
+        'Br': (0.6, 0.1, 0.1), 'S': (1.0, 1.0, 0.0), 'P': (1.0, 0.5, 0.0),
+        'Na': (0.0, 0.0, 1.0), 'default': (1.0, 0.0, 1.0),
+    }
+    _VDW_RADII = {
+        'H': 1.20, 'C': 1.70, 'N': 1.55, 'O': 1.52,
+        'F': 1.47, 'Cl': 1.75, 'Br': 1.85, 'S': 1.80,
+        'P': 1.80, 'Na': 2.27, 'default': 1.50,
+    }
+
+    @staticmethod
+    def _resolve_atom_base_scale(style: str, atom_scale: float) -> float:
+        """Return atom sphere scale factor for the given rendering style."""
+        return {'spacefill': 1.0, 'stick': 0.15, 'wireframe': 0.0}.get(style, atom_scale)
+
+    @staticmethod
+    def _get_atom_color(atom, atom_index: int, n_atoms: int, color_by: str) -> tuple:
+        """Return RGB color tuple for an atom based on the color_by mode."""
+        element_colors = Visual3DOperations._ELEMENT_COLORS
+        element = atom.element
+        if color_by == "charge":
+            charge = atom.charge
+            if charge < 0:
+                t = min(1.0, abs(charge))
+                return (1.0, 1.0 - t, 1.0 - t)
+            if charge > 0:
+                t = min(1.0, charge)
+                return (1.0 - t, 1.0 - t, 1.0)
+            return (1.0, 1.0, 1.0)
+        if color_by == "index":
+            t = atom_index / max(1, n_atoms - 1)
+            return (
+                0.5 + 0.5 * np.sin(2 * np.pi * t),
+                0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.33)),
+                0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.67)),
+            )
+        return element_colors.get(element, element_colors['default'])
+
     @staticmethod
     @operator(
         domain="visual3d",
@@ -1126,147 +1167,52 @@ class Visual3DOperations:
         bond_radius: float = 0.1,
         resolution: int = 16
     ) -> Visual3D:
-        """Render molecular structure as 3D visualization.
-
-        Args:
-            mol: Molecule object with atoms, bonds, and positions
-            style: Rendering style - "ball_and_stick", "spacefill", "stick", "wireframe"
-            color_by: Coloring mode - "element", "charge", "index"
-            atom_scale: Scale factor for atom spheres (relative to vdW radius)
-            bond_radius: Radius of bond cylinders
-            resolution: Mesh resolution for spheres/cylinders
-
-        Returns:
-            Visual3D containing combined molecular mesh
-        """
+        """Render molecular structure as 3D visualization."""
         import pyvista as pv
 
-        # CPK/Jmol element colors (RGB, normalized 0-1)
-        element_colors = {
-            'H': (1.0, 1.0, 1.0),      # White
-            'C': (0.5, 0.5, 0.5),      # Gray
-            'N': (0.0, 0.0, 1.0),      # Blue
-            'O': (1.0, 0.0, 0.0),      # Red
-            'F': (0.0, 1.0, 0.0),      # Green
-            'Cl': (0.0, 1.0, 0.0),     # Green
-            'Br': (0.6, 0.1, 0.1),     # Dark red
-            'S': (1.0, 1.0, 0.0),      # Yellow
-            'P': (1.0, 0.5, 0.0),      # Orange
-            'Na': (0.0, 0.0, 1.0),     # Blue
-            'default': (1.0, 0.0, 1.0)  # Magenta for unknown
-        }
-
-        # Van der Waals radii in Angstroms
-        vdw_radii = {
-            'H': 1.20, 'C': 1.70, 'N': 1.55, 'O': 1.52,
-            'F': 1.47, 'Cl': 1.75, 'Br': 1.85, 'S': 1.80,
-            'P': 1.80, 'Na': 2.27, 'default': 1.50
-        }
-
-        # Collect all mesh components
+        element_colors = Visual3DOperations._ELEMENT_COLORS
+        vdw_radii = Visual3DOperations._VDW_RADII
+        base_scale = Visual3DOperations._resolve_atom_base_scale(style, atom_scale)
         meshes = []
 
-        # Determine atom radii based on style
-        if style == "spacefill":
-            base_scale = 1.0
-        elif style == "ball_and_stick":
-            base_scale = atom_scale
-        elif style == "stick":
-            base_scale = 0.15  # Small atoms for stick style
-        elif style == "wireframe":
-            base_scale = 0.0  # No atom spheres
-        else:
-            base_scale = atom_scale
-
-        # Create atom spheres
+        # Atom spheres
         if style != "wireframe":
             for i, atom in enumerate(mol.atoms):
                 pos = mol.positions[i]
-                element = atom.element
-
-                # Get color
-                if color_by == "element":
-                    color = element_colors.get(element, element_colors['default'])
-                elif color_by == "charge":
-                    # Map charge to color: negative=red, neutral=white, positive=blue
-                    charge = atom.charge
-                    if charge < 0:
-                        t = min(1.0, abs(charge))
-                        color = (1.0, 1.0 - t, 1.0 - t)  # Toward red
-                    elif charge > 0:
-                        t = min(1.0, charge)
-                        color = (1.0 - t, 1.0 - t, 1.0)  # Toward blue
-                    else:
-                        color = (1.0, 1.0, 1.0)  # White
-                elif color_by == "index":
-                    # Rainbow by atom index
-                    t = i / max(1, mol.n_atoms - 1)
-                    color = (
-                        0.5 + 0.5 * np.sin(2 * np.pi * t),
-                        0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.33)),
-                        0.5 + 0.5 * np.sin(2 * np.pi * (t + 0.67))
-                    )
-                else:
-                    color = element_colors.get(element, element_colors['default'])
-
-                # Get radius
-                radius = vdw_radii.get(element, vdw_radii['default']) * base_scale
-
+                color = Visual3DOperations._get_atom_color(atom, i, mol.n_atoms, color_by)
+                radius = vdw_radii.get(atom.element, vdw_radii['default']) * base_scale
                 if radius > 0:
                     sphere = pv.Sphere(
-                        center=tuple(pos),
-                        radius=radius,
-                        theta_resolution=resolution,
-                        phi_resolution=resolution
+                        center=tuple(pos), radius=radius,
+                        theta_resolution=resolution, phi_resolution=resolution
                     )
-                    # Store color as point data for rendering
                     sphere['color'] = np.array([color] * sphere.n_points)
                     meshes.append(sphere)
 
-        # Create bond cylinders
+        # Bond cylinders
         if style in ("ball_and_stick", "stick", "wireframe"):
+            cyl_radius = 0.02 if style == "wireframe" else bond_radius
             for bond in mol.bonds:
-                pos1 = mol.positions[bond.atom1]
-                pos2 = mol.positions[bond.atom2]
-
-                # Bond midpoint and direction
+                pos1, pos2 = mol.positions[bond.atom1], mol.positions[bond.atom2]
                 center = (pos1 + pos2) / 2
                 direction = pos2 - pos1
                 length = np.linalg.norm(direction)
-
-                if length > 0.01:  # Skip if atoms overlap
-                    # Create cylinder along bond
-                    if style == "wireframe":
-                        # Use lines for wireframe (thin cylinder approximation)
-                        cyl_radius = 0.02
-                    else:
-                        cyl_radius = bond_radius
-
-                    # Split bond into two halves colored by atom
-                    for half in [0, 1]:
-                        if half == 0:
-                            c = (pos1 + center) / 2
-                            atom_idx = bond.atom1
-                        else:
-                            c = (pos2 + center) / 2
-                            atom_idx = bond.atom2
-
+                if length > 0.01:
+                    for half, (c, atom_idx) in enumerate([
+                        ((pos1 + center) / 2, bond.atom1),
+                        ((pos2 + center) / 2, bond.atom2),
+                    ]):
                         element = mol.atoms[atom_idx].element
                         color = element_colors.get(element, element_colors['default'])
-
                         cylinder = pv.Cylinder(
-                            center=tuple(c),
-                            direction=tuple(direction),
-                            radius=cyl_radius,
-                            height=length / 2,
+                            center=tuple(c), direction=tuple(direction),
+                            radius=cyl_radius, height=length / 2,
                             resolution=max(8, resolution // 2)
                         )
                         cylinder['color'] = np.array([color] * cylinder.n_points)
                         meshes.append(cylinder)
 
-        # Combine all meshes
-        if len(meshes) == 0:
-            # Return empty mesh if nothing to render
+        if not meshes:
             return Visual3D(
                 vertices=np.zeros((0, 3), dtype=np.float32),
                 faces=np.zeros((0, 3), dtype=np.int64)
@@ -1276,15 +1222,11 @@ class Visual3DOperations:
         for m in meshes[1:]:
             combined = combined.merge(m)
 
-        # Extract colors from point data if available
-        colors = None
-        if 'color' in combined.point_data:
-            colors = combined.point_data['color']
-
+        colors = combined.point_data.get('color')
         return Visual3D(
             vertices=np.array(combined.points, dtype=np.float32),
             faces=combined.faces.reshape(-1, 4)[:, 1:].astype(np.int64),
-            color=(0.5, 0.5, 0.5),  # Default gray, overridden by per-vertex colors
+            color=(0.5, 0.5, 0.5),
             point_colors=colors
         )
 

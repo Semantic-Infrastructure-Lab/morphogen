@@ -120,89 +120,65 @@ class TypeChecker(ASTVisitor):
             self.errors.append(f"Invalid unit expression '{unit_str}': {e}")
             return False
 
+    def _infer_additive_unit(self, left_unit, right_unit, op, parse_unit) -> Optional[str]:
+        """Unit inference for + and - operators (units must be compatible)."""
+        if left_unit is None and right_unit is None:
+            return None
+        if left_unit is None:
+            return right_unit
+        if right_unit is None:
+            return left_unit
+        left_parsed = parse_unit(left_unit)
+        right_parsed = parse_unit(right_unit)
+        if not left_parsed.is_compatible_with(right_parsed):
+            self.errors.append(
+                f"Unit mismatch in {op} operation: [{left_unit}] and [{right_unit}] are not compatible"
+            )
+            return None
+        return left_unit
+
+    def _infer_multiplicative_unit(self, left_unit, right_unit, parse_unit) -> Optional[str]:
+        """Unit inference for * operator (units multiply)."""
+        if left_unit is None and right_unit is None:
+            return None
+        if left_unit is None:
+            return right_unit
+        if right_unit is None:
+            return left_unit
+        result = parse_unit(left_unit) * parse_unit(right_unit)
+        return result.symbol
+
+    def _infer_division_unit(self, left_unit, right_unit, parse_unit) -> Optional[str]:
+        """Unit inference for / operator (units divide)."""
+        if left_unit is None and right_unit is None:
+            return None
+        result = parse_unit(left_unit or "1") / parse_unit(right_unit or "1")
+        return result.symbol if not result.is_dimensionless() else None
+
+    def _infer_power_unit(self, left_unit, right_unit, parse_unit) -> Optional[str]:
+        """Unit inference for ^ operator (exponent must be dimensionless)."""
+        if right_unit is not None:
+            if not parse_unit(right_unit).is_dimensionless():
+                self.errors.append(f"Exponent must be dimensionless, got [{right_unit}]")
+                return None
+        return left_unit  # None or the base unit (integer exponent assumed)
+
     def _infer_arithmetic_unit(self, left_type: 'Type', right_type: 'Type', op: str) -> Optional[str]:
-        """Infer the resulting unit from an arithmetic operation.
-
-        Args:
-            left_type: Type of left operand
-            right_type: Type of right operand
-            op: Operator ('+', '-', '*', '/', '^')
-
-        Returns:
-            Resulting unit string, or None if units don't match or are incompatible
-        """
+        """Infer the resulting unit from an arithmetic operation."""
         try:
             from morphogen.types.units import parse_unit
-
             left_unit = getattr(left_type, 'unit', None)
             right_unit = getattr(right_type, 'unit', None)
-
-            # For addition/subtraction, units must match
-            if op in ['+', '-']:
-                if left_unit is None and right_unit is None:
-                    return None
-                if left_unit is None:
-                    return right_unit
-                if right_unit is None:
-                    return left_unit
-
-                # Check dimensional compatibility
-                left_parsed = parse_unit(left_unit)
-                right_parsed = parse_unit(right_unit)
-                if not left_parsed.is_compatible_with(right_parsed):
-                    self.errors.append(
-                        f"Unit mismatch in {op} operation: [{left_unit}] and [{right_unit}] are not compatible"
-                    )
-                    return None
-                return left_unit
-
-            # For multiplication, multiply units
-            elif op == '*':
-                if left_unit is None and right_unit is None:
-                    return None
-                if left_unit is None:
-                    return right_unit
-                if right_unit is None:
-                    return left_unit
-
-                left_parsed = parse_unit(left_unit)
-                right_parsed = parse_unit(right_unit)
-                result = left_parsed * right_parsed
-                return result.symbol
-
-            # For division, divide units
-            elif op == '/':
-                if left_unit is None and right_unit is None:
-                    return None
-                if left_unit is None:
-                    left_unit = "1"
-                if right_unit is None:
-                    right_unit = "1"
-
-                left_parsed = parse_unit(left_unit)
-                right_parsed = parse_unit(right_unit)
-                result = left_parsed / right_parsed
-                return result.symbol if not result.is_dimensionless() else None
-
-            # For power, raise unit to power (right operand must be dimensionless)
-            elif op == '^':
-                if right_unit is not None:
-                    right_parsed = parse_unit(right_unit)
-                    if not right_parsed.is_dimensionless():
-                        self.errors.append(
-                            f"Exponent must be dimensionless, got [{right_unit}]"
-                        )
-                        return None
-                if left_unit is None:
-                    return None
-                # For now, only support integer exponents
-                # Would need to get the actual value to compute the power
-                return left_unit
-
+            if op in ('+', '-'):
+                return self._infer_additive_unit(left_unit, right_unit, op, parse_unit)
+            if op == '*':
+                return self._infer_multiplicative_unit(left_unit, right_unit, parse_unit)
+            if op == '/':
+                return self._infer_division_unit(left_unit, right_unit, parse_unit)
+            if op == '^':
+                return self._infer_power_unit(left_unit, right_unit, parse_unit)
             return None
-
         except (ImportError, ValueError, AttributeError):
-            # If unit parsing fails, fall back to no unit
             return None
 
     def visit_assignment(self, node: Assignment) -> Any:

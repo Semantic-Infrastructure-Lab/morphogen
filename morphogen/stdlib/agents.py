@@ -588,6 +588,79 @@ class AgentOperations:
     # ========================================================================
 
     @staticmethod
+    def _emit_positions(position, count: int, emission_shape: str,
+                        emission_radius: float, rng) -> np.ndarray:
+        """Generate particle positions for emit()."""
+        if callable(position):
+            positions = position(count)
+            if positions.shape != (count, 2):
+                raise ValueError(
+                    f"Position callable must return (count, 2) array, got {positions.shape}")
+            return positions
+        if not isinstance(position, np.ndarray):
+            raise TypeError(f"Position must be array or callable, got {type(position)}")
+        if position.shape == (count, 2):
+            return position.copy()
+        if position.shape != (2,):
+            raise ValueError(f"Position must be (2,) or (count, 2), got {position.shape}")
+        if emission_shape == "point":
+            return np.tile(position, (count, 1))
+        if emission_shape in ("circle", "sphere"):
+            angles = rng.rand(count) * 2 * np.pi
+            radii = (emission_radius * np.cbrt(rng.rand(count))
+                     if emission_shape == "sphere"
+                     else rng.rand(count) * emission_radius)
+            offsets = np.stack([radii * np.cos(angles), radii * np.sin(angles)], axis=1)
+            return position + offsets
+        if emission_shape == "cone":
+            angles = rng.randn(count) * 0.3
+            speeds = rng.rand(count) * emission_radius
+            offsets = np.stack([speeds * np.sin(angles), speeds * np.cos(angles)], axis=1)
+            return position + offsets
+        raise ValueError(f"Unknown emission_shape: {emission_shape}")
+
+    @staticmethod
+    def _emit_velocities(velocity, count: int, positions: np.ndarray,
+                         position, emission_shape: str,
+                         emission_radius: float, rng) -> np.ndarray:
+        """Generate particle velocities for emit()."""
+        if velocity is None:
+            if emission_shape in ("circle", "sphere"):
+                center = position if isinstance(position, np.ndarray) and position.shape == (2,) else 0
+                dirs = positions - center
+                norms = np.linalg.norm(dirs, axis=1, keepdims=True)
+                norms = np.where(norms > 1e-6, norms, 1.0)
+                return (dirs / norms) * emission_radius * 0.1
+            if emission_shape == "cone":
+                angles = rng.randn(count) * 0.3
+                speeds = emission_radius * 0.2
+                return np.stack([speeds * np.sin(angles), speeds * np.cos(angles)], axis=1)
+            return rng.randn(count, 2) * 0.5
+        if callable(velocity):
+            velocities = velocity(count)
+            if velocities.shape != (count, 2):
+                raise ValueError(
+                    f"Velocity callable must return (count, 2) array, got {velocities.shape}")
+            return velocities
+        if not isinstance(velocity, np.ndarray):
+            raise TypeError(f"Velocity must be array or callable, got {type(velocity)}")
+        if velocity.shape == (2,):
+            return np.tile(velocity, (count, 1))
+        if velocity.shape == (count, 2):
+            return velocity.copy()
+        raise ValueError(f"Velocity must be (2,) or (count, 2), got {velocity.shape}")
+
+    @staticmethod
+    def _emit_lifetimes(lifetime, count: int, rng) -> np.ndarray:
+        """Generate particle lifetimes for emit()."""
+        if lifetime is None:
+            return np.full(count, np.inf, dtype=np.float32)
+        if isinstance(lifetime, tuple):
+            min_life, max_life = lifetime
+            return rng.uniform(min_life, max_life, count).astype(np.float32)
+        return np.full(count, float(lifetime), dtype=np.float32)
+
+    @staticmethod
     @operator(
         domain="agents",
         category=OpCategory.CONSTRUCT,
@@ -646,96 +719,12 @@ class AgentOperations:
         """
         rng = np.random.RandomState(seed)
 
-        # Generate positions
-        if callable(position):
-            positions = position(count)
-            if positions.shape != (count, 2):
-                raise ValueError(f"Position callable must return (count, 2) array, got {positions.shape}")
-        elif isinstance(position, np.ndarray):
-            if position.shape == (2,):
-                # Single point - apply emission shape
-                if emission_shape == "point":
-                    positions = np.tile(position, (count, 1))
-                elif emission_shape == "circle":
-                    # Random angles
-                    angles = rng.rand(count) * 2 * np.pi
-                    radii = rng.rand(count) * emission_radius
-                    offsets = np.stack([
-                        radii * np.cos(angles),
-                        radii * np.sin(angles)
-                    ], axis=1)
-                    positions = position + offsets
-                elif emission_shape == "sphere":
-                    # Uniform sphere sampling
-                    angles = rng.rand(count) * 2 * np.pi
-                    radii = emission_radius * np.cbrt(rng.rand(count))
-                    offsets = np.stack([
-                        radii * np.cos(angles),
-                        radii * np.sin(angles)
-                    ], axis=1)
-                    positions = position + offsets
-                elif emission_shape == "cone":
-                    # Cone emission (upward)
-                    angles = rng.randn(count) * 0.3  # Spread
-                    speeds = rng.rand(count) * emission_radius
-                    offsets = np.stack([
-                        speeds * np.sin(angles),
-                        speeds * np.cos(angles)
-                    ], axis=1)
-                    positions = position + offsets
-                else:
-                    raise ValueError(f"Unknown emission_shape: {emission_shape}")
-            elif position.shape == (count, 2):
-                positions = position.copy()
-            else:
-                raise ValueError(f"Position must be (2,) or (count, 2), got {position.shape}")
-        else:
-            raise TypeError(f"Position must be array or callable, got {type(position)}")
+        positions = AgentOperations._emit_positions(
+            position, count, emission_shape, emission_radius, rng)
+        velocities = AgentOperations._emit_velocities(
+            velocity, count, positions, position, emission_shape, emission_radius, rng)
+        lifetimes = AgentOperations._emit_lifetimes(lifetime, count, rng)
 
-        # Generate velocities
-        if velocity is None:
-            # Default velocities based on emission shape
-            if emission_shape == "circle" or emission_shape == "sphere":
-                # Radial outward
-                centers = positions - (position if isinstance(position, np.ndarray) and position.shape == (2,) else 0)
-                norms = np.linalg.norm(centers, axis=1, keepdims=True)
-                norms = np.where(norms > 1e-6, norms, 1.0)  # Avoid division by zero
-                velocities = (centers / norms) * emission_radius * 0.1
-            elif emission_shape == "cone":
-                # Upward cone
-                angles = rng.randn(count) * 0.3
-                speeds = emission_radius * 0.2
-                velocities = np.stack([
-                    speeds * np.sin(angles),
-                    speeds * np.cos(angles)
-                ], axis=1)
-            else:
-                # Random
-                velocities = rng.randn(count, 2) * 0.5
-        elif callable(velocity):
-            velocities = velocity(count)
-            if velocities.shape != (count, 2):
-                raise ValueError(f"Velocity callable must return (count, 2) array, got {velocities.shape}")
-        elif isinstance(velocity, np.ndarray):
-            if velocity.shape == (2,):
-                velocities = np.tile(velocity, (count, 1))
-            elif velocity.shape == (count, 2):
-                velocities = velocity.copy()
-            else:
-                raise ValueError(f"Velocity must be (2,) or (count, 2), got {velocity.shape}")
-        else:
-            raise TypeError(f"Velocity must be array or callable, got {type(velocity)}")
-
-        # Generate lifetimes
-        if lifetime is None:
-            lifetimes = np.full(count, np.inf, dtype=np.float32)
-        elif isinstance(lifetime, tuple):
-            min_life, max_life = lifetime
-            lifetimes = rng.uniform(min_life, max_life, count).astype(np.float32)
-        else:
-            lifetimes = np.full(count, float(lifetime), dtype=np.float32)
-
-        # Build properties dict
         particle_props = {
             'pos': positions.astype(np.float32),
             'vel': velocities.astype(np.float32),
@@ -743,7 +732,6 @@ class AgentOperations:
             'lifetime': lifetimes
         }
 
-        # Add user properties
         if properties is not None:
             for key, value in properties.items():
                 if isinstance(value, np.ndarray):
@@ -751,14 +739,15 @@ class AgentOperations:
                         raise ValueError(f"Property '{key}' has wrong shape: {value.shape}")
                     particle_props[key] = value.copy()
                 elif np.isscalar(value):
-                    # Scalar value - broadcast to all particles
                     particle_props[key] = np.full(count, value, dtype=np.float32)
                 elif isinstance(value, (tuple, list)):
-                    # Vector value - replicate for all particles
                     value_array = np.array(value, dtype=np.float32)
-                    particle_props[key] = np.tile(value_array, (count, 1)) if value_array.ndim == 1 else np.array([value_array] * count)
+                    particle_props[key] = (np.tile(value_array, (count, 1))
+                                           if value_array.ndim == 1
+                                           else np.array([value_array] * count))
                 else:
-                    raise TypeError(f"Property '{key}' must be array or scalar, got {type(value)}")
+                    raise TypeError(
+                        f"Property '{key}' must be array or scalar, got {type(value)}")
 
         return AgentOperations.alloc(count=count, properties=particle_props)
 
