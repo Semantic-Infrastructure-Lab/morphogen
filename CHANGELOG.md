@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Tests (lightning-warrior-0316, 2026-03-16)
+- **`test_audio_physics.py`** (new, 29 tests): physics-level invariant tests for `audio_analysis` and `instrument_model` — assertions not covered by existing functional tests:
+  - `TestT60Physics` (5): `T60 × d == 6.91` invariant for arbitrary rates; `measure_t60(1.0) == 6.91`; amplitude at T60 = 0.001
+  - `TestPitchDetectionPhysics` (5): 880 Hz not aliased to 440; autocorr/YIN agree within 5% on pure tone; frame consistency
+  - `TestFitExponentialDecayPhysics` (3): recover known rate within 5%; monotonicity; accuracy across two decades (1–20 s⁻¹)
+  - `TestDeconvolvePhysics` (2): resonator log-spectrum variance < signal; excitation+resonator partition covers input
+  - `TestModelNoisePhysics` (3): temporal envelope length == STFT time bins; white noise CV < 1.5; band count respected
+  - `TestSynthesizeNotePhysics` (6): `peak = 0.9 × velocity` exactly; `velocity=0` → silence; RMS decay over time; exact sample count; linear velocity ratio
+  - `TestMorphInstrumentsPhysics` (5): self-morph identity; exact midpoint at blend=0.5; linear interpolation at 0.25; exact endpoints at 0 and 1
+
+### Fixed (hudite-0316, 2026-03-16)
+- **`run_md` fs→ps unit bug** (`molecular.py`): `dt` parameter is documented in femtoseconds but was passed directly to `velocity_verlet`/`langevin_integrator` which expect picoseconds — caused temperatures of ~2.3e26 K. Fixed: `dt_ps = dt * 1e-3` before integrator calls. NVT now initializes velocities from Maxwell-Boltzmann at target temperature: σ = sqrt(k_B·T·418.4 / m_i) Å/ps per component.
+
+### Tests (hudite-0316, 2026-03-16)
+- **`test_molecular.py`**: `test_md_temperature_control` now passes — verifies NVT thermostat maintains temperature within 50% of target after 50 steps. All 20 molecular tests pass (2 conformer skips remain, pre-existing API mismatch).
+
 ### Added (mountain-rainbow-0316, 2026-03-16)
 - **`run_md` operator** (`molecular.py`): run molecular dynamics returning one `Molecule` frame per step. Accepts `dt` (fs), `steps`, `ensemble` ('nve'/'nvt'), `temperature`, `seed`. Uses `velocity_verlet` for NVE and `langevin_integrator` for NVT.
 - **`calculate_temperature` operator** (`molecular.py`): compute instantaneous kinetic temperature from atomic velocities. T = 2·KE / (3·N·k_B).

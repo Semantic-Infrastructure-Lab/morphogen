@@ -1,8 +1,8 @@
 # Morphogen — Implementation Status & v1.0 Roadmap
 
-**Last Updated:** 2025-12-12
+**Last Updated:** 2026-03-16
 **Current Version:** v0.12.0 (December 2025) → v1.0 (2026-Q2)
-**Status:** 39 Production Domains | 606 Operators | Migration Complete ✅
+**Status:** 39 Production Domains | 606 Operators | 1,912 Tests | Migration Complete ✅
 **Detailed Analysis:** [DOMAIN_STATUS_ANALYSIS.md](DOMAIN_STATUS_ANALYSIS.md) | **Migration History:** [docs/guides/DOMAIN_MIGRATION_GUIDE.md](docs/guides/DOMAIN_MIGRATION_GUIDE.md)
 
 ---
@@ -16,7 +16,7 @@
 **Impact:**
 - ✅ **39 production domains** (up from 25 in v0.11.0)
 - ✅ **606 operators total** (up from 386)
-- ✅ **1,705 comprehensive tests** (1,454 passing, 251 MLIR skipped)
+- ✅ **1,912 comprehensive tests** (up from 1,705 at v0.12.0)
 - ✅ **Migration complete**: All legacy domains integrated
 
 **New Domains Available** (Phase 3-5):
@@ -29,7 +29,7 @@
 - Created first Phase 3 integration example (fluid_jet domain)
 - Test coverage: 25 new tests for Phase 3 domains
 
-**Next Steps:** Integration examples for audio_analysis and instrument_model, then v1.0 preparation
+**Next Steps:** Integration examples for audio_analysis and instrument_model; v1.0 preparation — see [ROADMAP.md P0](docs/ROADMAP.md#p0---do-now-current-sprint---post-v0120)
 
 **See:** [CHANGELOG.md](CHANGELOG.md) for detailed migration summary
 

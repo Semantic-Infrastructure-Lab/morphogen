@@ -1,16 +1,17 @@
 # Morphogen Documentation Index
 
 **Generated**: 2025-11-21
-**Updated**: 2026-01-05
+**Updated**: 2026-03-16
 **Purpose**: Comprehensive index of all documentation with structure and navigation
 
-> 💡 **Tip**: Use `./scripts/reveal.sh` to explore any document incrementally:
-> - Level 0: Metadata (size, lines, type)
-> - Level 1: Structure (headings, functions, classes) — **Most useful for initial exploration**
-> - Level 2: Preview (sample content) — **Good for getting a feel for the content**
-> - Level 3: Full content — **Use when you need complete details**
->
-> **Token savings**: Level 1 = ~5-10% of tokens | Level 2 = ~20-30% | Level 3 = 100%
+> 💡 **Tip**: Use `reveal` to explore any document incrementally:
+> ```bash
+> reveal README.md              # structure (headings, functions, classes)
+> reveal docs/specifications/   # directory layout
+> reveal audio_analysis.py      # functions and classes in a source file
+> reveal audio_analysis.py fit_exponential_decay  # single function
+> ```
+> **Token savings**: `reveal` = 5–50× cheaper than `Read` — always triage with reveal first
 
 ## Root-Level Documentation
 
@@ -27,7 +28,7 @@
 - Ecosystem Vision & Professional Applications
 - Sister Project: Philbrick
 
-**Navigate**: `./scripts/reveal.sh 1 README.md`
+**Navigate**: `reveal README.md`
 
 ---
 
@@ -41,7 +42,7 @@
 - Operators across all domains
 - Execution model & determinism
 
-**Navigate**: `./scripts/reveal.sh 1 SPECIFICATION.md`
+**Navigate**: `reveal SPECIFICATION.md`
 
 ---
 
@@ -53,7 +54,7 @@
 - Test coverage statistics (900+ tests)
 - Known issues & future work
 
-**Navigate**: `./scripts/reveal.sh 1 STATUS.md`
+**Navigate**: `reveal STATUS.md`
 
 ---
 
@@ -65,7 +66,7 @@
 - Cross-domain integration patterns
 - Future expansion plans
 
-**Navigate**: `./scripts/reveal.sh 1 docs/architecture/ECOSYSTEM_MAP.md`
+**Navigate**: `reveal docs/architecture/ECOSYSTEM_MAP.md`
 
 ---
 
@@ -90,15 +91,15 @@
 - Feature additions, bug fixes, breaking changes
 - Migration guides between versions
 
-**Navigate**: `./scripts/reveal.sh 2 CHANGELOG.md` (large file - use preview)
+**Navigate**: `reveal CHANGELOG.md` (large file - use preview)
 
 ---
 
 ### docs/ROADMAP.md (~350 lines) ⭐ **UNIFIED ROADMAP**
 **Purpose**: Single source of truth for Morphogen development roadmap
 **Key Sections**:
-- Current Status (v0.12.0) - 39 domains, 606 operators, legacy migration complete
-- Critical Blockers - 3D visualization, molecular features
+- Current Status (v0.12.0) - 39 domains, 606 operators, 1,912 tests, migration complete
+- Remaining work - integration examples, v1.0 prep
 - v1.0 - Production Release (Q2 2026) - three-track strategy
 - Post-v1.0 Vision - v1.1, v1.5, v2.0 roadmap
 - Implementation Tracking - all 39 domains, completion status
@@ -106,7 +107,7 @@
 **Replaces**: Multiple scattered planning documents (consolidated 2025-12-07)
 **See also**: [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) for archived planning documents
 
-**Navigate**: `./scripts/reveal.sh 1 docs/ROADMAP.md`
+**Navigate**: `reveal docs/ROADMAP.md`
 
 ---
 
@@ -120,7 +121,7 @@
 - Finding what you need (task-based navigation)
 - Recent changes
 
-**Navigate**: `./scripts/reveal.sh 1 docs/README.md`
+**Navigate**: `reveal docs/README.md`
 
 ---
 
@@ -147,7 +148,7 @@
 ### docs/architecture/interactive-visualization.md
 **Purpose**: Visualization approach and capabilities
 
-**Explore**: `find docs/architecture -name "*.md" -exec scripts/reveal.sh 1 {} \;`
+**Explore**: `reveal docs/architecture/ --files --ext md`
 
 ---
 
@@ -182,7 +183,7 @@
 | Units | units.md | Physical unit system |
 | Snapshot ABI | snapshot-abi.md | State serialization |
 
-**Explore**: `scripts/reveal.sh 1 docs/specifications/chemistry.md`
+**Explore**: `reveal docs/specifications/chemistry.md`
 
 ---
 
@@ -215,8 +216,8 @@
 ### docs/guides/DOMAIN_FINISHING_GUIDE.md
 **Purpose**: Checklist for completing domain implementations
 
-**Explore**: `scripts/reveal.sh 1 docs/guides/domain-implementation.md`
-**New**: `scripts/reveal.sh 1 docs/guides/analysis-visualization.md`
+**Explore**: `reveal docs/guides/domain-implementation.md`
+**New**: `reveal docs/guides/analysis-visualization.md`
 
 ---
 
@@ -229,7 +230,7 @@
 - **racing-ai-pipeline.md**: AI agent racing simulation
 - **ambient-music-pipelines.md**: Generative music examples
 
-**Explore**: `scripts/reveal.sh 1 docs/examples/emergence-cross-domain.md`
+**Explore**: `reveal docs/examples/emergence-cross-domain.md`
 
 ---
 
@@ -267,7 +268,7 @@ Chemistry simulation framework across multiple domains
 - **multiphysics-success-patterns.md** (30KB): 12 battle-tested patterns
 - **time-alignment-operators.md**: Temporal synchronization
 
-**Explore**: `scripts/reveal.sh 1 docs/reference/multiphysics-success-patterns.md`
+**Explore**: `reveal docs/reference/multiphysics-success-patterns.md`
 
 ---
 
@@ -292,7 +293,7 @@ Located in `docs/adr/`:
 | 013 | Music Stack Consolidation | Audio domain unification |
 | 014 | Complexity Refactoring Plan | 6-phase code quality improvement |
 
-**Explore**: `scripts/reveal.sh 1 docs/adr/001-unified-reference-model.md`
+**Explore**: `reveal docs/adr/001-unified-reference-model.md`
 
 ---
 
@@ -304,7 +305,7 @@ Located in `docs/adr/`:
 - **operator-foundations.md**: Mathematical operator theory
 - **categorical-structure.md**: Category-theoretic formalization
 
-**Explore**: `scripts/reveal.sh 1 docs/philosophy/formalization-and-knowledge.md`
+**Explore**: `reveal docs/philosophy/formalization-and-knowledge.md`
 
 ---
 
@@ -343,16 +344,15 @@ Located in `docs/adr/`:
 - Development workflow
 - Common tasks and examples
 
-**Navigate**: `scripts/reveal.sh 1 claude.md`
+**Navigate**: `reveal claude.md`
 
 ---
 
 ## Scripts & Tools
 
-### scripts/reveal.sh
+### reveal (CLI tool)
 **Purpose**: Progressive file explorer (wrapper)
-**Usage**: `./scripts/reveal.sh <level> <file>`
-**Levels**: 0=metadata, 1=structure, 2=preview, 3=full
+**Usage**: `reveal <file>` or `reveal <dir>/` or `reveal <file> <func>`
 
 ### scripts/reveal.py
 **Purpose**: Local Python implementation of reveal tool
@@ -371,35 +371,36 @@ Located in `docs/adr/`:
 
 ```bash
 # Explore README structure
-./scripts/reveal.sh 1 README.md
+reveal README.md
 
-# Preview chemistry specification
-./scripts/reveal.sh 2 docs/specifications/chemistry.md
+# See directory layout
+reveal docs/specifications/
 
-# View full guide with line numbers
-./scripts/reveal.sh 3 docs/guides/domain-implementation.md
+# Inspect a source file (functions, classes)
+reveal morphogen/stdlib/audio_analysis.py
 
-# Check metadata of large file
-./scripts/reveal.sh 0 CHANGELOG.md
+# Extract a single function
+reveal morphogen/stdlib/audio_analysis.py measure_t60
+
+# List all markdown docs by recency
+reveal docs/ --files --ext md
 ```
 
 ### Exploring Documentation Systematically
 
 ```bash
-# List all specifications with structure
+# See structure of all specifications
 for f in docs/specifications/*.md; do
     echo "=== $f ==="
-    ./scripts/reveal.sh 1 "$f" | head -40
+    reveal "$f"
     echo ""
 done
 
-# Find all architecture docs
-find docs/architecture -name "*.md" -exec scripts/reveal.sh 0 {} \;
+# List all guides
+reveal docs/guides/ --files --ext md
 
-# Preview all guides
-for f in docs/guides/*.md; do
-    ./scripts/reveal.sh 2 "$f"
-done
+# Triage a large file before reading
+reveal CHANGELOG.md
 ```
 
 ---
@@ -425,9 +426,8 @@ done
 1. **Start with README.md** for project overview
 2. **Read docs/README.md** for documentation navigation
 3. **Use reveal tool** to explore incrementally:
-   - `./scripts/reveal.sh 1 <file>` — Structure first (recommended starting point)
-   - `./scripts/reveal.sh 2 <file>` — Preview sample content
-   - Only read full docs when you need complete details
+   - `reveal <file>` — Structure first (headings, functions, classes)
+   - Only `Read` the full file when you need the complete implementation
 4. **Check SPECIFICATION.md** for language reference
 5. **Browse docs/specifications/** for domain details
 6. **Read ADRs** to understand key decisions
@@ -437,20 +437,20 @@ done
 ```bash
 # Survey a directory (structure of all files)
 for f in docs/specifications/*.md; do
-    ./scripts/reveal.sh 1 "$f" | head -40
+    reveal "$f" | head -40
 done
 
 # Preview interesting files
-./scripts/reveal.sh 2 docs/guides/domain-implementation.md
+reveal docs/guides/domain-implementation.md
 
 # Read full content only when needed
-./scripts/reveal.sh 3 SPECIFICATION.md
+reveal SPECIFICATION.md
 ```
 
 ---
 
 **Generated**: 2025-11-21
-**Updated**: 2026-01-05
+**Updated**: 2026-03-16
 **Tool**: `scripts/reveal.py` and custom documentation mapping
 **Maintenance**: Regenerate when documentation structure changes significantly
 

@@ -70,21 +70,21 @@
 - 55 tests passing
 - See [Visual3D Quick Reference](reference/visual3d-quickref.md) for API
 
-**Incomplete Molecular Features**:
-- Geometry optimization not implemented (`tests/test_molecular.py:195`)
-- Molecular dynamics `run_md` not implemented (`tests/test_molecular.py:249`)
-- Trajectory analysis not implemented (`tests/test_molecular.py:316`)
-- 10 tests currently skipped pending these implementations
+**Molecular Features** ✅ COMPLETE (2026-03-16):
+- Geometry optimization: L-BFGS-B via scipy, element-pair bond parameters (mountain-rainbow-0316)
+- `run_md`: NVE + NVT (Langevin) with Maxwell-Boltzmann initialization, fs→ps unit fix (hudite-0316)
+- Trajectory analysis: `calculate_temperature`, `calculate_rmsd`, `radius_of_gyration` (mountain-rainbow-0316)
+- 2 tests remain skipped (conformer generation API mismatch — pre-existing, separate issue)
+
+**Test Coverage** ✅ COMPLETE (2026-03-16):
+- audio_analysis: 29 functional tests + 29 physics-level invariant tests (`test_audio_analysis.py`, `test_audio_physics.py`)
+- instrument_model: 35 functional tests + shared physics fixtures (`test_instrument_model.py`, `test_audio_physics.py`)
+- Total test count: **1,912** (up from 1,705 at v0.12.0)
 
 **Integration Examples**:
-- Phase 3 domains (fluid_jet, audio_analysis, instrument_model) need usage examples
-- Cross-domain examples should demonstrate new capabilities
+- Phase 3 domains (fluid_jet, audio_analysis, instrument_model) still need narrative usage examples
+- Cross-domain examples should demonstrate audio_analysis → instrument_model pipeline
 - Tutorial content for chemistry and specialized physics domains
-
-**Test Coverage**:
-- audio_analysis: Smoke tests only (needs functional tests)
-- instrument_model: Smoke tests only (needs functional tests)
-- Target: Expand to 30+ tests for these domains based on real use cases
 
 ---
 
@@ -281,15 +281,15 @@
 1. **Integration Examples for Phase 3 Domains**
    - Create usage examples for fluid_jet, audio_analysis, instrument_model
    - Cross-domain examples showcasing new capabilities
-   - Tutorial content for chemistry and specialized physics
+   - Tutorial content for chemistry and specialized physics domains
 
-2. **Test Coverage Expansion**
-   - Expand audio_analysis tests (smoke → functional)
-   - Expand instrument_model tests (smoke → functional)
-   - Target: 30+ tests per domain
+2. ~~**Test Coverage Expansion**~~ ✅ COMPLETE (2026-03-16)
+   - ~~Expand audio_analysis tests (smoke → functional)~~ — 29 functional + 29 physics tests added
+   - ~~Expand instrument_model tests (smoke → functional)~~ — 35 functional tests added
+   - ~~Target: 30+ tests per domain~~ — exceeded; total suite now 1,912 tests
 
 3. **Documentation Polish**
-   - Update remaining docs to reflect 39 domains, 606 operators
+   - Add narrative usage examples for audio_analysis + instrument_model
    - Chemistry domain tutorials
    - Physics domain integration guides
 
