@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (mountain-rainbow-0316, 2026-03-16)
+- **`run_md` operator** (`molecular.py`): run molecular dynamics returning one `Molecule` frame per step. Accepts `dt` (fs), `steps`, `ensemble` ('nve'/'nvt'), `temperature`, `seed`. Uses `velocity_verlet` for NVE and `langevin_integrator` for NVT.
+- **`calculate_temperature` operator** (`molecular.py`): compute instantaneous kinetic temperature from atomic velocities. T = 2·KE / (3·N·k_B).
+- **`calculate_rmsd` operator** (`molecular.py`): raw unaligned RMSD between two structures (no centering/rotation). Distinct from `rmsd()` which applies Kabsch alignment.
+- **`radius_of_gyration` operator** (`molecular.py`): mass-weighted Rg = sqrt(sum(m_i·|r_i−r_com|²)/M).
+
+### Fixed (mountain-rainbow-0316, 2026-03-16)
+- **`optimize_geometry` now uses scipy L-BFGS-B**: replaced unstable fixed-step steepest descent (diverged for large forces) with `scipy.optimize.minimize` L-BFGS-B. Added `max_iter`/`tol` parameter aliases to match test API.
+- **`bond_energy` element-specific parameters**: was using generic single-bond r0=1.54 Å for all atom pairs — caused massive forces on H-H (0.74 Å) and O-H (0.96 Å) geometries. Added element-pair lookup table (H-H: 432/0.74, O-H: 553/0.96, C-H: 340/1.09, etc.).
+- **`vdw_energy` 1-2/1-3 exclusions**: bonded atom pairs had full Lennard-Jones applied — 544,000 kcal/mol for H-H at 0.74 Å. Now excludes directly bonded (1-2) and angle (1-3) pairs, matching standard MM practice.
+- **`langevin_integrator` shape bug**: `random_force = sqrt(...) *= randn(n,3)` failed with `(n,1)` output shape. Fixed to explicit multiplication: `random_force = sqrt(...) * noise / sqrt(dt)`.
+- **CSTR solver** (`kinetics.py`): explicit Picard iteration diverged for τ·k > 1 (common in practice). Replaced with `scipy.optimize.root` hybr method.
+
+### Tests (mountain-rainbow-0316, 2026-03-16)
+- **`test_chemistry_physics.py`** (new, 65 tests): physics-level assertions across kinetics (arrhenius, van't Hoff, reaction rates, batch reactor, CSTR, mass-transfer-limited), electrochem (Butler-Volmer, Nernst, Tafel, limiting current), catalysis (Langmuir isotherm, L-H mechanism, competitive adsorption), transport (Fourier conduction, Stefan-Boltzmann, Nusselt correlations).
+- **`test_molecular.py`**: unskipped `TestGeometryOptimization`, `TestMolecularDynamics`, `TestTrajectoryAnalysis`, `TestDeterminism::test_md_determinism` — 10 previously skipped tests now enabled. `TestConformers` and `test_conformer_determinism` remain skipped (API mismatch).
+
 ### Fixed (ethereal-cobra-0315, 2026-03-15)
 - **Inductor transient sign bug** (`_build_transient_matrices` + `_build_mna_matrices_nonlinear`): inductor history current source was injecting `+i_L_old` INTO n1 — backward, causing voltage at the R-L junction to increase over time instead of decrease. Fixed to `-i_L_old` (history source REMOVES current from n1, correctly opposing the forward-flowing inductor current). Bug was completely hidden — `test_rl_step_response` only checked `len(time_points) > 0`.
 - **Capacitor sign in nonlinear path** (`_build_mna_matrices_nonlinear`): had `i_eq = -C*v_old/dt` (negative) — inconsistent with the linear path fix from juceje-0315. Fixed to `+C*v_old/dt`.

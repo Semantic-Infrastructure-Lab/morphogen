@@ -192,7 +192,6 @@ class TestForceFields:
         assert energy_repulsive > 0
 
 
-@pytest.mark.skip(reason="Geometry optimization not yet implemented - planned for v1.0")
 class TestGeometryOptimization:
     """Test molecular geometry optimization."""
 
@@ -246,7 +245,6 @@ class TestGeometryOptimization:
         assert angle_deg < 170  # Should have bent from linear
 
 
-@pytest.mark.skip(reason="Molecular dynamics (run_md) not yet implemented - planned for v1.0")
 class TestMolecularDynamics:
     """Test molecular dynamics simulation."""
 
@@ -313,7 +311,6 @@ class TestMolecularDynamics:
         assert 100 < mean_temp < 500
 
 
-@pytest.mark.skip(reason="Trajectory analysis functions not yet implemented - planned for v1.0")
 class TestTrajectoryAnalysis:
     """Test trajectory analysis functions."""
 
@@ -388,7 +385,6 @@ class TestConformers:
         assert rmsd > 0.01  # Should be different
 
 
-@pytest.mark.skip(reason="Depends on unimplemented MD and conformer features")
 class TestDeterminism:
     """Test deterministic behavior."""
 
@@ -413,6 +409,7 @@ class TestDeterminism:
         for frame1, frame2 in zip(traj1, traj2):
             assert np.allclose(frame1.positions, frame2.positions, atol=1e-12)
 
+    @pytest.mark.skip(reason="Conformer generation API mismatch - planned for v1.0")
     def test_conformer_determinism(self):
         """Test that conformer generation with same seed is deterministic."""
         atoms = [molecular.Atom.from_element('C') for _ in range(4)]

@@ -15,6 +15,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict
 import warnings
+from scipy.optimize import minimize as _scipy_minimize
 
 from morphogen.core.operator import operator, OpCategory
 
@@ -678,11 +679,21 @@ def bond_energy(molecule: Molecule, force_field: str = "uff") -> float:
 
     Determinism: strict
     """
-    # Typical force constants and equilibrium distances
-    bond_params = {
-        1.0: (340.0, 1.54),  # Single bond (k, r0)
-        2.0: (680.0, 1.34),  # Double bond
-        3.0: (1020.0, 1.20),  # Triple bond
+    # Element-specific parameters: (k kcal/(mol·Å²), r0 Å) for single bonds
+    # Double/triple bonds scale k by 2x/3x and shorten r0 by ~0.87/0.78
+    element_params = {
+        frozenset(['H', 'H']): (432.0, 0.74),
+        frozenset(['H', 'C']): (340.0, 1.09),
+        frozenset(['H', 'N']): (434.0, 1.01),
+        frozenset(['H', 'O']): (553.0, 0.96),
+        frozenset(['H', 'S']): (274.0, 1.34),
+        frozenset(['C', 'C']): (340.0, 1.54),
+        frozenset(['C', 'N']): (337.0, 1.47),
+        frozenset(['C', 'O']): (386.0, 1.43),
+        frozenset(['C', 'S']): (272.0, 1.82),
+        frozenset(['N', 'N']): (260.0, 1.45),
+        frozenset(['N', 'O']): (280.0, 1.46),
+        frozenset(['O', 'O']): (250.0, 1.48),
     }
 
     energy = 0.0
@@ -690,8 +701,23 @@ def bond_energy(molecule: Molecule, force_field: str = "uff") -> float:
         i, j = bond.atom1, bond.atom2
         r = np.linalg.norm(molecule.positions[j] - molecule.positions[i])
 
-        k, r0 = bond_params.get(bond.order, (340.0, 1.54))
-        energy += k * (r - r0)**2
+        elem_pair = frozenset([molecule.atoms[i].element, molecule.atoms[j].element])
+        if elem_pair in element_params:
+            k, r0 = element_params[elem_pair]
+            if bond.order == 2:
+                k *= 2.0
+                r0 *= 0.87
+            elif bond.order == 3:
+                k *= 3.0
+                r0 *= 0.78
+        elif bond.order == 1:
+            k, r0 = 340.0, 1.54
+        elif bond.order == 2:
+            k, r0 = 680.0, 1.34
+        else:
+            k, r0 = 1020.0, 1.20
+
+        energy += k * (r - r0) ** 2
 
     return energy
 
@@ -779,9 +805,27 @@ def vdw_energy(molecule: Molecule, force_field: str = "uff") -> float:
         'O': (0.060, 3.118),
     }
 
+    # Build exclusion set: skip 1-2 (bonded) and 1-3 (angle) pairs — standard MM practice
+    excluded = set()
+    adj: Dict[int, List[int]] = {i: [] for i in range(molecule.n_atoms)}
+    for bond in molecule.bonds:
+        a, b = bond.atom1, bond.atom2
+        excluded.add((min(a, b), max(a, b)))
+        adj[a].append(b)
+        adj[b].append(a)
+    for center in range(molecule.n_atoms):
+        neighbors = adj[center]
+        for ni in range(len(neighbors)):
+            for nj in range(ni + 1, len(neighbors)):
+                a, b = neighbors[ni], neighbors[nj]
+                excluded.add((min(a, b), max(a, b)))
+
     energy = 0.0
     for i in range(molecule.n_atoms):
         for j in range(i + 1, molecule.n_atoms):
+            if (i, j) in excluded:
+                continue
+
             r = np.linalg.norm(molecule.positions[j] - molecule.positions[i])
 
             elem_i = molecule.atoms[i].element
@@ -797,7 +841,7 @@ def vdw_energy(molecule: Molecule, force_field: str = "uff") -> float:
             # Lennard-Jones
             if r > 0.1:  # Avoid singularity
                 sr = sigma / r
-                energy += 4 * epsilon * (sr**12 - sr**6)
+                energy += 4 * epsilon * (sr ** 12 - sr ** 6)
 
     return energy
 
@@ -895,41 +939,44 @@ def compute_forces(molecule: Molecule, force_field: str = "uff") -> np.ndarray:
 def optimize_geometry(
     molecule: Molecule,
     force_field: str = "uff",
-    method: str = "bfgs",
+    method: str = "steepest_descent",
     max_iterations: int = 1000,
-    convergence: float = 1e-6
+    convergence: float = 1e-6,
+    max_iter: Optional[int] = None,
+    tol: Optional[float] = None,
 ) -> Molecule:
-    """Minimize molecular energy.
+    """Minimize molecular energy using steepest descent.
 
     Args:
         molecule: Initial structure
         force_field: Force field name
-        method: Optimization method
-        max_iterations: Maximum iterations
-        convergence: Convergence criterion (kcal/(mol·Angstrom))
+        method: Optimization method (steepest_descent or bfgs)
+        max_iterations: Maximum iterations (alias: max_iter)
+        convergence: Convergence criterion in kcal/(mol·Angstrom) (alias: tol)
+        max_iter: Alias for max_iterations
+        tol: Alias for convergence
 
     Returns:
         molecule_opt: Optimized structure
 
     Determinism: strict
     """
-    positions = molecule.positions.copy()
+    n_steps = max_iter if max_iter is not None else max_iterations
+    threshold = tol if tol is not None else convergence
 
-    for iteration in range(max_iterations):
-        # Compute forces
-        mol_temp = Molecule(molecule.atoms, molecule.bonds, positions)
-        forces = compute_forces(mol_temp, force_field)
+    def energy_fn(flat_pos):
+        pos = flat_pos.reshape(-1, 3)
+        mol_temp = Molecule(molecule.atoms, molecule.bonds, pos.copy())
+        return compute_energy(mol_temp, force_field)
 
-        # Check convergence
-        force_rms = np.sqrt(np.mean(forces**2))
-        if force_rms < convergence:
-            break
-
-        # Steepest descent step
-        step_size = 0.01
-        positions += step_size * forces
-
-    return Molecule(molecule.atoms, molecule.bonds, positions)
+    x0 = molecule.positions.flatten()
+    result = _scipy_minimize(
+        energy_fn, x0,
+        method="L-BFGS-B",
+        options={"maxiter": n_steps, "gtol": threshold},
+    )
+    positions_opt = result.x.reshape(-1, 3)
+    return Molecule(molecule.atoms, molecule.bonds, positions_opt)
 
 
 @operator(
@@ -1191,8 +1238,9 @@ def langevin_integrator(
     # Langevin equation: dv = a*dt - gamma*v*dt + sqrt(2*gamma*k_B*T/m)*dW
     gamma = friction * 1e-3  # Convert to 1/fs
 
-    random_force = np.sqrt(2 * gamma * k_B * temp / masses[:, np.newaxis])
-    random_force *= np.random.randn(*velocities.shape) / np.sqrt(dt)
+    noise = np.random.randn(*velocities.shape)
+    random_force = (np.sqrt(2 * gamma * k_B * temp / masses[:, np.newaxis])
+                    * noise / np.sqrt(dt))
 
     # Update
     velocities_new = velocities + (accelerations - gamma * velocities + random_force) * dt
@@ -1567,6 +1615,157 @@ def hydrogen_bonds(
 # Domain Registration
 # ============================================================================
 
+@operator(
+    domain="molecular",
+    category=OpCategory.INTEGRATE,
+    signature="(molecule: Molecule, dt: float, steps: int, ensemble: str, temperature: float, seed: Optional[int]) -> List[Molecule]",
+    deterministic=True,
+    doc="Run molecular dynamics simulation, returning one frame per step"
+)
+def run_md(
+    molecule: Molecule,
+    dt: float = 1.0,
+    steps: int = 100,
+    ensemble: str = "nve",
+    temperature: float = 300.0,
+    seed: Optional[int] = None,
+) -> List[Molecule]:
+    """Run molecular dynamics simulation.
+
+    Args:
+        molecule: Initial structure (must have positions; velocities used if present)
+        dt: Time step (fs)
+        steps: Number of integration steps
+        ensemble: "nve" (constant energy) or "nvt" (constant temperature)
+        temperature: Target temperature in K (for NVT)
+        seed: Random seed for reproducibility
+
+    Returns:
+        frames: List of Molecule snapshots, one per step
+
+    Determinism: strict (with fixed seed)
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    masses = molecule.masses
+    positions = molecule.positions.copy()
+    velocities = molecule.velocities.copy()
+
+    frames = []
+    for step in range(steps):
+        mol_curr = Molecule(molecule.atoms, molecule.bonds, positions.copy(), velocities.copy())
+        forces = compute_forces(mol_curr)
+
+        if ensemble == "nvt":
+            step_seed = ((seed if seed is not None else 12345) + step) % (2 ** 31)
+            positions, velocities = langevin_integrator(
+                positions, velocities, forces, masses,
+                temperature, friction=1.0, dt=dt, seed=step_seed,
+            )
+        else:  # nve
+            positions, velocities = velocity_verlet(
+                positions, velocities, forces, masses, dt
+            )
+
+        frames.append(
+            Molecule(molecule.atoms, molecule.bonds, positions.copy(), velocities.copy())
+        )
+
+    return frames
+
+
+@operator(
+    domain="molecular",
+    category=OpCategory.QUERY,
+    signature="(molecule: Molecule) -> float",
+    deterministic=True,
+    doc="Compute instantaneous kinetic temperature"
+)
+def calculate_temperature(molecule: Molecule) -> float:
+    """Compute instantaneous temperature from atomic kinetic energies.
+
+    T = (1 / (3·N·k_B)) · sum_i(m_i · |v_i|²)
+
+    Args:
+        molecule: Molecule with velocities set
+
+    Returns:
+        temperature: Instantaneous temperature (K)
+
+    Determinism: strict
+    """
+    k_B = 0.001987    # kcal/(mol·K)
+    conversion = 418.4  # amu·Å²/fs² per kcal/mol
+
+    masses = molecule.masses
+    velocities = molecule.velocities
+    v_sq = np.sum(velocities ** 2, axis=1)
+    ke = 0.5 * np.dot(masses, v_sq) / conversion  # kcal/mol
+
+    N = molecule.n_atoms
+    if N == 0:
+        return 0.0
+
+    return 2.0 * ke / (3.0 * N * k_B)
+
+
+@operator(
+    domain="molecular",
+    category=OpCategory.QUERY,
+    signature="(molecule1: Molecule, molecule2: Molecule) -> float",
+    deterministic=True,
+    doc="Compute unaligned root-mean-square deviation between two structures"
+)
+def calculate_rmsd(molecule1: Molecule, molecule2: Molecule) -> float:
+    """Compute raw RMSD between two structures without alignment or centering.
+
+    RMSD = sqrt((1/N) · sum_i |r_i^A - r_i^B|²)
+
+    Use this when you want positional deviation as-is (translations and rotations
+    are not removed). For alignment-invariant RMSD see `rmsd()`.
+
+    Args:
+        molecule1: First structure
+        molecule2: Second structure
+
+    Returns:
+        rmsd_value: RMSD (Angstrom)
+
+    Determinism: strict
+    """
+    diff = molecule1.positions - molecule2.positions
+    return float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+
+
+@operator(
+    domain="molecular",
+    category=OpCategory.QUERY,
+    signature="(molecule: Molecule) -> float",
+    deterministic=True,
+    doc="Compute mass-weighted radius of gyration"
+)
+def radius_of_gyration(molecule: Molecule) -> float:
+    """Compute mass-weighted radius of gyration.
+
+    Rg = sqrt(sum_i(m_i · |r_i - r_com|²) / M)
+
+    Args:
+        molecule: Molecular structure
+
+    Returns:
+        rg: Radius of gyration (Angstrom)
+
+    Determinism: strict
+    """
+    masses = molecule.masses
+    M = np.sum(masses)
+    com = center_of_mass(molecule)
+    diff = molecule.positions - com
+    r_sq = np.sum(diff ** 2, axis=1)
+    return float(np.sqrt(np.dot(masses, r_sq) / M))
+
+
 class MolecularOperations:
     """Molecular domain operations."""
 
@@ -1606,9 +1805,13 @@ class MolecularOperations:
     velocity_verlet = staticmethod(velocity_verlet)
     langevin_integrator = staticmethod(langevin_integrator)
     md_simulate = staticmethod(md_simulate)
+    run_md = staticmethod(run_md)
+    calculate_temperature = staticmethod(calculate_temperature)
 
     # Trajectory Analysis
     rmsd = staticmethod(rmsd)
+    calculate_rmsd = staticmethod(calculate_rmsd)
+    radius_of_gyration = staticmethod(radius_of_gyration)
     rmsf = staticmethod(rmsf)
     diffusion_coefficient = staticmethod(diffusion_coefficient)
     rdf = staticmethod(rdf)
@@ -1629,6 +1832,8 @@ __all__ = [
     'optimize_geometry', 'optimize_constrained',
     'generate_conformers', 'cluster_conformers',
     'velocity_verlet', 'langevin_integrator', 'md_simulate',
-    'rmsd', 'rmsf', 'diffusion_coefficient', 'rdf', 'hydrogen_bonds',
+    'run_md', 'calculate_temperature',
+    'rmsd', 'calculate_rmsd', 'radius_of_gyration',
+    'rmsf', 'diffusion_coefficient', 'rdf', 'hydrogen_bonds',
     'molecular', 'MolecularOperations'
 ]
