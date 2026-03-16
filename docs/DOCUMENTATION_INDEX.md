@@ -19,6 +19,7 @@
 **Purpose**: Project overview, getting started, domain catalog
 **Key Sections**:
 - Why Morphogen Exists
+- The Name: A Structural Homage to Alan Turing
 - Two Surfaces, One Kernel (Morphogen.Audio + RiffStack)
 - Cross-Domain in Action
 - Quick Start & Installation
@@ -29,6 +30,19 @@
 - Sister Project: Philbrick
 
 **Navigate**: `reveal README.md`
+
+---
+
+### docs/PITCH.md
+**Purpose**: 2-minute overview of what Morphogen is and why it matters — the entry point for new visitors
+**Key Sections**:
+- The Problem (integration tax)
+- The Solution (cross-domain composition examples)
+- What Makes It Different (determinism, category theory, multirate)
+- The Name (Turing lineage)
+- Current status and where to go deeper
+
+**Navigate**: `reveal docs/PITCH.md`
 
 ---
 

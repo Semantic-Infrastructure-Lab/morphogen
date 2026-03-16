@@ -88,6 +88,29 @@ Both compile to the same Graph IR, share the same operator registry, and guarant
 - Lowers to optimized CPU/GPU code via LLVM
 - Field operations, agents, audio DSP, temporal execution all compile to native code
 
+**Category-Theoretic Foundations**
+- Domains are categories, operators are morphisms, cross-domain translations are functors
+- Composition is provably well-defined — not glue code, but algebra
+- Compiler optimizes via natural transformations (e.g., `fft ∘ filter ∘ ifft` → single frequency-domain filter automatically)
+
+---
+
+## The Name: A Structural Homage to Alan Turing
+
+Most people know Turing for the Turing machine or the Turing test. But his **most visionary scientific work** was his 1952 paper *"The Chemical Basis of Morphogenesis"* — showing how zebra stripes, leopard spots, and leaf arrangements emerge from two chemicals diffusing and reacting by simple local rules. No blueprint. No central controller. Just composition.
+
+Morphogen the platform is a direct continuation of that work:
+
+- **Turing's equations are first-class** — reaction-diffusion PDEs (`∂u/∂t = D_u ∇²u + f(u,v)`) run natively in the `field` domain
+- **Same philosophical structure** — complex emergent behavior from typed local rules composing across domains
+- **Same unification impulse** — Turing bridged chemistry, mathematics, and biology; Morphogen bridges audio, physics, circuit, fluid, geometry, and more
+
+This is not a superficial naming choice. The name signals what kind of computation Morphogen is: **emergent, compositional, continuous** — the 1952 Turing, not the 1936 one.
+
+> *"Simple rules. Unified domains. Emergent computation."*
+
+> 📖 **Full lineage:** [docs/philosophy/heritage-and-naming.md](docs/philosophy/heritage-and-naming.md)
+
 ---
 
 ## Sister Project: Philbrick
@@ -196,10 +219,10 @@ morphogen run hello.morph
 
 ## 🚀 Project Status & v1.0 Roadmap
 
-**Current Status (v0.11.0):**
+**Current Status (v0.12.0):**
 - ✅ **39 production computational domains** (fully integrated with `use` statement)
 - ✅ **606 operators** accessible from Morphogen language
-- ✅ **1,705 tests passing** (251 MLIR tests skipped)
+- ✅ **1,912 tests passing** (207 MLIR tests skipped)
 - ✅ MLIR compilation pipeline complete (6 phases)
 - ✅ Python runtime with NumPy backend
 - ✅ All legacy domains migrated to modern `@operator` system
@@ -236,7 +259,7 @@ Morphogen is on an aggressive path to v1.0 with a three-track strategy:
 - 🔌 User extensibility (plugin system for custom domains)
 - 🎯 50+ integrated domains (audio, physics, chemistry, graphics, AI)
 
-**Timeline:** Current v0.11.0 → v1.0 release in 2026-Q2
+**Timeline:** Current v0.12.0 → v1.0 release in 2026-Q2
 
 ---
 
@@ -407,6 +430,7 @@ flow(dt=1.0, steps=10000) {
 
 ### Getting Started
 
+- **[2-Minute Pitch](docs/PITCH.md)** - What Morphogen is and why it matters
 - **[Getting Started Guide](docs/getting-started.md)** - Installation, first program, core concepts
 - **[Domain Catalog](docs/DOMAINS.md)** - Complete catalog of all 40+ domains with examples
 - **[docs/README.md](docs/README.md)** - Documentation navigation and index
