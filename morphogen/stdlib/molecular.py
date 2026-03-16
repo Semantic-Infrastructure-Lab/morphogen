@@ -1652,6 +1652,21 @@ def run_md(
     positions = molecule.positions.copy()
     velocities = molecule.velocities.copy()
 
+    # Integrators use ps internally (conversion=418.4 → amu·Å²/ps²).
+    # Public API accepts dt in fs; convert once here.
+    dt_ps = dt * 1e-3
+
+    # For NVT, initialize velocities from Maxwell-Boltzmann at target temperature
+    # so the thermostat starts at the right kinetic energy scale.
+    # In Å/ps: v_i ~ N(0, sqrt(k_B * T * 418.4 / m_i)) per component
+    if ensemble == "nvt":
+        k_B = 0.001987  # kcal/(mol·K)
+        conversion = 418.4  # amu·Å²/ps² per kcal/mol
+        mb_seed = (seed if seed is not None else 12345)
+        rng = np.random.default_rng(mb_seed)
+        sigma = np.sqrt(k_B * temperature * conversion / masses)  # Å/ps per component
+        velocities = rng.standard_normal(velocities.shape) * sigma[:, np.newaxis]
+
     frames = []
     for step in range(steps):
         mol_curr = Molecule(molecule.atoms, molecule.bonds, positions.copy(), velocities.copy())
@@ -1661,11 +1676,11 @@ def run_md(
             step_seed = ((seed if seed is not None else 12345) + step) % (2 ** 31)
             positions, velocities = langevin_integrator(
                 positions, velocities, forces, masses,
-                temperature, friction=1.0, dt=dt, seed=step_seed,
+                temperature, friction=1.0, dt=dt_ps, seed=step_seed,
             )
         else:  # nve
             positions, velocities = velocity_verlet(
-                positions, velocities, forces, masses, dt
+                positions, velocities, forces, masses, dt_ps
             )
 
         frames.append(
