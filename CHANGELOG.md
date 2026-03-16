@@ -3209,3 +3209,19 @@ All changelog entries reflect **actual implemented features**, not aspirational 
 **For detailed status of all components:** See [STATUS.md](STATUS.md)
 **For architecture overview:** See [ARCHITECTURE.md](ARCHITECTURE.md)
 **For ecosystem roadmap:** See [ECOSYSTEM_MAP.md](ECOSYSTEM_MAP.md)
+
+## gentle-drizzle-0316 (2026-03-16)
+
+### Documentation
+- Added `docs/PITCH.md` — 2-minute entry point doc for new visitors
+- Added `docs/STRATEGY.md` — honest path-to-v1.0: what's real vs. aspirational, strategic choice (Python API-first), 5 success criteria, what to defer
+- README: added "The Name: A Structural Homage to Alan Turing" section surfacing the 1952 morphogenesis lineage
+- README: added category-theoretic foundations bullet to "What Makes Morphogen Different"
+- README: fixed stale v0.11.0 → v0.12.0, 1,705 → 1,912 tests
+- DOCUMENTATION_INDEX.md: added entries for PITCH.md and STRATEGY.md
+
+### Bug Fixes (Showcase Demos)
+- `examples/cross_domain/fluid_acoustics_audio.py`: fix Visual import, field.diffuse API (diffusion_coeff→rate), palette API (apply/create_gradient→map)
+- `examples/showcase/07_physical_instrument.py`: fix io_storage.save_image reversed args
+- `examples/showcase/08_digital_twin.py`: fix palette.coolwarm→palette.plasma
+- All 3 demos now run end-to-end and produce output files
