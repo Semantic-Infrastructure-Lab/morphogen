@@ -760,78 +760,61 @@ class Parser:
                 break
         return expr
 
+    def _parse_paren_expr(self) -> Expression:
+        """Parse parenthesized expression or tuple after consuming LPAREN."""
+        self.advance()  # consume LPAREN
+        if self.current_token().type == TokenType.RPAREN:
+            self.advance()
+            return Tuple([])
+        first_expr = self.parse_expression()
+        if self.current_token().type == TokenType.COMMA:
+            elements = [first_expr]
+            while self.current_token().type == TokenType.COMMA:
+                self.advance()
+                if self.current_token().type == TokenType.RPAREN:
+                    break
+                elements.append(self.parse_expression())
+            self.expect(TokenType.RPAREN)
+            return Tuple(elements)
+        self.expect(TokenType.RPAREN)
+        return first_expr
+
+    def _parse_list_literal(self) -> Expression:
+        """Parse list literal after consuming LBRACKET."""
+        self.advance()  # consume LBRACKET
+        elements = []
+        while self.current_token().type != TokenType.RBRACKET:
+            elements.append(self.parse_expression())
+            if self.current_token().type == TokenType.COMMA:
+                self.advance()
+        self.expect(TokenType.RBRACKET)
+        return Literal(elements)
+
     def parse_primary(self) -> Expression:
         """Parse primary expression (literals, identifiers, parenthesized)."""
         token = self.current_token()
 
-        # Lambda expression: |args| expr
         if token.type == TokenType.PIPE:
             return self.parse_lambda()
-
-        # If/else expression: if cond then expr1 else expr2 or if cond { expr1 } else { expr2 }
         if token.type == TokenType.IF:
             return self.parse_if_else()
+        if token.type == TokenType.LPAREN:
+            return self._parse_paren_expr()
+        if token.type == TokenType.LBRACKET:
+            return self._parse_list_literal()
 
-        # Number literal
-        if token.type == TokenType.NUMBER:
+        # Literal and identifier tokens: advance and wrap
+        _literal_tokens = {
+            TokenType.NUMBER: Literal,
+            TokenType.STRING: Literal,
+            TokenType.BOOL:   Literal,
+        }
+        if token.type in _literal_tokens:
             self.advance()
-            return Literal(token.value)
-
-        # String literal
-        if token.type == TokenType.STRING:
-            self.advance()
-            return Literal(token.value)
-
-        # Boolean literal
-        if token.type == TokenType.BOOL:
-            self.advance()
-            return Literal(token.value)
-
-        # Identifier
+            return _literal_tokens[token.type](token.value)
         if token.type == TokenType.IDENTIFIER:
             self.advance()
             return Identifier(token.value)
-
-        # Parenthesized expression or tuple
-        if token.type == TokenType.LPAREN:
-            self.advance()
-
-            # Check for empty tuple
-            if self.current_token().type == TokenType.RPAREN:
-                self.advance()
-                return Tuple([])
-
-            # Parse first element
-            first_expr = self.parse_expression()
-
-            # Check if it's a tuple (has comma) or just parenthesized expression
-            if self.current_token().type == TokenType.COMMA:
-                # It's a tuple
-                elements = [first_expr]
-                while self.current_token().type == TokenType.COMMA:
-                    self.advance()
-                    # Allow trailing comma
-                    if self.current_token().type == TokenType.RPAREN:
-                        break
-                    elements.append(self.parse_expression())
-                self.expect(TokenType.RPAREN)
-                return Tuple(elements)
-            else:
-                # Just a parenthesized expression
-                self.expect(TokenType.RPAREN)
-                return first_expr
-
-        # List literal
-        if token.type == TokenType.LBRACKET:
-            self.advance()
-            elements = []
-            while self.current_token().type != TokenType.RBRACKET:
-                elements.append(self.parse_expression())
-                if self.current_token().type == TokenType.COMMA:
-                    self.advance()
-            self.expect(TokenType.RBRACKET)
-            # Return a list literal (would need to add ListLiteral to AST)
-            return Literal(elements)
 
         raise ParseError(
             f"Unexpected token {token.type.name} at {token.line}:{token.column}"

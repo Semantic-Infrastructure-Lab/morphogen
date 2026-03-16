@@ -133,38 +133,30 @@ class ConstantFoldingPass(OptimizationPass):
                 pass
         return None
 
+    _ARITH_OPS = {
+        "arith.addf": lambda a, b: a + b,
+        "arith.addi": lambda a, b: a + b,
+        "arith.subf": lambda a, b: a - b,
+        "arith.subi": lambda a, b: a - b,
+        "arith.mulf": lambda a, b: a * b,
+        "arith.muli": lambda a, b: a * b,
+        "arith.divf": lambda a, b: a / b if b != 0 else None,
+        "arith.divi": lambda a, b: a / b if b != 0 else None,
+        "arith.remf": lambda a, b: a % b if b != 0 else None,
+        "arith.remi": lambda a, b: a % b if b != 0 else None,
+    }
+
     def _fold_arithmetic(self, opcode: str, operands: List[Any]) -> Optional[Any]:
-        """Fold arithmetic operation with constant operands.
-
-        Args:
-            opcode: Operation code (e.g., "arith.addf")
-            operands: Constant operand values
-
-        Returns:
-            Computed constant result or None if can't fold
-        """
+        """Fold arithmetic operation with constant operands."""
         if len(operands) < 2:
             return None
-
-        a, b = operands[0], operands[1]
-
+        op = ConstantFoldingPass._ARITH_OPS.get(opcode)
+        if op is None:
+            return None
         try:
-            if opcode == "arith.addf" or opcode == "arith.addi":
-                return a + b
-            elif opcode == "arith.subf" or opcode == "arith.subi":
-                return a - b
-            elif opcode == "arith.mulf" or opcode == "arith.muli":
-                return a * b
-            elif opcode == "arith.divf" or opcode == "arith.divi":
-                if b != 0:
-                    return a / b
-            elif opcode == "arith.remf" or opcode == "arith.remi":
-                if b != 0:
-                    return a % b
-        except:
-            pass
-
-        return None
+            return op(operands[0], operands[1])
+        except Exception:
+            return None
 
 
 class DeadCodeEliminationPass(OptimizationPass):

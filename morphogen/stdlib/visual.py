@@ -343,6 +343,37 @@ def _gather_agent_render_attrs(agents, positions, color_property, color, size_pr
     return colors, sizes, alphas, rotations
 
 
+def _composite_blend(mode: str, bottom: np.ndarray, top: np.ndarray, alpha: float) -> np.ndarray:
+    """Apply one composite blend mode. Returns new result array."""
+    if mode == "over":
+        return bottom * (1 - alpha) + top * alpha
+    if mode == "add":
+        return bottom + top * alpha
+    if mode == "multiply":
+        return bottom * (1 - alpha + top * alpha)
+    if mode == "screen":
+        return 1 - (1 - bottom) * (1 - top * alpha)
+    if mode == "overlay":
+        mask = bottom < 0.5
+        return np.where(
+            mask,
+            2 * bottom * top * alpha + bottom * (1 - alpha),
+            1 - 2 * (1 - bottom) * (1 - top) * alpha + bottom * (1 - alpha)
+        )
+    raise ValueError(f"Unknown blending mode: {mode}. Supported: 'over', 'add', 'multiply', 'screen', 'overlay'")
+
+
+def _resolve_opacities(opacity, n_layers: int) -> list:
+    """Resolve opacity argument into a per-layer list."""
+    if opacity is None:
+        return [1.0] * n_layers
+    if isinstance(opacity, (int, float)):
+        return [float(opacity)] * n_layers
+    if len(opacity) != n_layers:
+        raise ValueError(f"opacity list length {len(opacity)} doesn't match layers {n_layers}")
+    return list(opacity)
+
+
 def _get_edge_weight(adjacency_list: dict, i: int, j: int) -> float:
     """Get edge weight between two nodes from adjacency list."""
     for neighbor, weight in adjacency_list.get(i, []):
@@ -848,52 +879,11 @@ class VisualOperations:
                     f"Layer {i} has shape {layer.shape}, expected {base_shape}"
                 )
 
-        # Handle opacity
-        if opacity is None:
-            opacities = [1.0] * len(layers)
-        elif isinstance(opacity, (int, float)):
-            opacities = [float(opacity)] * len(layers)
-        else:
-            if len(opacity) != len(layers):
-                raise ValueError(
-                    f"opacity list length {len(opacity)} doesn't match layers {len(layers)}"
-                )
-            opacities = list(opacity)
-
-        # Start with first layer
+        opacities = _resolve_opacities(opacity, len(layers))
         result = layers[0].data.copy() * opacities[0]
 
-        # Composite remaining layers
         for i, layer in enumerate(layers[1:], 1):
-            alpha = opacities[i]
-            top = layer.data
-            bottom = result
-
-            if mode == "over":
-                # Standard alpha compositing (over operator)
-                result = bottom * (1 - alpha) + top * alpha
-            elif mode == "add":
-                # Additive blending
-                result = bottom + top * alpha
-            elif mode == "multiply":
-                # Multiply blending
-                result = bottom * (1 - alpha + top * alpha)
-            elif mode == "screen":
-                # Screen blending
-                result = 1 - (1 - bottom) * (1 - top * alpha)
-            elif mode == "overlay":
-                # Overlay blending
-                mask = bottom < 0.5
-                result = np.where(
-                    mask,
-                    2 * bottom * top * alpha + bottom * (1 - alpha),
-                    1 - 2 * (1 - bottom) * (1 - top) * alpha + bottom * (1 - alpha)
-                )
-            else:
-                raise ValueError(
-                    f"Unknown blending mode: {mode}. "
-                    f"Supported: 'over', 'add', 'multiply', 'screen', 'overlay'"
-                )
+            result = _composite_blend(mode, result, layer.data, opacities[i])
 
         return Visual(result)
 
