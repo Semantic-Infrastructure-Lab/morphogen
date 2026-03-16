@@ -192,37 +192,15 @@ def reaction_rates(
     rates = {species: 0.0 for rxn in reactions for species in rxn.all_species}
 
     for reaction in reactions:
-        # Compute rate constant
-        if reaction.rate_law.type == RateLawType.ARRHENIUS:
-            k = arrhenius(temp, reaction.rate_law.A, reaction.rate_law.Ea)
-        elif reaction.rate_law.type == RateLawType.MODIFIED_ARRHENIUS:
-            k = modified_arrhenius(temp, reaction.rate_law.A, reaction.rate_law.n, reaction.rate_law.Ea)
-        elif reaction.rate_law.type == RateLawType.CUSTOM:
-            k = reaction.rate_law.custom_func(conc, temp)
-        else:
-            k = 0.0
+        k = _compute_rate_constant(reaction.rate_law, conc, temp)
 
-        # Compute forward reaction rate
-        # r = k * prod(c_i^nu_i) for reactants
         forward_rate = k
         for species, stoich in reaction.reactants.items():
             forward_rate *= conc.get(species, 0.0) ** stoich
 
-        # Reverse reaction (if applicable)
         reverse_rate = 0.0
         if reaction.reversible and reaction.reverse_rate_law:
-            if reaction.reverse_rate_law.type == RateLawType.ARRHENIUS:
-                k_rev = arrhenius(temp, reaction.reverse_rate_law.A, reaction.reverse_rate_law.Ea)
-            elif reaction.reverse_rate_law.type == RateLawType.MODIFIED_ARRHENIUS:
-                k_rev = modified_arrhenius(
-                    temp,
-                    reaction.reverse_rate_law.A,
-                    reaction.reverse_rate_law.n,
-                    reaction.reverse_rate_law.Ea
-                )
-            else:
-                k_rev = 0.0
-
+            k_rev = _compute_rate_constant(reaction.reverse_rate_law, conc, temp)
             reverse_rate = k_rev
             for species, stoich in reaction.products.items():
                 reverse_rate *= conc.get(species, 0.0) ** stoich
@@ -238,6 +216,17 @@ def reaction_rates(
             rates[species] += stoich * net_rate
 
     return rates
+
+
+def _compute_rate_constant(rate_law, conc: Dict[str, float], temp: float) -> float:
+    """Compute rate constant k from a RateLaw and current conditions."""
+    if rate_law.type == RateLawType.ARRHENIUS:
+        return arrhenius(temp, rate_law.A, rate_law.Ea)
+    if rate_law.type == RateLawType.MODIFIED_ARRHENIUS:
+        return modified_arrhenius(temp, rate_law.A, rate_law.n, rate_law.Ea)
+    if rate_law.type == RateLawType.CUSTOM:
+        return rate_law.custom_func(conc, temp)
+    return 0.0
 
 
 @operator(
