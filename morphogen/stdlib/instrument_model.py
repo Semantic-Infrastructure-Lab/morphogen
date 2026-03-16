@@ -251,12 +251,11 @@ def synthesize_note(
     if model.synth_params.body_coupling > 0:
         audio = _apply_body_ir(audio, model.body_ir, model.synth_params.body_coupling)
 
-    # Apply velocity
-    audio = audio * velocity
-
-    # Normalize
+    # Normalize to 0.9 peak first, then scale by velocity so velocity is preserved
     if np.max(np.abs(audio)) > 0:
         audio = audio / np.max(np.abs(audio)) * 0.9
+
+    audio = audio * velocity
 
     return audio
 
@@ -317,8 +316,8 @@ def _synthesize_additive(
 
 def _apply_body_ir(audio: np.ndarray, body_ir: np.ndarray, coupling: float) -> np.ndarray:
     """Apply body impulse response via convolution."""
-    # Convolve with body IR
-    body_response = np.convolve(audio, body_ir, mode='same')
+    # Convolve and truncate to original length (body_ir may be longer than audio)
+    body_response = np.convolve(audio, body_ir, mode='full')[:len(audio)]
 
     # Mix with dry signal
     audio_with_body = audio * (1 - coupling) + body_response * coupling

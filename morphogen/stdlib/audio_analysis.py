@@ -627,7 +627,9 @@ def model_noise(
 
     for i in range(num_bands):
         band_mask = (f >= band_edges[i]) & (f < band_edges[i+1])
-        spectral_envelope[i] = np.mean(noise_floor[band_mask])
+        if band_mask.any():
+            spectral_envelope[i] = np.mean(noise_floor[band_mask])
+        # else leave as 0.0 — band spans no STFT bins at this resolution
 
     # Temporal envelope (RMS over time)
     temporal_envelope = np.sqrt(np.mean(np.abs(Zxx)**2, axis=0))
