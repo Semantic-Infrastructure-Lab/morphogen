@@ -8,10 +8,20 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
+from PIL import Image
 from morphogen.parser.parser import parse
 from morphogen.runtime.runtime import Runtime, ExecutionContext
 from morphogen.stdlib.field import field, Field2D
 from morphogen.stdlib.visual import visual
+
+
+def _assert_valid_png(path: Path, expected_size: tuple[int, int]) -> None:
+    """Assert a PNG file exists, is non-empty, and has the expected dimensions."""
+    assert path.exists()
+    assert path.stat().st_size > 0
+    img = Image.open(path)
+    assert img.size == expected_size
+    assert img.mode == "RGB"
 
 
 @pytest.mark.slow
@@ -179,8 +189,7 @@ class TestPortfolioVisualOutput:
         output_path = output_dir / "01_hello_heat_test.png"
         visual.output(vis, path=str(output_path))
 
-        assert output_path.exists()
-        assert output_path.stat().st_size > 1000
+        _assert_valid_png(output_path, (128, 128))
 
     def test_wave_ripples_visual_output(self, examples_dir, output_dir):
         """Test visual output generation for wave ripples example."""
@@ -212,8 +221,7 @@ class TestPortfolioVisualOutput:
         output_path = output_dir / "03_wave_ripples_test.png"
         visual.output(vis, path=str(output_path))
 
-        assert output_path.exists()
-        assert output_path.stat().st_size > 1000
+        _assert_valid_png(output_path, (128, 128))
 
     def test_gray_scott_visual_output(self, examples_dir, output_dir):
         """Test visual output generation for Gray-Scott example."""
@@ -249,8 +257,7 @@ class TestPortfolioVisualOutput:
         output_path = output_dir / "11_gray_scott_test.png"
         visual.output(vis, path=str(output_path))
 
-        assert output_path.exists()
-        assert output_path.stat().st_size > 1000
+        _assert_valid_png(output_path, (128, 128))
 
 
 @pytest.mark.slow
