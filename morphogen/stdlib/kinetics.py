@@ -11,6 +11,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Dict, Callable, Optional, Tuple
 from scipy.integrate import ode, solve_ivp
+from scipy.optimize import root
 from enum import Enum
 from morphogen.core.operator import operator, OpCategory
 
@@ -404,28 +405,21 @@ def cstr(
     # Residence time
     tau = volume / feed_flow
 
-    # Solve nonlinear algebraic equations iteratively
-    # c = c_in + tau * r(c)
+    species_list = list(feed_conc.keys())
 
-    conc = feed_conc.copy()
+    def residuals(c_vec):
+        c = dict(zip(species_list, c_vec))
+        rates = reaction_rates(c, temp, reactions)
+        return [
+            c[s] - feed_conc.get(s, 0.0) - tau * rates.get(s, 0.0)
+            for s in species_list
+        ]
 
-    for iteration in range(1000):
-        rates = reaction_rates(conc, temp, reactions)
+    c0 = np.array([feed_conc[s] for s in species_list])
+    sol = root(residuals, c0, method='hybr', tol=1e-10)
+    c_sol = np.maximum(sol.x, 0.0)  # concentrations cannot be negative
 
-        conc_new = {}
-        for species in feed_conc.keys():
-            c_in = feed_conc.get(species, 0.0)
-            r = rates.get(species, 0.0)
-            conc_new[species] = c_in + tau * r
-
-        # Check convergence
-        error = sum(abs(conc_new[s] - conc.get(s, 0.0)) for s in feed_conc.keys())
-        if error < 1e-8:
-            break
-
-        conc = conc_new
-
-    return conc
+    return dict(zip(species_list, c_sol))
 
 
 @operator(
