@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (ethereal-cobra-0315, 2026-03-15)
+- **Inductor transient sign bug** (`_build_transient_matrices` + `_build_mna_matrices_nonlinear`): inductor history current source was injecting `+i_L_old` INTO n1 — backward, causing voltage at the R-L junction to increase over time instead of decrease. Fixed to `-i_L_old` (history source REMOVES current from n1, correctly opposing the forward-flowing inductor current). Bug was completely hidden — `test_rl_step_response` only checked `len(time_points) > 0`.
+- **Capacitor sign in nonlinear path** (`_build_mna_matrices_nonlinear`): had `i_eq = -C*v_old/dt` (negative) — inconsistent with the linear path fix from juceje-0315. Fixed to `+C*v_old/dt`.
+- **`transient_analysis` initial conditions**: was always starting from zero. Now uses `circuit.node_voltages` as initial conditions if set, enabling pre-charged capacitors and non-zero starting states.
+
+### Added (ethereal-cobra-0315, 2026-03-15)
+- **`set_node_voltage` operator**: sets initial node voltage for transient analysis — unlocks pre-charged capacitor simulations, RC discharge, and any circuit needing non-zero initial state.
+
+### Tests (ethereal-cobra-0315, 2026-03-15)
+- `test_circuit`: 50 → 52 tests — `test_rl_step_response` now checks V_L at τ within 5% of analytic (10·e⁻¹); `test_rc_discharge` now fully implemented (was `pass` stub): pre-charges C to 5V, verifies discharge through τ=1ms RC, checks V at τ and at 5τ
+- `test_acoustics`: 4 weak assertions replaced with physics-grounded checks — exact impulse position (p_fwd[0]=1.0), peak at segment 10 after 10 steps, output zero before arrival + >0.5 at arrival, resonance tolerance tightened 50%→20%
+- `test_fluid_jet`: 2 smoke tests replaced — `test_jet_from_tube_basic` checks analytic velocity (m_dot/ρA) within 1%; `test_jet_reynolds` checks exact Re formula and confirms turbulent (Re>2300)
+
 ### Fixed (juceje-0315, 2026-03-15)
 - **`process_audio` transient bug**: was calling `dc_analysis` per sample — capacitors and inductors had no memory across samples. Now uses proper backward Euler transient stepping (matches `transient_analysis` logic). Maintained `voltages` and `inductor_currents` state across all samples.
 - **Capacitor companion model sign bug**: `_build_transient_matrices` had `i_eq = -C*v_old/dt` — wrong sign, Norton current fought the charge instead of maintaining it. Fixed to `i_eq = +C*v_old/dt`. Previously masked by a test checking the wrong node.
