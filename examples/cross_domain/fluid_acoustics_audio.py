@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from morphogen.stdlib import field, audio, visual, palette, acoustics
 from morphogen.stdlib.field import Field2D
+from morphogen.stdlib.visual import Visual
 
 
 class FluidAcousticsPipeline:
@@ -134,7 +135,7 @@ class FluidAcousticsPipeline:
                 pressure.data += noise_field.data * 0.1
 
             # Diffuse pressure (viscosity approximation)
-            pressure = field.diffuse(pressure, diffusion_coeff=0.1, dt=self.fluid_dt)
+            pressure = field.diffuse(pressure, rate=0.1, dt=self.fluid_dt)
 
             # Advect velocity (simple Euler)
             vx.data = vx.data - vx.data * dvx_dx * self.fluid_dt
@@ -192,7 +193,7 @@ class FluidAcousticsPipeline:
             acoustic.data += source
 
             # Propagate (diffusion as wave approximation)
-            acoustic = field.diffuse(acoustic, diffusion_coeff=c_sound, dt=self.fluid_dt)
+            acoustic = field.diffuse(acoustic, rate=c_sound, dt=self.fluid_dt)
 
             # Damping (acoustic energy dissipation)
             acoustic.data *= 0.98
@@ -275,7 +276,7 @@ class FluidAcousticsPipeline:
         return audio_buffer
 
     def create_visualization(self, pressure_fields: List[Field2D],
-                             acoustic_fields: List[Field2D]) -> List[visual.Visual]:
+                             acoustic_fields: List[Field2D]) -> List[Visual]:
         """Create visualization frames showing fluid and acoustic fields.
 
         Args:
@@ -298,15 +299,9 @@ class FluidAcousticsPipeline:
             # Left: Fluid pressure
             # Right: Acoustic pressure
 
-            fluid_vis = palette.apply(
-                palette.create_gradient('coolwarm', 256),
-                pressure_fields[i].data
-            )
+            fluid_vis = palette.map(palette.plasma(256), pressure_fields[i].data)
 
-            acoustic_vis = palette.apply(
-                palette.create_gradient('seismic', 256),
-                acoustic_fields[i].data
-            )
+            acoustic_vis = palette.map(palette.viridis(256), acoustic_fields[i].data)
 
             # Concatenate horizontally
             combined = np.concatenate([fluid_vis, acoustic_vis], axis=1)
@@ -323,7 +318,7 @@ class FluidAcousticsPipeline:
                             if 0 <= y < combined.shape[0] and 0 <= x < combined.shape[1]:
                                 combined[y, x] = [1.0, 1.0, 1.0]  # White
 
-            frames.append(visual.Visual(combined))
+            frames.append(Visual(combined))
 
         print(f"  ✓ Created {len(frames)} visualization frames")
         return frames
@@ -471,7 +466,7 @@ def demo_with_formal_interfaces():
         pressure.data = -divergence * 10.0
 
         # Diffuse
-        pressure = field.diffuse(pressure, diffusion_coeff=0.1, dt=fluid_dt)
+        pressure = field.diffuse(pressure, rate=0.1, dt=fluid_dt)
 
         # Advect
         vx.data = vx.data - vx.data * dvx_dx * fluid_dt

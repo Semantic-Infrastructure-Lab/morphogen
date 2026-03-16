@@ -377,7 +377,7 @@ def demo_karplus_strong():
         img = palette.map(pal, string_field.data)
 
         output_path = f"output_instrument_string_vibration_t{i:02d}.png"
-        io_storage.save_image(img, output_path)
+        io_storage.save_image(output_path, img)
         print(f"  ✓ Saved: {output_path}")
 
 

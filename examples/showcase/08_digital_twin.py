@@ -432,7 +432,7 @@ def demo_heat_exchanger():
         normalized = np.clip(normalized, 0, 1)
 
         # Apply colormap
-        pal = palette.coolwarm(256)
+        pal = palette.plasma(256)
         img = palette.map(pal, normalized)
 
         output_path = f"output_digital_twin_heat_exchanger_frame{idx:02d}.png"
@@ -575,7 +575,7 @@ def demo_multi_physics_coupling():
     stress_normalized = frames_stress[-1] / (np.max(np.abs(frames_stress[-1])) + 1e-6)
     stress_normalized = (stress_normalized + 1.0) * 0.5  # Map to [0, 1]
 
-    pal_stress = palette.coolwarm(256)
+    pal_stress = palette.plasma(256)
     stress_img = palette.map(pal_stress, stress_normalized)
     io_storage.save_image("output_digital_twin_multiphysics_stress.png", stress_img)
     print("  ✓ Saved: output_digital_twin_multiphysics_stress.png")
