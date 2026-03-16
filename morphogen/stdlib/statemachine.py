@@ -565,6 +565,43 @@ class StateMachineOperations:
         return BehaviorNode(name=name, node_type='condition', condition=condition)
 
     @staticmethod
+    def _exec_action(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
+        if node.action:
+            return node.action(context)
+        return BehaviorStatus.FAILURE
+
+    @staticmethod
+    def _exec_condition(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
+        if node.condition:
+            return BehaviorStatus.SUCCESS if node.condition(context) else BehaviorStatus.FAILURE
+        return BehaviorStatus.FAILURE
+
+    @staticmethod
+    def _exec_sequence(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
+        for child in node.children:
+            status = StateMachineOperations.execute_behavior(child, context)
+            if status != BehaviorStatus.SUCCESS:
+                return status
+        return BehaviorStatus.SUCCESS
+
+    @staticmethod
+    def _exec_selector(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
+        for child in node.children:
+            status = StateMachineOperations.execute_behavior(child, context)
+            if status in (BehaviorStatus.SUCCESS, BehaviorStatus.RUNNING):
+                return status
+        return BehaviorStatus.FAILURE
+
+    @staticmethod
+    def _exec_parallel(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
+        results = [StateMachineOperations.execute_behavior(c, context) for c in node.children]
+        if all(s == BehaviorStatus.SUCCESS for s in results):
+            return BehaviorStatus.SUCCESS
+        if any(s == BehaviorStatus.RUNNING for s in results):
+            return BehaviorStatus.RUNNING
+        return BehaviorStatus.FAILURE
+
+    @staticmethod
     @operator(
         domain="statemachine",
         category=OpCategory.TRANSFORM,
@@ -573,59 +610,16 @@ class StateMachineOperations:
         doc="Execute a behavior tree node"
     )
     def execute_behavior(node: BehaviorNode, context: Dict[str, Any]) -> BehaviorStatus:
-        """Execute a behavior tree node
-
-        Args:
-            node: Behavior node
-            context: Execution context
-
-        Returns:
-            Execution status
-        """
-        if node.node_type == 'action':
-            if node.action:
-                return node.action(context)
-            return BehaviorStatus.FAILURE
-
-        elif node.node_type == 'condition':
-            if node.condition:
-                return BehaviorStatus.SUCCESS if node.condition(context) else BehaviorStatus.FAILURE
-            return BehaviorStatus.FAILURE
-
-        elif node.node_type == 'sequence':
-            # All children must succeed
-            for child in node.children:
-                status = StateMachineOperations.execute_behavior(child, context)
-                if status != BehaviorStatus.SUCCESS:
-                    return status
-            return BehaviorStatus.SUCCESS
-
-        elif node.node_type == 'selector':
-            # At least one child must succeed
-            for child in node.children:
-                status = StateMachineOperations.execute_behavior(child, context)
-                if status == BehaviorStatus.SUCCESS:
-                    return BehaviorStatus.SUCCESS
-                if status == BehaviorStatus.RUNNING:
-                    return BehaviorStatus.RUNNING
-            return BehaviorStatus.FAILURE
-
-        elif node.node_type == 'parallel':
-            # Execute all children
-            results = []
-            for child in node.children:
-                status = StateMachineOperations.execute_behavior(child, context)
-                results.append(status)
-
-            # Success if all succeed
-            if all(s == BehaviorStatus.SUCCESS for s in results):
-                return BehaviorStatus.SUCCESS
-            # Running if any running
-            if any(s == BehaviorStatus.RUNNING for s in results):
-                return BehaviorStatus.RUNNING
-            return BehaviorStatus.FAILURE
-
-        return BehaviorStatus.FAILURE
+        """Execute a behavior tree node."""
+        _dispatch = {
+            'action': StateMachineOperations._exec_action,
+            'condition': StateMachineOperations._exec_condition,
+            'sequence': StateMachineOperations._exec_sequence,
+            'selector': StateMachineOperations._exec_selector,
+            'parallel': StateMachineOperations._exec_parallel,
+        }
+        handler = _dispatch.get(node.node_type)
+        return handler(node, context) if handler else BehaviorStatus.FAILURE
 
 
 # Export singleton instance for DSL access

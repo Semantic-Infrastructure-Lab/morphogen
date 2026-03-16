@@ -80,6 +80,57 @@ class GraphMetrics:
         )
 
 
+def _bfs_find_path(residual, source: int, sink: int):
+    """BFS augmenting path search for Edmonds-Karp. Returns path or None."""
+    visited = {source}
+    queue = deque([(source, [source])])
+    while queue:
+        node, path = queue.popleft()
+        if node == sink:
+            return path
+        for neighbor, capacity in residual.adjacency_list[node]:
+            if neighbor not in visited and capacity > 0:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+    return None
+
+
+def _path_min_capacity(residual, path: list) -> float:
+    """Return the minimum residual capacity along path."""
+    min_cap = float('inf')
+    for i in range(len(path) - 1):
+        u, v = path[i], path[i + 1]
+        for neighbor, capacity in residual.adjacency_list[u]:
+            if neighbor == v:
+                min_cap = min(min_cap, capacity)
+                break
+    return min_cap
+
+
+def _update_residual_path(residual, path: list, flow: float) -> None:
+    """Decrease forward edges and increase backward edges along path by flow."""
+    for i in range(len(path) - 1):
+        u, v = path[i], path[i + 1]
+        # Decrease forward edge
+        residual.adjacency_list[u] = [
+            (nb, cap - flow) if nb == v and cap - flow > 0 else (nb, cap)
+            for nb, cap in residual.adjacency_list[u]
+            if not (nb == v and cap - flow <= 0)
+        ]
+        # Increase backward edge
+        found = False
+        new_back = []
+        for nb, cap in residual.adjacency_list[v]:
+            if nb == u:
+                new_back.append((nb, cap + flow))
+                found = True
+            else:
+                new_back.append((nb, cap))
+        if not found:
+            new_back.append((u, flow))
+        residual.adjacency_list[v] = new_back
+
+
 class GraphOperations:
     """Graph and network analysis operations"""
 
@@ -670,74 +721,16 @@ class GraphOperations:
         Returns:
             Maximum flow value
         """
-        # Create residual graph
         residual = graph.copy()
         max_flow_value = 0.0
 
-        def bfs_find_path():
-            """Find augmenting path using BFS"""
-            visited = set([source])
-            queue = deque([(source, [source])])
-
-            while queue:
-                node, path = queue.popleft()
-
-                if node == sink:
-                    return path
-
-                for neighbor, capacity in residual.adjacency_list[node]:
-                    if neighbor not in visited and capacity > 0:
-                        visited.add(neighbor)
-                        queue.append((neighbor, path + [neighbor]))
-
-            return None
-
-        # Find augmenting paths
         while True:
-            path = bfs_find_path()
+            path = _bfs_find_path(residual, source, sink)
             if path is None:
                 break
-
-            # Find minimum capacity along path
-            min_capacity = float('inf')
-            for i in range(len(path) - 1):
-                u, v = path[i], path[i + 1]
-                for neighbor, capacity in residual.adjacency_list[u]:
-                    if neighbor == v:
-                        min_capacity = min(min_capacity, capacity)
-                        break
-
-            # Update residual capacities
-            for i in range(len(path) - 1):
-                u, v = path[i], path[i + 1]
-
-                # Decrease forward edge
-                new_neighbors = []
-                for neighbor, capacity in residual.adjacency_list[u]:
-                    if neighbor == v:
-                        new_cap = capacity - min_capacity
-                        if new_cap > 0:
-                            new_neighbors.append((neighbor, new_cap))
-                    else:
-                        new_neighbors.append((neighbor, capacity))
-                residual.adjacency_list[u] = new_neighbors
-
-                # Increase backward edge
-                found = False
-                new_neighbors = []
-                for neighbor, capacity in residual.adjacency_list[v]:
-                    if neighbor == u:
-                        new_neighbors.append((neighbor, capacity + min_capacity))
-                        found = True
-                    else:
-                        new_neighbors.append((neighbor, capacity))
-
-                if not found:
-                    new_neighbors.append((u, min_capacity))
-
-                residual.adjacency_list[v] = new_neighbors
-
-            max_flow_value += min_capacity
+            flow = _path_min_capacity(residual, path)
+            _update_residual_path(residual, path, flow)
+            max_flow_value += flow
 
         return max_flow_value
 

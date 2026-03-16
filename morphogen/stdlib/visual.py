@@ -275,6 +275,74 @@ def _compute_text_position(position: str, width: int, height: int,
     return positions[position]
 
 
+def _collect_frames(frames, max_frames) -> list:
+    """Collect Visual frames from a callable generator or list, with validation."""
+    if callable(frames):
+        frame_list = []
+        count = 0
+        while True:
+            if max_frames is not None and count >= max_frames:
+                break
+            frame = frames()
+            if frame is None:
+                break
+            if not isinstance(frame, Visual):
+                raise TypeError(f"Frame {count} is not a Visual instance")
+            frame_list.append(frame)
+            count += 1
+    else:
+        frame_list = list(frames)
+        for i, frame in enumerate(frame_list):
+            if not isinstance(frame, Visual):
+                raise TypeError(f"Frame {i} is not a Visual instance")
+    return frame_list
+
+
+def _write_video(imageio, format: str, path: str, rgb_frames: list, fps: int) -> None:
+    """Write rgb_frames to disk in mp4 or gif format."""
+    if format == "mp4":
+        try:
+            imageio.mimwrite(path, rgb_frames, fps=fps, codec='libx264', quality=8, pixelformat='yuv420p')
+        except Exception:
+            imageio.mimwrite(path, rgb_frames, fps=fps)
+    elif format == "gif":
+        imageio.mimwrite(path, rgb_frames, fps=fps, loop=0)
+    else:
+        raise ValueError(f"Unsupported format: {format}. Supported: 'mp4', 'gif'")
+
+
+def _gather_agent_render_attrs(agents, positions, color_property, color, size_property, size,
+                                alpha_property, alpha, rotation_property, palette_colors):
+    """Compute per-agent colors, sizes, alphas, and optional rotations."""
+    if color_property is not None:
+        colors = _map_property_to_colors(agents.get(color_property), palette_colors)
+    else:
+        colors = np.tile(color, (len(positions), 1))
+
+    if size_property is not None:
+        sizes = _map_property_to_sizes(agents.get(size_property), size)
+    else:
+        sizes = np.ones(len(positions)) * size
+
+    if alpha_property is not None:
+        alpha_values = agents.get(alpha_property)
+        if len(alpha_values.shape) > 1:
+            alpha_values = np.linalg.norm(alpha_values, axis=1)
+        alphas = np.clip(alpha_values, 0.0, 1.0)
+    else:
+        alphas = np.ones(len(positions)) * alpha
+
+    rotations = None
+    if rotation_property is not None and rotation_property in agents.properties:
+        rotation_values = agents.get(rotation_property)
+        if len(rotation_values.shape) > 1 and rotation_values.shape[1] == 2:
+            rotations = np.arctan2(rotation_values[:, 1], rotation_values[:, 0])
+        else:
+            rotations = rotation_values
+
+    return colors, sizes, alphas, rotations
+
+
 def _get_edge_weight(adjacency_list: dict, i: int, j: int) -> float:
     """Get edge weight between two nodes from adjacency list."""
     for neighbor, weight in adjacency_list.get(i, []):
@@ -676,34 +744,11 @@ class VisualOperations:
         img = np.zeros((height, width, 3), dtype=np.float32)
         img[:, :, :] = background
 
-        # Compute colors, sizes, and alphas
         palette_colors = np.array(VisualOperations.PALETTES[palette])
-        if color_property is not None:
-            colors = _map_property_to_colors(agents.get(color_property), palette_colors)
-        else:
-            colors = np.tile(color, (len(positions), 1))
-
-        if size_property is not None:
-            sizes = _map_property_to_sizes(agents.get(size_property), size)
-        else:
-            sizes = np.ones(len(positions)) * size
-
-        if alpha_property is not None:
-            alpha_values = agents.get(alpha_property)
-            if len(alpha_values.shape) > 1:
-                alpha_values = np.linalg.norm(alpha_values, axis=1)
-            alphas = np.clip(alpha_values, 0.0, 1.0)
-        else:
-            alphas = np.ones(len(positions)) * alpha
-
-        # Get rotations if specified
-        rotations = None
-        if rotation_property is not None and rotation_property in agents.properties:
-            rotation_values = agents.get(rotation_property)
-            if len(rotation_values.shape) > 1 and rotation_values.shape[1] == 2:
-                rotations = np.arctan2(rotation_values[:, 1], rotation_values[:, 0])
-            else:
-                rotations = rotation_values
+        colors, sizes, alphas, rotations = _gather_agent_render_attrs(
+            agents, positions, color_property, color, size_property, size,
+            alpha_property, alpha, rotation_property, palette_colors
+        )
 
         # Render trails
         if trail and 'trail_history' in agents.properties:
@@ -715,15 +760,11 @@ class VisualOperations:
         # Render agents
         for i in range(len(positions)):
             x, y = px[i], py[i]
-            agent_color = colors[i]
-            agent_alpha = alphas[i]
             agent_size = int(sizes[i])
-
             if rotations is not None:
                 _render_rotation_indicator(img, x, y, rotations[i], agent_size,
-                                           agent_color, agent_alpha, blend_mode)
-
-            _render_filled_circle(img, x, y, agent_size, agent_color, agent_alpha, blend_mode)
+                                           colors[i], alphas[i], blend_mode)
+            _render_filled_circle(img, x, y, agent_size, colors[i], alphas[i], blend_mode)
 
         return Visual(img)
 
@@ -905,85 +946,21 @@ class VisualOperations:
                 "Install with: pip install imageio imageio-ffmpeg"
             )
 
-        # Infer format from path if auto
         if format == "auto":
-            if path.endswith(".mp4"):
-                format = "mp4"
-            elif path.endswith(".gif"):
-                format = "gif"
-            else:
-                format = "mp4"  # Default
-
+            format = "mp4" if not path.endswith(".gif") else "gif"
         format = format.lower()
 
-        # Collect frames
-        if callable(frames):
-            # Generator function
-            frame_list = []
-            count = 0
-            while True:
-                if max_frames is not None and count >= max_frames:
-                    break
-
-                frame = frames()
-                if frame is None:
-                    break
-
-                if not isinstance(frame, Visual):
-                    raise TypeError(f"Frame {count} is not a Visual instance")
-
-                frame_list.append(frame)
-                count += 1
-        else:
-            # List of frames
-            frame_list = list(frames)
-
-            # Validate all frames
-            for i, frame in enumerate(frame_list):
-                if not isinstance(frame, Visual):
-                    raise TypeError(f"Frame {i} is not a Visual instance")
-
+        frame_list = _collect_frames(frames, max_frames)
         if len(frame_list) == 0:
             raise ValueError("No frames to export")
 
         print(f"Exporting {len(frame_list)} frames to {path}...")
 
-        # Convert frames to 8-bit RGB
-        rgb_frames = []
-        for frame in frame_list:
-            # Apply gamma correction
-            srgb = VisualOperations._linear_to_srgb(frame.data)
-
-            # Convert to 8-bit
-            rgb_8bit = (srgb * 255).astype(np.uint8)
-            rgb_frames.append(rgb_8bit)
-
-        # Write video
-        if format == "mp4":
-            # MP4 requires ffmpeg
-            try:
-                imageio.mimwrite(
-                    path,
-                    rgb_frames,
-                    fps=fps,
-                    codec='libx264',
-                    quality=8,
-                    pixelformat='yuv420p'
-                )
-            except Exception as e:
-                # Fall back to basic MP4 if codec not available
-                imageio.mimwrite(path, rgb_frames, fps=fps)
-        elif format == "gif":
-            # GIF export
-            imageio.mimwrite(
-                path,
-                rgb_frames,
-                fps=fps,
-                loop=0  # Infinite loop
-            )
-        else:
-            raise ValueError(f"Unsupported format: {format}. Supported: 'mp4', 'gif'")
-
+        rgb_frames = [
+            (VisualOperations._linear_to_srgb(f.data) * 255).astype(np.uint8)
+            for f in frame_list
+        ]
+        _write_video(imageio, format, path, rgb_frames, fps)
         print(f"Video export complete: {path}")
 
     # ========================================================================

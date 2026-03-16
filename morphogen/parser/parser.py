@@ -65,6 +65,15 @@ class Parser:
 
         return Program(statements)
 
+    _STATEMENT_DISPATCH = None  # populated after class definition
+
+    def _parse_identifier_statement(self, decorators: list) -> Statement:
+        """Handle IDENTIFIER token: assignment if followed by = or :, else expression."""
+        peek = self.peek_token()
+        if peek.type in (TokenType.ASSIGN, TokenType.COLON):
+            return self.parse_assignment(decorators)
+        return ExpressionStatement(self.parse_expression())
+
     def parse_statement(self) -> Optional[Statement]:
         """Parse a single statement."""
         self.skip_newlines()
@@ -77,80 +86,16 @@ class Parser:
             self.skip_newlines()
             token = self.current_token()
 
-        # Step block (legacy)
-        if token.type == TokenType.STEP:
-            return self.parse_step()
-
-        # Substep block (legacy)
-        if token.type == TokenType.SUBSTEP:
-            return self.parse_substep()
-
-        # Flow block (v0.3.1)
-        if token.type == TokenType.FLOW:
-            return self.parse_flow()
-
-        # Function definition (v0.3.1)
-        if token.type == TokenType.FN:
-            return self.parse_function()
-
-        # Struct definition (v0.3.1)
-        if token.type == TokenType.STRUCT:
-            return self.parse_struct()
-
-        # Return statement (v0.3.1)
-        if token.type == TokenType.RETURN:
-            return self.parse_return()
-
-        # Module definition
-        if token.type == TokenType.MODULE:
-            return self.parse_module()
-
-        # Compose statement
-        if token.type == TokenType.COMPOSE:
-            return self.parse_compose()
-
-        # Link statement
-        if token.type == TokenType.LINK:
-            return self.parse_link()
-
-        # Use statement
-        if token.type == TokenType.USE:
-            return self.parse_use()
-
-        # Output statement (visual output)
-        if token.type == TokenType.OUTPUT:
-            return self.parse_output()
-
-        # Const declaration
+        # CONST needs decorators; IF wraps in ExpressionStatement; IDENTIFIER has lookahead
         if token.type == TokenType.CONST:
             return self.parse_const_declaration(decorators)
-
-        # Assignment or expression statement
         if token.type == TokenType.IDENTIFIER:
-            # Look ahead to determine if it's an assignment or expression statement
-            # Check if there's '=' or ':' after the identifier (for type annotation)
-            if (self.peek_token().type == TokenType.ASSIGN or
-                self.peek_token().type == TokenType.COLON):
-                return self.parse_assignment(decorators)
-            else:
-                # It's an expression statement (e.g., function call)
-                expr = self.parse_expression()
-                return ExpressionStatement(expr)
-
-        # Type definition
-        if token.type == TokenType.TYPE:
-            return self.parse_type_definition()
-
-        # Set statement (for configuration)
-        if token.type == TokenType.SET:
-            return self.parse_set_statement()
-
-        # If expression as statement (e.g., inside lambda blocks)
+            return self._parse_identifier_statement(decorators)
         if token.type == TokenType.IF:
-            expr = self.parse_if_else()
-            return ExpressionStatement(expr)
+            return ExpressionStatement(self.parse_if_else())
 
-        return None
+        handler = Parser._STATEMENT_DISPATCH.get(token.type)
+        return handler(self) if handler else None
 
     def parse_decorator(self) -> Decorator:
         """Parse a decorator (@name or @name(args))."""
@@ -891,6 +836,23 @@ class Parser:
         raise ParseError(
             f"Unexpected token {token.type.name} at {token.line}:{token.column}"
         )
+
+
+Parser._STATEMENT_DISPATCH = {
+    TokenType.STEP:    Parser.parse_step,
+    TokenType.SUBSTEP: Parser.parse_substep,
+    TokenType.FLOW:    Parser.parse_flow,
+    TokenType.FN:      Parser.parse_function,
+    TokenType.STRUCT:  Parser.parse_struct,
+    TokenType.RETURN:  Parser.parse_return,
+    TokenType.MODULE:  Parser.parse_module,
+    TokenType.COMPOSE: Parser.parse_compose,
+    TokenType.LINK:    Parser.parse_link,
+    TokenType.USE:     Parser.parse_use,
+    TokenType.OUTPUT:  Parser.parse_output,
+    TokenType.TYPE:    Parser.parse_type_definition,
+    TokenType.SET:     Parser.parse_set_statement,
+}
 
 
 def parse(source: str) -> Program:

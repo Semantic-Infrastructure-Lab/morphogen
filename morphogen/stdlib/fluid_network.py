@@ -170,6 +170,59 @@ def tube_resistance(
     return R
 
 
+def _compute_resistances(net, flows_guess, n_tubes) -> np.ndarray:
+    """Compute tube resistances based on current flow guess (for friction factor iteration)."""
+    resistances = np.zeros(n_tubes)
+    for i, (_, _, tube) in enumerate(net.tubes):
+        velocity = flows_guess[i] / (tube.fluid.density * tube.area)
+        Re = max(tube.fluid.density * velocity * tube.diameter / tube.fluid.viscosity, 1.0)
+        resistances[i] = tube_resistance(tube, Re)
+    return resistances
+
+
+def _build_mna_system(net, resistances, n_junctions, delta_p):
+    """Build conductance matrix A and RHS b for Modified Nodal Analysis."""
+    A = np.zeros((n_junctions, n_junctions))
+    b = np.zeros(n_junctions)
+
+    for i, (j_from, j_to, _) in enumerate(net.tubes):
+        conductance = 1.0 / resistances[i] if resistances[i] > 0 else 1e10
+        A[j_from, j_from] += conductance
+        A[j_to, j_to] += conductance
+        A[j_from, j_to] -= conductance
+        A[j_to, j_from] -= conductance
+
+    for j_idx, junction in enumerate(net.junctions):
+        if junction.boundary_condition is not None:
+            bc_type, bc_value = junction.boundary_condition
+            if bc_type == "pressure":
+                A[j_idx, :] = 0
+                A[j_idx, j_idx] = 1.0
+                b[j_idx] = bc_value
+
+    if net.junctions[0].boundary_condition is None:
+        b[0] += delta_p
+
+    return A, b
+
+
+def _solve_pressures(A, b, solver, tolerance, max_iterations, n_junctions):
+    """Solve Ax=b for junction pressures. Returns None on singular matrix."""
+    try:
+        if solver == "direct":
+            return np.linalg.solve(A, b)
+        elif solver == "cg":
+            pressures, _ = np.linalg.cg(A, b, tol=tolerance, maxiter=max_iterations)
+            return pressures
+        elif solver == "gmres":
+            pressures, _ = np.linalg.gmres(A, b, tol=tolerance, maxiter=max_iterations)
+            return pressures
+        else:
+            raise ValueError(f"Unknown solver: {solver}")
+    except np.linalg.LinAlgError:
+        return None
+
+
 @operator(
     domain="fluid_network",
     category=OpCategory.QUERY,
@@ -206,74 +259,24 @@ def network_solve(
     """
     n_junctions = net.num_junctions()
     n_tubes = net.num_tubes()
-
-    # Compute tube resistances (iterate to refine friction factors)
-    resistances = np.zeros(n_tubes)
     flows_guess = np.ones(n_tubes) * 0.01  # Initial guess (kg/s)
 
-    for iteration in range(max_iterations):
-        for i, (j_from, j_to, tube) in enumerate(net.tubes):
-            # Compute Reynolds number from current flow guess
-            velocity = flows_guess[i] / (tube.fluid.density * tube.area)
-            Re = tube.fluid.density * velocity * tube.diameter / tube.fluid.viscosity
-            Re = max(Re, 1.0)  # Avoid division by zero
+    for _ in range(max_iterations):
+        resistances = _compute_resistances(net, flows_guess, n_tubes)
+        A, b = _build_mna_system(net, resistances, n_junctions, delta_p)
+        pressures = _solve_pressures(A, b, solver, tolerance, max_iterations, n_junctions)
 
-            resistances[i] = tube_resistance(tube, Re)
+        if pressures is None:
+            return np.zeros(n_tubes), np.zeros(n_junctions)
 
-        # Construct system matrix (Modified Nodal Analysis)
-        A = np.zeros((n_junctions, n_junctions))
-        b = np.zeros(n_junctions)
+        flows = np.array([
+            np.sign(pressures[j_from] - pressures[j_to]) *
+            np.sqrt(abs(pressures[j_from] - pressures[j_to]) / resistances[i])
+            for i, (j_from, j_to, _) in enumerate(net.tubes)
+        ])
 
-        # Assemble conductance matrix
-        for i, (j_from, j_to, tube) in enumerate(net.tubes):
-            conductance = 1.0 / resistances[i] if resistances[i] > 0 else 1e10
-
-            A[j_from, j_from] += conductance
-            A[j_to, j_to] += conductance
-            A[j_from, j_to] -= conductance
-            A[j_to, j_from] -= conductance
-
-        # Apply boundary conditions
-        for j_idx, junction in enumerate(net.junctions):
-            if junction.boundary_condition is not None:
-                bc_type, bc_value = junction.boundary_condition
-                if bc_type == "pressure":
-                    # Fix pressure at this node
-                    A[j_idx, :] = 0
-                    A[j_idx, j_idx] = 1.0
-                    b[j_idx] = bc_value
-
-        # Apply driving pressure (between first and last junctions)
-        if net.junctions[0].boundary_condition is None:
-            b[0] += delta_p
-
-        # Solve for junction pressures
-        try:
-            if solver == "direct":
-                pressures = np.linalg.solve(A, b)
-            elif solver == "cg":
-                pressures, info = np.linalg.cg(A, b, tol=tolerance, maxiter=max_iterations)
-            elif solver == "gmres":
-                pressures, info = np.linalg.gmres(A, b, tol=tolerance, maxiter=max_iterations)
-            else:
-                raise ValueError(f"Unknown solver: {solver}")
-        except np.linalg.LinAlgError:
-            # Singular matrix - return zeros
-            pressures = np.zeros(n_junctions)
-            flows = np.zeros(n_tubes)
-            return flows, pressures
-
-        # Compute flows from pressure differences
-        flows = np.zeros(n_tubes)
-        for i, (j_from, j_to, tube) in enumerate(net.tubes):
-            delta_p_tube = pressures[j_from] - pressures[j_to]
-            # Flow = sqrt(ΔP / R)
-            flows[i] = np.sign(delta_p_tube) * np.sqrt(abs(delta_p_tube) / resistances[i])
-
-        # Check convergence
         if np.max(np.abs(flows - flows_guess)) < tolerance:
             break
-
         flows_guess = flows
 
     return flows, pressures

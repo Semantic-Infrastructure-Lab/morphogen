@@ -932,54 +932,45 @@ class MLIRCompiler:
 
         return results[0]
 
-    def _find_free_variables(self, expr: Expression, bound_vars: set) -> set:
-        """Find free variables in an expression (variables not in bound_vars).
+    # Maps node type → callable returning child expressions to recurse into
+    _FREE_VAR_CHILDREN = {
+        BinaryOp:    lambda e: [e.left, e.right],
+        UnaryOp:     lambda e: [e.operand],
+        IfElse:      lambda e: [e.condition, e.then_expr, e.else_expr],
+        FieldAccess: lambda e: [e.object],
+    }
 
-        Args:
-            expr: Expression to analyze
-            bound_vars: Set of variable names that are bound (in scope)
-
-        Returns:
-            Set of free variable names (captured variables)
-        """
+    def _find_free_in_call(self, expr: Call, bound_vars: set) -> set:
+        """Find free variables in a Call expression."""
         free_vars = set()
-
-        if isinstance(expr, Identifier):
-            if expr.name not in bound_vars:
-                free_vars.add(expr.name)
-        elif isinstance(expr, BinaryOp):
-            free_vars.update(self._find_free_variables(expr.left, bound_vars))
-            free_vars.update(self._find_free_variables(expr.right, bound_vars))
-        elif isinstance(expr, UnaryOp):
-            free_vars.update(self._find_free_variables(expr.operand, bound_vars))
-        elif isinstance(expr, Call):
-            if isinstance(expr.callee, Identifier):
-                # Don't count function names or lambda names as captured variables
-                # They can be called directly through the symbol table
-                callee_name = expr.callee.name
-                is_function = callee_name in self.functions
-                is_lambda = (callee_name in self.symbols and
-                           hasattr(self.symbols.get(callee_name), '_lambda_meta'))
-
-                if not is_function and not is_lambda and callee_name not in bound_vars:
-                    free_vars.add(callee_name)
-            for arg in expr.args:
-                free_vars.update(self._find_free_variables(arg, bound_vars))
-        elif isinstance(expr, IfElse):
-            free_vars.update(self._find_free_variables(expr.condition, bound_vars))
-            free_vars.update(self._find_free_variables(expr.then_expr, bound_vars))
-            free_vars.update(self._find_free_variables(expr.else_expr, bound_vars))
-        elif isinstance(expr, FieldAccess):
-            free_vars.update(self._find_free_variables(expr.object, bound_vars))
-        elif isinstance(expr, StructLiteral):
-            for field_expr in expr.fields.values():
-                free_vars.update(self._find_free_variables(field_expr, bound_vars))
-        elif isinstance(expr, Lambda):
-            # Nested lambda: its params are bound within its body
-            nested_bound = bound_vars | set(expr.params)
-            free_vars.update(self._find_free_variables(expr.body, nested_bound))
-
+        if isinstance(expr.callee, Identifier):
+            callee_name = expr.callee.name
+            is_function = callee_name in self.functions
+            is_lambda = (callee_name in self.symbols and
+                         hasattr(self.symbols.get(callee_name), '_lambda_meta'))
+            if not is_function and not is_lambda and callee_name not in bound_vars:
+                free_vars.add(callee_name)
+        for arg in expr.args:
+            free_vars.update(self._find_free_variables(arg, bound_vars))
         return free_vars
+
+    def _find_free_variables(self, expr: Expression, bound_vars: set) -> set:
+        """Find free variables in an expression (variables not in bound_vars)."""
+        if isinstance(expr, Identifier):
+            return {expr.name} if expr.name not in bound_vars else set()
+
+        get_children = MLIRCompiler._FREE_VAR_CHILDREN.get(type(expr))
+        if get_children is not None:
+            return set().union(*(self._find_free_variables(c, bound_vars) for c in get_children(expr)))
+
+        if isinstance(expr, Call):
+            return self._find_free_in_call(expr, bound_vars)
+        if isinstance(expr, StructLiteral):
+            return set().union(*(self._find_free_variables(v, bound_vars) for v in expr.fields.values()))
+        if isinstance(expr, Lambda):
+            return self._find_free_variables(expr.body, bound_vars | set(expr.params))
+
+        return set()
 
     def _build_lambda_signature(
         self, params: List[str], captured_var_list: List[str]

@@ -66,6 +66,65 @@ class OptimizationResult:
 # Differential Evolution (DE) Implementation
 # ============================================================================
 
+def _de_trial(population, i, fitness, bounds_array, n_dim, F, CR, objective_fn):
+    """Compute one DE/rand/1/bin trial and return (candidate, candidate_fitness)."""
+    candidates = [idx for idx in range(len(population)) if idx != i]
+    a, b, c = population[np.random.choice(candidates, 3, replace=False)]
+    mutant = np.clip(a + F * (b - c), bounds_array[:, 0], bounds_array[:, 1])
+    cross_points = np.random.rand(n_dim) < CR
+    if not np.any(cross_points):
+        cross_points[np.random.randint(0, n_dim)] = True
+    trial = np.where(cross_points, mutant, population[i])
+    return trial, objective_fn(trial)
+
+
+def _nm_simplex_step(simplex, f_values, objective_fn, n_dim,
+                     x_centroid, x_best, x_worst,
+                     f_best, f_second_worst, f_worst,
+                     alpha, gamma, rho, sigma):
+    """Perform one Nelder-Mead simplex update in-place. Returns extra eval count."""
+    x_reflected = x_centroid + alpha * (x_centroid - x_worst)
+    f_reflected = objective_fn(x_reflected)
+    n_extra = 1
+
+    if f_best <= f_reflected < f_second_worst:
+        simplex[-1], f_values[-1] = x_reflected, f_reflected
+    elif f_reflected < f_best:
+        x_expanded = x_centroid + gamma * (x_reflected - x_centroid)
+        f_expanded = objective_fn(x_expanded)
+        n_extra += 1
+        if f_expanded < f_reflected:
+            simplex[-1], f_values[-1] = x_expanded, f_expanded
+        else:
+            simplex[-1], f_values[-1] = x_reflected, f_reflected
+    else:
+        x_contracted = x_centroid + rho * (
+            x_reflected - x_centroid if f_reflected < f_worst else x_worst - x_centroid
+        )
+        f_contracted = objective_fn(x_contracted)
+        n_extra += 1
+        if f_contracted < min(f_reflected, f_worst):
+            simplex[-1], f_values[-1] = x_contracted, f_contracted
+        else:
+            for j in range(1, n_dim + 1):
+                simplex[j] = x_best + sigma * (simplex[j] - x_best)
+                f_values[j] = objective_fn(simplex[j])
+            n_extra += n_dim
+    return n_extra
+
+
+def _auto_select_method(bounds, initial) -> str:
+    """Auto-select optimization algorithm based on problem structure."""
+    if bounds is not None:
+        n_dim = len(bounds)
+        if n_dim <= 5:
+            return 'nelder-mead' if initial is not None else 'de'
+        return 'de' if n_dim <= 20 else 'cmaes'
+    if initial is not None:
+        return 'nelder-mead'
+    raise ValueError("Either bounds or initial point must be provided")
+
+
 class DifferentialEvolution:
     """
     Differential Evolution optimizer.
@@ -139,30 +198,11 @@ class DifferentialEvolution:
             new_population = np.zeros_like(population)
 
             for i in range(population_size):
-                # DE/rand/1 mutation strategy
-                # Select 3 random distinct individuals (not i)
-                candidates = [idx for idx in range(population_size) if idx != i]
-                a, b, c = population[np.random.choice(candidates, 3, replace=False)]
-
-                # Mutation: v = a + F * (b - c)
-                mutant = a + F * (b - c)
-
-                # Clip to bounds
-                mutant = np.clip(mutant, bounds_array[:, 0], bounds_array[:, 1])
-
-                # Binomial crossover
-                cross_points = np.random.rand(n_dim) < CR
-                # Ensure at least one parameter is from mutant
-                if not np.any(cross_points):
-                    cross_points[np.random.randint(0, n_dim)] = True
-
-                trial = np.where(cross_points, mutant, population[i])
-
-                # Selection
-                trial_fitness = objective_fn(trial)
+                trial, trial_fitness = _de_trial(
+                    population, i, fitness, bounds_array, n_dim, F, CR, objective_fn
+                )
                 n_evals += 1
-
-                if trial_fitness <= fitness[i]:  # Minimization
+                if trial_fitness <= fitness[i]:
                     new_population[i] = trial
                     fitness[i] = trial_fitness
                 else:
@@ -644,48 +684,12 @@ class NelderMead:
             # Centroid of all points except worst
             x_centroid = np.mean(simplex[:-1], axis=0)
 
-            # Reflection
-            x_reflected = x_centroid + alpha * (x_centroid - x_worst)
-            f_reflected = objective_fn(x_reflected)
-            n_evals += 1
-
-            if f_best <= f_reflected < f_second_worst:
-                # Accept reflected point
-                simplex[-1] = x_reflected
-                f_values[-1] = f_reflected
-            elif f_reflected < f_best:
-                # Try expansion
-                x_expanded = x_centroid + gamma * (x_reflected - x_centroid)
-                f_expanded = objective_fn(x_expanded)
-                n_evals += 1
-
-                if f_expanded < f_reflected:
-                    simplex[-1] = x_expanded
-                    f_values[-1] = f_expanded
-                else:
-                    simplex[-1] = x_reflected
-                    f_values[-1] = f_reflected
-            else:
-                # Contraction
-                if f_reflected < f_worst:
-                    # Outside contraction
-                    x_contracted = x_centroid + rho * (x_reflected - x_centroid)
-                else:
-                    # Inside contraction
-                    x_contracted = x_centroid + rho * (x_worst - x_centroid)
-
-                f_contracted = objective_fn(x_contracted)
-                n_evals += 1
-
-                if f_contracted < min(f_reflected, f_worst):
-                    simplex[-1] = x_contracted
-                    f_values[-1] = f_contracted
-                else:
-                    # Shrink
-                    for i in range(1, n_dim + 1):
-                        simplex[i] = x_best + sigma * (simplex[i] - x_best)
-                        f_values[i] = objective_fn(simplex[i])
-                    n_evals += n_dim
+            n_evals += _nm_simplex_step(
+                simplex, f_values, objective_fn, n_dim,
+                x_centroid, x_best, x_worst,
+                f_best, f_second_worst, f_worst,
+                alpha, gamma, rho, sigma
+            )
 
             # Track best
             current_best = min(f_values)
@@ -770,20 +774,8 @@ class Optimizer:
             >>> bounds = [(-5, 5)] * 10
             >>> result = Optimizer.minimize(rosenbrock, bounds, method='de')
         """
-        # Auto-select algorithm
         if method == 'auto':
-            if bounds is not None:
-                n_dim = len(bounds)
-                if n_dim <= 5:
-                    method = 'nelder-mead' if initial is not None else 'de'
-                elif n_dim <= 20:
-                    method = 'de'
-                else:
-                    method = 'cmaes'
-            elif initial is not None:
-                method = 'nelder-mead'
-            else:
-                raise ValueError("Either bounds or initial point must be provided")
+            method = _auto_select_method(bounds, initial)
 
         # Dispatch to appropriate algorithm
         if method == 'de':

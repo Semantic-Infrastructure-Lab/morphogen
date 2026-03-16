@@ -163,6 +163,45 @@ class Scene3D:
         return f"Scene3D(objects={len(self.objects)}, camera={self.camera is not None})"
 
 
+def _parse_vtk_faces(faces_flat, triangulate_quads: bool = False) -> np.ndarray:
+    """Parse VTK face array into (N, 3) triangle indices."""
+    faces = []
+    i = 0
+    while i < len(faces_flat):
+        n = faces_flat[i]
+        if n == 3:
+            faces.append(faces_flat[i + 1:i + 4])
+        elif n == 4 and triangulate_quads:
+            q = faces_flat[i + 1:i + 5]
+            faces.append([q[0], q[1], q[2]])
+            faces.append([q[0], q[2], q[3]])
+        i += n + 1
+    return np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+
+
+def _compute_stream_scalars(streamlines, color_by: str) -> np.ndarray:
+    """Compute per-point scalars from streamlines for the given color_by mode."""
+    if color_by == "magnitude" and "vectors" in streamlines.point_data:
+        return np.linalg.norm(streamlines.point_data["vectors"], axis=1)
+    if color_by in ("x", "y", "z"):
+        return streamlines.points[:, {"x": 0, "y": 1, "z": 2}[color_by]]
+    return np.ones(streamlines.n_points)
+
+
+def _create_pyvista_glyph_source(glyph_type: str):
+    """Return a PyVista glyph geometry source for the given type."""
+    import pyvista as pv
+    _sources = {
+        "arrow":    lambda: pv.Arrow(tip_length=0.25, tip_radius=0.1, shaft_radius=0.05),
+        "cone":     lambda: pv.Cone(radius=0.3, height=1.0, resolution=16),
+        "sphere":   lambda: pv.Sphere(radius=0.5, theta_resolution=8, phi_resolution=8),
+        "cylinder": lambda: pv.Cylinder(radius=0.1, height=1.0, resolution=16),
+    }
+    if glyph_type not in _sources:
+        raise ValueError(f"Unknown glyph_type: {glyph_type}. Use 'arrow', 'cone', 'sphere', or 'cylinder'")
+    return _sources[glyph_type]()
+
+
 # =============================================================================
 # Operations Class
 # =============================================================================
@@ -1468,35 +1507,14 @@ class Visual3DOperations:
                 colormap=colormap
             )
 
-        # Calculate scalars for coloring
-        if color_by == "magnitude":
-            if "vectors" in streamlines.point_data:
-                vecs = streamlines.point_data["vectors"]
-                scalars = np.linalg.norm(vecs, axis=1)
-            else:
-                scalars = np.ones(streamlines.n_points)
-        elif color_by in ["x", "y", "z"]:
-            idx = {"x": 0, "y": 1, "z": 2}[color_by]
-            scalars = streamlines.points[:, idx]
-        else:
-            scalars = np.ones(streamlines.n_points)
+        scalars = _compute_stream_scalars(streamlines, color_by)
 
-        # Convert to tubes if requested
         if tube_radius > 0:
             streamlines = streamlines.tube(radius=tube_radius)
 
-        # Extract mesh data
         vertices = np.array(streamlines.points)
         if streamlines.n_cells > 0 and hasattr(streamlines, 'faces'):
-            faces_flat = np.array(streamlines.faces)
-            faces = []
-            i = 0
-            while i < len(faces_flat):
-                n = faces_flat[i]
-                if n == 3:
-                    faces.append(faces_flat[i + 1:i + 4])
-                i += n + 1
-            faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+            faces = _parse_vtk_faces(np.array(streamlines.faces), triangulate_quads=False)
         else:
             faces = np.zeros((0, 3), dtype=np.int32)
 
@@ -1557,17 +1575,7 @@ class Visual3DOperations:
         magnitudes = np.linalg.norm(vectors, axis=1)
         cloud["magnitude"] = magnitudes
 
-        # Create glyph source
-        if glyph_type == "arrow":
-            source = pv.Arrow(tip_length=0.25, tip_radius=0.1, shaft_radius=0.05)
-        elif glyph_type == "cone":
-            source = pv.Cone(radius=0.3, height=1.0, resolution=16)
-        elif glyph_type == "sphere":
-            source = pv.Sphere(radius=0.5, theta_resolution=8, phi_resolution=8)
-        elif glyph_type == "cylinder":
-            source = pv.Cylinder(radius=0.1, height=1.0, resolution=16)
-        else:
-            raise ValueError(f"Unknown glyph_type: {glyph_type}. Use 'arrow', 'cone', 'sphere', or 'cylinder'")
+        source = _create_pyvista_glyph_source(glyph_type)
 
         # Generate glyphs
         glyphs = cloud.glyph(
@@ -1577,33 +1585,15 @@ class Visual3DOperations:
             geom=source
         )
 
-        # Calculate scalars for coloring
         if color_by == "magnitude":
             scalars = glyphs.point_data.get("magnitude", magnitudes)
-        elif color_by in ["x", "y", "z"]:
-            idx = {"x": 0, "y": 1, "z": 2}[color_by]
-            scalars = glyphs.points[:, idx]
+        elif color_by in ("x", "y", "z"):
+            scalars = glyphs.points[:, {"x": 0, "y": 1, "z": 2}[color_by]]
         else:
             scalars = None
 
-        # Extract mesh
         vertices = np.array(glyphs.points)
-        faces_flat = np.array(glyphs.faces)
-
-        # Parse VTK face format
-        faces = []
-        i = 0
-        while i < len(faces_flat):
-            n = faces_flat[i]
-            if n == 3:
-                faces.append(faces_flat[i + 1:i + 4])
-            elif n == 4:
-                idx = faces_flat[i + 1:i + 5]
-                faces.append([idx[0], idx[1], idx[2]])
-                faces.append([idx[0], idx[2], idx[3]])
-            i += n + 1
-
-        faces = np.array(faces) if faces else np.zeros((0, 3), dtype=np.int32)
+        faces = _parse_vtk_faces(np.array(glyphs.faces), triangulate_quads=True)
 
         return Visual3D(
             vertices=vertices,

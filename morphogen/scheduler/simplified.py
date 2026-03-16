@@ -335,6 +335,48 @@ class SimplifiedScheduler:
 
         return outputs
 
+    def _execute_rate_group(self, rate_group, hop: int) -> None:
+        """Execute all operators in a rate group for one hop."""
+        rate_samples = int((hop / self.sample_rate) * rate_group.rate_hz)
+        if rate_samples == 0:
+            rate_samples = 1  # Always execute at least one sample
+
+        for op_id in rate_group.operators:
+            node = self.graph.get_node(op_id)
+            if node is None:
+                continue
+
+            input_edges = [e for e in self.graph.edges if e.to_node == op_id]
+            inputs = {
+                edge.to_port_name: self._get_input_buffer(
+                    edge.from_port, rate_samples, rate_group.rate_hz
+                )
+                for edge in input_edges
+            }
+
+            outputs = self._execute_operator(op_id, inputs, rate_samples)
+            for port_name, buffer in outputs.items():
+                self.buffers[f"{op_id}:{port_name}"] = buffer
+
+    def _collect_hop_outputs(self, output_buffers: Dict, hop: int) -> None:
+        """Append this hop's graph outputs into the accumulator buffers."""
+        for output_name, port_refs in self.graph.outputs.items():
+            if not port_refs:
+                continue
+            port_ref = port_refs[0]
+            if port_ref not in self.buffers:
+                continue
+
+            buffer = self.buffers[port_ref]
+            node_id = port_ref.split(":")[0]
+            source_node = self.graph.get_node(node_id)
+            if source_node:
+                source_rate = self.rates.get(source_node.rate, self.sample_rate)
+                if source_rate != self.sample_rate:
+                    buffer = self._linear_resample(buffer, source_rate, self.sample_rate)
+
+            output_buffers[output_name].append(buffer[:hop])
+
     def execute(
         self,
         duration_samples: Optional[int] = None,
@@ -350,7 +392,6 @@ class SimplifiedScheduler:
         Returns:
             Dictionary of output buffers (output_name -> buffer)
         """
-        # Determine duration
         if duration_seconds is not None:
             duration_samples = int(duration_seconds * self.sample_rate)
         elif duration_samples is None:
@@ -359,76 +400,17 @@ class SimplifiedScheduler:
         current_sample = 0
         output_buffers = {name: [] for name in self.graph.outputs.keys()}
 
-        # Main execution loop
         while current_sample < duration_samples:
-            # Compute hop size (may be smaller at end)
             hop = min(self.hop_size, duration_samples - current_sample)
-
-            # Execute each rate group for this hop
             for rate_group in self.rate_groups:
-                # Calculate how many samples this rate needs for this hop
-                rate_samples = int((hop / self.sample_rate) * rate_group.rate_hz)
-                if rate_samples == 0:
-                    rate_samples = 1  # Always execute at least one sample
-
-                # Execute operators in topological order
-                for op_id in rate_group.operators:
-                    node = self.graph.get_node(op_id)
-                    if node is None:
-                        continue
-
-                    # Find input edges
-                    input_edges = [e for e in self.graph.edges if e.to_node == op_id]
-
-                    # Gather inputs with resampling
-                    inputs = {}
-                    for edge in input_edges:
-                        port_name = edge.to_port_name
-                        buffer = self._get_input_buffer(
-                            edge.from_port,
-                            rate_samples,
-                            rate_group.rate_hz,
-                        )
-                        inputs[port_name] = buffer
-
-                    # Execute operator (mock for now)
-                    outputs = self._execute_operator(op_id, inputs, rate_samples)
-
-                    # Store outputs in buffers
-                    for port_name, buffer in outputs.items():
-                        port_ref = f"{op_id}:{port_name}"
-                        self.buffers[port_ref] = buffer
-
-            # Collect graph outputs for this hop
-            for output_name, port_refs in self.graph.outputs.items():
-                # For now, just take the first output
-                if port_refs:
-                    port_ref = port_refs[0]
-                    if port_ref in self.buffers:
-                        # Resample to audio rate if needed
-                        buffer = self.buffers[port_ref]
-                        node_id = port_ref.split(":")[0]
-                        source_node = self.graph.get_node(node_id)
-                        if source_node:
-                            source_rate = self.rates.get(source_node.rate, self.sample_rate)
-                            if source_rate != self.sample_rate:
-                                buffer = self._linear_resample(buffer, source_rate, self.sample_rate)
-
-                        # Take only hop samples
-                        buffer = buffer[:hop]
-                        output_buffers[output_name].append(buffer)
-
+                self._execute_rate_group(rate_group, hop)
+            self._collect_hop_outputs(output_buffers, hop)
             current_sample += hop
 
-        # Concatenate output buffers
-        final_outputs = {}
-        for output_name, buffers in output_buffers.items():
-            if buffers:
-                final_outputs[output_name] = np.concatenate(buffers)
-            else:
-                final_outputs[output_name] = np.zeros(duration_samples)
-
-        return final_outputs
+        return {
+            name: np.concatenate(bufs) if bufs else np.zeros(duration_samples)
+            for name, bufs in output_buffers.items()
+        }
 
     def get_info(self) -> Dict[str, Any]:
         """

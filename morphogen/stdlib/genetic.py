@@ -472,6 +472,27 @@ class GeneticOperations:
         return offspring1, offspring2
 
     @staticmethod
+    def _select_parents(population, selection_method: str, seed, loop_idx: int):
+        """Select two parents using the specified method; returns (parent1, parent2)."""
+        if seed is None:
+            seed1, seed2 = None, None
+        else:
+            seed1, seed2 = seed + loop_idx * 10, seed + loop_idx * 10 + 1
+
+        if selection_method == 'tournament':
+            return (
+                GeneticOperations.tournament_selection(population, seed=seed1),
+                GeneticOperations.tournament_selection(population, seed=seed2),
+            )
+        elif selection_method == 'roulette':
+            return (
+                GeneticOperations.roulette_selection(population, seed=seed1),
+                GeneticOperations.roulette_selection(population, seed=seed2),
+            )
+        else:
+            raise ValueError(f"Unknown selection method: {selection_method}")
+
+    @staticmethod
     @operator(
         domain="genetic",
         category=OpCategory.TRANSFORM,
@@ -529,21 +550,7 @@ class GeneticOperations:
         offspring = []
 
         for i in range(n_offspring_needed // 2):
-            # Select parents
-            if selection_method == 'tournament':
-                selection_seed1 = None if seed is None else seed + i * 10
-                selection_seed2 = None if seed is None else seed + i * 10 + 1
-                parent1 = GeneticOperations.tournament_selection(population, seed=selection_seed1)
-                parent2 = GeneticOperations.tournament_selection(population, seed=selection_seed2)
-            elif selection_method == 'roulette':
-                selection_seed1 = None if seed is None else seed + i * 10
-                selection_seed2 = None if seed is None else seed + i * 10 + 1
-                parent1 = GeneticOperations.roulette_selection(population, seed=selection_seed1)
-                parent2 = GeneticOperations.roulette_selection(population, seed=selection_seed2)
-            else:
-                raise ValueError(f"Unknown selection method: {selection_method}")
-
-            # Breed
+            parent1, parent2 = GeneticOperations._select_parents(population, selection_method, seed, i)
             breed_seed = None if seed is None else seed + i * 100
             child1, child2 = GeneticOperations.breed(
                 parent1, parent2,
