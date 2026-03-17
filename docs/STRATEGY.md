@@ -73,8 +73,8 @@ This is the differentiator. Three canonical examples showing what you can't do e
 - Circuit simulation → audio output (design a guitar pedal, hear it)
 - Fluid dynamics → acoustics → audio (engine exhaust simulation with sound)
 
-**4. A domain tutorial for each of the 5 most useful domains.**
-Field, audio, rigidbody, circuit, molecular — progressive tutorials from "hello world" to "real problem."
+**4. A domain tutorial for each of the 5 most useful domains.** ✅ DONE (kufigi-0316)
+Field (`docs/usage/field.md`), audio (`audio_analysis.md` + `instrument_model.md`), rigidbody (`rigidbody.md`), circuit (`circuit.md`), molecular (`molecular.md`) — progressive tutorials from "hello world" to "real problem."
 
 **5. The README/docs accurately reflect what works.**
 Not aspirational claims about MLIR — honest description of the Python library and what it does today.
@@ -118,8 +118,14 @@ examples/canonical/
 |-----|--------|--------------|
 | audio_analysis narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/audio_analysis.md` |
 | instrument_model narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/instrument_model.md` |
-| cross_domain coupling guide | open | "Here's how typed domain interfaces work, here's how to write one" |
-| chemistry domain tutorial | open | One worked example through the molecular → thermo → kinetics pipeline |
+| field domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/field.md` |
+| rigidbody domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/rigidbody.md` |
+| circuit domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/circuit.md` |
+| molecular domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/molecular.md` |
+| fluid_jet narrative | ✅ DONE (kufigi-0316) | `docs/usage/fluid_jet.md` |
+| cross_domain coupling guide | ✅ DONE (kufigi-0316) | `docs/usage/cross_domain_coupling.md` |
+| chemistry domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/chemistry_pipeline.md` |
+| audio_analysis → instrument_model pipeline | ✅ DONE (kufigi-0316) | `examples/canonical/04_analysis_to_instrument.py` |
 
 ---
 

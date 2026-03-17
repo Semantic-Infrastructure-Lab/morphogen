@@ -10,7 +10,7 @@ beth_topics:
 
 # Canonical Cross-Domain Examples
 
-Three examples that demonstrate Morphogen's core value proposition:
+Four examples that demonstrate Morphogen's core value proposition:
 **type-safe, zero-glue composition across radically different domains.**
 
 Each runs end-to-end, produces a WAV file, and prints what happened.
@@ -64,6 +64,24 @@ propagation; two virtual microphones sample the acoustic field and
 produce a stereo WAV.
 
 Domains: `field` (fluid) → `acoustics` → `audio`
+
+---
+
+### 04 — Analysis → Instrument Model → Synthesis
+
+```bash
+python examples/canonical/04_analysis_to_instrument.py
+# → output/04_analysis_to_instrument.wav
+```
+
+Extracts acoustic parameters from a reference signal, builds a reusable
+instrument model, then synthesises a melody using the learned timbre.
+
+`audio_analysis` answers "how does this instrument sound?" — decay rates,
+inharmonicity, harmonic envelope. `instrument_model` applies that sonic
+fingerprint at any pitch or velocity.
+
+Domains: `audio_analysis` → `instrument_model` → `audio`
 
 ---
 

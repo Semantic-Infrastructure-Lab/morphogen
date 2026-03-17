@@ -215,25 +215,31 @@
 
 ---
 
-## Usage Guides (2 documents) ⭐ NEW
+## Usage Guides (9 documents)
 
 Narrative how-to guides for specific domains — start here if you want to
 *use* a domain rather than understand its internals.
 
-### docs/usage/audio_analysis.md ⭐ NEW
-**Purpose**: Narrative guide to the `audio_analysis` domain
-**Covers**: Pitch extraction (`track_fundamental`), harmonic decay (`fit_exponential_decay`),
-T60 measurement (`measure_t60`), inharmonicity, feeding results into `instrument_model`
+### Core Domain Tutorials
 
-**Navigate**: `reveal docs/usage/audio_analysis.md`
+| Guide | Domain | Key Topics |
+|-------|--------|-----------|
+| `docs/usage/field.md` | `field` | Heat diffusion, reaction-diffusion, advection, gradient/laplacian, coupling to other domains |
+| `docs/usage/rigidbody.md` | `rigidbody` | Bouncing balls, collision detection, forces/impulses, raycasting, collision→audio |
+| `docs/usage/circuit.md` | `circuit` | RC filters, op-amp amplifiers, guitar pedal, transient/AC analysis, audio processing |
+| `docs/usage/molecular.md` | `molecular` | Load/optimize molecules, MD (NVE/NVT), trajectory analysis, coupling to thermo |
+| `docs/usage/audio_analysis.md` | `audio_analysis` | Pitch tracking, harmonic decay, T60, inharmonicity, feeding into `instrument_model` |
+| `docs/usage/instrument_model.md` | `instrument_model` | Analyse recordings, synthesise notes, morph instruments, SynthParams |
+| `docs/usage/fluid_jet.md` | `fluid_jet` | Single jets, entrainment, jet arrays, projecting to 2D field, coupling to acoustics |
 
-### docs/usage/instrument_model.md ⭐ NEW
-**Purpose**: Narrative guide to the `instrument_model` domain
-**Covers**: Analysing a recording (`analyze_instrument`), synthesising notes
-(`synthesize_note`), morphing between instruments (`morph_instruments`), saving/loading models,
-tuning `SynthParams`
+### Pipeline and Architecture Guides
 
-**Navigate**: `reveal docs/usage/instrument_model.md`
+| Guide | What It Covers |
+|-------|---------------|
+| `docs/usage/chemistry_pipeline.md` | End-to-end chemistry: molecular → thermo → kinetics (ethylene hydrogenation worked example) |
+| `docs/usage/cross_domain_coupling.md` | How cross-domain interfaces work; writing and registering your own `DomainInterface` |
+
+**Navigate**: `reveal docs/usage/` or `reveal docs/usage/field.md`
 
 ---
 
@@ -453,14 +459,14 @@ reveal CHANGELOG.md
 **Root Documentation**: 5 major files
 **Architecture**: 6 documents (domain-architecture.md archived 2026-03-16)
 **Specifications**: 24 documents (3 research specs marked with 🔬 badges)
-**Usage Guides**: 2 documents (audio_analysis, instrument_model)
+**Usage Guides**: 9 documents (field, rigidbody, circuit, molecular, audio_analysis, instrument_model, fluid_jet, chemistry_pipeline, cross_domain_coupling)
 **Guides**: 5 documents (3 archived 2026-03-16)
 **Examples**: 3 documents (2 design docs archived 2026-03-16)
 **Reference**: 17 documents
 **ADRs**: 15 decision records
 **Philosophy**: 5 documents
 
-**Total**: ~100 documentation files (down from 117, further -15% reduction 2026-03-16)
+**Total**: ~107 documentation files (+7 usage guides added 2026-03-16, kufigi-0316)
 
 ---
 

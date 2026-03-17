@@ -81,10 +81,15 @@
 - instrument_model: 35 functional tests + shared physics fixtures (`test_instrument_model.py`, `test_audio_physics.py`)
 - Total test count: **1,912** (up from 1,705 at v0.12.0)
 
-**Integration Examples**:
-- Phase 3 domains (fluid_jet, audio_analysis, instrument_model) still need narrative usage examples
-- Cross-domain examples should demonstrate audio_analysis → instrument_model pipeline
-- Tutorial content for chemistry and specialized physics domains
+**Integration Examples** ✅ COMPLETE (2026-03-16, kufigi-0316):
+- `docs/usage/field.md` — Field domain narrative (heat diffusion, reaction-diffusion, advection)
+- `docs/usage/rigidbody.md` — Rigidbody narrative (collisions, forces, raycasting, → audio)
+- `docs/usage/circuit.md` — Circuit narrative (RC filter, op-amp, guitar pedal, transient/AC)
+- `docs/usage/molecular.md` — Molecular narrative (geometry opt, MD, trajectory analysis)
+- `docs/usage/fluid_jet.md` — Fluid jet narrative (single jets, entrainment, jet arrays, → field)
+- `docs/usage/chemistry_pipeline.md` — Chemistry pipeline: molecular → thermo → kinetics
+- `docs/usage/cross_domain_coupling.md` — How to write DomainInterface subclasses + registry
+- `examples/canonical/04_analysis_to_instrument.py` — audio_analysis → instrument_model → WAV
 
 ---
 
