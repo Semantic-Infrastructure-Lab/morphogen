@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Tests (clearing-cloud-0317, 2026-03-17)
+
+**134 new tests targeting the lowest-coverage output modules and cross-domain pipelines:**
+
+- `tests/test_image.py` (84 tests) — full `Image` class + all `ImageOperations` methods: blend mode math (`multiply=0.25`, `screen=0.75`, `add` clips), alpha compositing, erode/dilate semantics, edge detection correctness, roundtrip save. `image.py` coverage: 31.8% → 98.6%
+- `tests/test_io_storage.py` (28 tests) — load/save roundtrips for image, audio, JSON, HDF5, and checkpoint formats. `io_storage.py` coverage: 12.7% → 74%
+- `tests/test_cross_domain_integration.py` (25 tests) — physics→audio, circuit→audio, fluid→acoustics→audio pipelines with output correctness assertions; API contract regression guards for `noise.worley()`, `solve_sparse()`, `image.blend()`, `field.gradient()`
+
+### Fixed (clearing-cloud-0317, 2026-03-17)
+
+**Three bugs exposed by new tests:**
+
+- `image.rotate(reshape=True)` — pre-allocated output with original shape, then tried to broadcast larger rotated array into it → `ValueError`. Fixed by rotating first channel to determine output shape.
+- `image.erode/dilate` — passed `iterations` kwarg to `grey_erosion/grey_dilation` which don't accept it → `TypeError`. Fixed with manual loop.
+- `field.diffuse()` — crashed when passed `NoiseField2D` (no `.copy()` method) → `AttributeError`. Now coerces any non-`Field2D` input to `Field2D` upfront.
+
+**Dead code removed:**
+
+- `morphogen/stdlib/audio.py` (3105 lines) — shadowed by `audio/` subpackage since Python resolves directory packages first. Was at 0% coverage, never imported.
+
+**Test count:** 1894 passed, 199 skipped, 0 failures
+
+---
+
 ### Fixed (echo-bastion-0316, 2026-03-17)
 
 **16/16 showcase + canonical + cross-domain examples now pass** — fixed API drift across 4 broken demos:
