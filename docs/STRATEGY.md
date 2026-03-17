@@ -101,18 +101,16 @@ Several showcase demos crash on fixable API bugs. These are the highest-leverage
 - Basic `morphogen` CLI entry point
 - Test that installation works in a clean virtualenv
 
-### Three Canonical Cross-Domain Examples
+### Three Canonical Cross-Domain Examples ✅ DONE (heating-dawn-0316)
 
-Replace broken or incomplete examples with three that run perfectly and tell the story:
+`examples/canonical/` — all three run end-to-end and produce WAV output:
 
 ```
 examples/canonical/
-  01_physics_to_audio.py       # Collision → sound, with real output WAV
-  02_circuit_to_audio.py       # Guitar pedal → distorted WAV (this mostly works already)
-  03_fluid_to_sound.py         # Fluid vortex → acoustic field → audio
+  01_physics_to_audio.py   ✅  rigidbody → audio (collision detection fixed)
+  02_circuit_to_audio.py   ✅  audio ↔ circuit → audio (overdrive + Tube Screamer)
+  03_fluid_to_sound.py     ✅  field → acoustics → audio (3-domain pipeline)
 ```
-
-Each should: run without errors, produce an output file (WAV or PNG), print what happened.
 
 ### Documentation Gaps
 

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (heating-dawn-0316, 2026-03-16)
+
+- `examples/canonical/` — 3 canonical cross-domain examples, all run end-to-end and produce WAV output
+  - `01_physics_to_audio.py` — bouncing balls → percussive WAV (rigidbody → audio)
+  - `02_circuit_to_audio.py` — guitar signal → op-amp overdrive + Tube Screamer WAVs (audio ↔ circuit → audio)
+  - `03_fluid_to_sound.py` — Navier-Stokes vortex → acoustic propagation → WAV (field → acoustics → audio)
+- Fixed collision detection in physics sonification: `step_world` mutates bodies in-place, so
+  prev_velocities must be tracked separately as a dict copy, not by holding a prev_world reference
+- `examples/canonical/README.md` — explains all 3 examples and the cross-domain story
+
 ### Tests (lightning-warrior-0316, 2026-03-16)
 - **`test_audio_physics.py`** (new, 29 tests): physics-level invariant tests for `audio_analysis` and `instrument_model` — assertions not covered by existing functional tests:
   - `TestT60Physics` (5): `T60 × d == 6.91` invariant for arbitrary rates; `measure_t60(1.0) == 6.91`; amplitude at T60 = 0.001
