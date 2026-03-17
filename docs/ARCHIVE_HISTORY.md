@@ -1,6 +1,6 @@
 # Morphogen Documentation Archive History
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-03-16
 
 This document tracks historical documentation that has been moved from the active morphogen repository to `~/Archive/morphogen/` for preservation without cluttering the active codebase.
 
@@ -13,6 +13,31 @@ All archived morphogen documentation is stored at: **`~/Archive/morphogen/`**
 ---
 
 ## Consolidation Summary
+
+### Session heating-dawn-0316 (2026-03-16)
+**Document Reduction**: ~117 → ~100 docs (-15%)
+
+**Archived to `~/Archive/morphogen/docs-archive/2026-03-16/`:**
+
+| File | Reason |
+|------|--------|
+| `docs/DOMAINS.md` | Broken: contained raw paste of README.md lines 304–1046, not a real doc |
+| `docs/troubleshooting.md` | Pre-rename era: references "Creative Computation DSL v0.2.2 MVP" |
+| `docs/guides/DOMAIN_FINISHING_GUIDE.md` | Obsolete: described work to finish 23 half-finished domains; all 39 are now complete |
+| `docs/guides/DOMAIN_MIGRATION_GUIDE.md` | Obsolete: "Status: Planning" — migration to `@operator` system is complete since v0.12.0 |
+| `docs/architecture/domain-architecture.md` | Pre-implementation design doc (108KB, 3,159 lines); references TiaCAD/Kairo/v0.7 milestones; superseded by actual code + specs + ADRs |
+| `docs/examples/emergence-cross-domain.md` | Design doc (Status: Design Document); examples not verified to run |
+| `docs/examples/j-tube-firepit-multiphysics.md` | Design doc (Status: Design Document); motivated domain creation, now historical only |
+
+**Rewrote:**
+- `docs/getting-started.md` — updated from v0.6/v0.7 to v0.12.0; switched primary interface from DSL to Python API; fixed `morphogen --version` → `morphogen version`; added canonical examples as the first programs to try
+
+**Updated:**
+- `docs/ROADMAP.md` — test count 1,705→1,912, operator count 606→612, P0 items marked done
+- `docs/README.md` — added `usage/` section; removed archived example links
+- `docs/DOCUMENTATION_INDEX.md` — reflects archive, updates counts
+
+---
 
 ### Session 1 (fallen-spear-0105, 2026-01-05)
 **Document Reduction**: 156 → 122 docs (-22%)

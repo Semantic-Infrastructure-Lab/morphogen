@@ -237,25 +237,18 @@ tuning `SynthParams`
 
 ---
 
-## Guides (8 documents)
+## Guides (5 documents)
 
 ### docs/guides/domain-implementation.md
 **Purpose**: How to add new domains to Morphogen
 **Topics**: Operator definition, registry integration, testing, documentation
 
-### docs/guides/analysis-visualization.md ⭐ NEW
+### docs/guides/analysis-visualization.md
 **Purpose**: Analyzing and visualizing Morphogen simulations with external tools
 **Topics**: Built-in analysis (audio_analysis, signal, graph), PyDMD modal decomposition, showcase animations, spectral workflows
-**Key Sections**: DMD tutorials, cross-domain mode correlation, animation creation, best practices
-**Use Cases**: Understanding simulation dynamics, creating explanatory animations, detecting regime changes
-
-### docs/guides/DOMAIN_MIGRATION_GUIDE.md
-**Purpose**: Migrating legacy domains to modern operator registry pattern
-**Topics**: @operator decorator, migration phases, testing requirements
 
 ### docs/guides/EASY_TRANSFORMS_GUIDE.md
 **Purpose**: Quick-win cross-domain transforms (high-impact, low-effort)
-**Topics**: Transform implementation patterns, common transforms, testing
 
 ### docs/guides/optimization-implementation.md
 **Purpose**: Implementing optimization algorithms
@@ -263,24 +256,24 @@ tuning `SynthParams`
 ### docs/guides/output-generation.md
 **Purpose**: Generating visualizations and outputs
 
-### docs/guides/DOMAIN_FINISHING_GUIDE.md
-**Purpose**: Checklist for completing domain implementations
+*Archived (2026-03-16)*: `DOMAIN_FINISHING_GUIDE.md` (migration complete), `DOMAIN_MIGRATION_GUIDE.md` (migration complete)
 
 **Explore**: `reveal docs/guides/domain-implementation.md`
-**New**: `reveal docs/guides/analysis-visualization.md`
 
 ---
 
-## Examples (6 documents)
+## Examples (3 documents)
 
 ### docs/examples/
-- **emergence-cross-domain.md**: Emergent behavior from cross-domain coupling
-- **j-tube-firepit-multiphysics.md**: Multiphysics combustion simulation
 - **kerbal-space-program.md**: Orbital mechanics example
 - **racing-ai-pipeline.md**: AI agent racing simulation
 - **ambient-music-pipelines.md**: Generative music examples
 
-**Explore**: `reveal docs/examples/emergence-cross-domain.md`
+*Archived (2026-03-16)*: `emergence-cross-domain.md` (design doc), `j-tube-firepit-multiphysics.md` (design doc)
+
+See also: [`examples/canonical/`](../examples/canonical/) — 3 canonical cross-domain examples that run end-to-end
+
+**Explore**: `reveal docs/examples/racing-ai-pipeline.md`
 
 ---
 
@@ -457,17 +450,17 @@ reveal CHANGELOG.md
 
 ## Documentation Statistics
 
-**Root Documentation**: 5 major files (141KB total)
-**Architecture**: 7 documents
+**Root Documentation**: 5 major files
+**Architecture**: 6 documents (domain-architecture.md archived 2026-03-16)
 **Specifications**: 24 documents (3 research specs marked with 🔬 badges)
-**Guides**: 8 documents
-**Examples**: 6 documents
+**Usage Guides**: 2 documents (audio_analysis, instrument_model)
+**Guides**: 5 documents (3 archived 2026-03-16)
+**Examples**: 3 documents (2 design docs archived 2026-03-16)
 **Reference**: 17 documents
-**ADRs**: 14 decision records
+**ADRs**: 15 decision records
 **Philosophy**: 5 documents
-**Planning**: 3 active documents
 
-**Total**: ~117 documentation files (down from 156, 25% reduction through consolidation)
+**Total**: ~100 documentation files (down from 117, further -15% reduction 2026-03-16)
 
 ---
 

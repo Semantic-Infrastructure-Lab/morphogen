@@ -1,19 +1,26 @@
+---
+title: "Getting Started with Morphogen"
+type: guide
+beth_topics:
+  - morphogen
+  - getting-started
+  - installation
+  - tutorial
+---
+
 # Getting Started with Morphogen
 
-Welcome to Morphogen! This guide will help you get up and running in under 30 minutes.
+**Version**: v0.12.0 | **Python**: 3.9+
 
-## What is Morphogen?
+Morphogen is a cross-domain computation platform for simulation, audio synthesis, and computational creativity. The core idea: instead of gluing together NumPy + SciPy + librosa + PyBullet with manual data conversion, you compose typed operators from different domains directly.
 
-**Morphogen** is a typed, deterministic domain-specific language for creative computation. It unifies **simulation**, **sound**, **visualization**, and **procedural design** within a single, reproducible execution model.
+```python
+# Physics drives audio — no glue code
+from morphogen.stdlib.rigidbody import create_circle_body, step_world
+from morphogen.stdlib.audio import AudioBuffer
 
-### Key Features
-
-- ✅ **Deterministic by default** - Bitwise-identical results across runs and platforms
-- ✅ **Explicit temporal model** - Time evolution via `flow(dt)` blocks
-- ✅ **Declarative state** - `@state` annotations make persistence clear
-- ✅ **Multi-domain** - Fields, agents, signals, and visuals in one language
-- ✅ **Hot-reload ready** - Interactive development with live code updates
-- ✅ **MLIR-based** - Compiles to optimized native code (v0.7.0+)
+# collision → sound, circuit → audio, fluid → acoustics → wav
+```
 
 ---
 
@@ -21,568 +28,175 @@ Welcome to Morphogen! This guide will help you get up and running in under 30 mi
 
 ### Prerequisites
 
-- **Python 3.9 or higher**
-- **pip package manager**
+- Python 3.9 or higher
+- pip
 
-### Install from Source
+### Install from source
 
 ```bash
-# Clone the repository
 git clone https://github.com/scottsen/morphogen.git
 cd morphogen
-
-# Install the package
 pip install -e .
 ```
 
-This will install Morphogen and its core dependencies:
-- **numpy** - For numerical operations
-- **pillow** - For image output
+Core dependencies (numpy, scipy, pillow) install automatically.
 
-### Optional I/O Dependencies
-
-For audio I/O and video export (v0.6.0+ features):
+### Optional: audio I/O
 
 ```bash
 pip install -e ".[io]"
+# adds: sounddevice, soundfile, imageio
 ```
 
-This adds:
-- **sounddevice** - Real-time audio playback/recording
-- **soundfile** - WAV/FLAC file I/O
-- **scipy** - Audio processing utilities
-- **imageio** - Video export (MP4, GIF)
-
-### Verify Installation
+### Verify
 
 ```bash
-# Check version
-morphogen --version
-
-# You should see:
-# Morphogen v0.6.0 (stable) / v0.7.0-dev (development)
+morphogen version
+# Morphogen v0.12.0
 ```
 
 ---
 
-## Your First Program
+## Your First Program (Python API)
 
-Let's create a simple heat diffusion simulation to understand the basics.
+The recommended interface is the Python API. Let's run a field diffusion:
 
-### Example: Heat Diffusion
+```python
+import numpy as np
+from morphogen.stdlib import field, visual
 
-Create a new file called `hello.morph`:
+# Create a 64×64 temperature field with a hot spot in the center
+temp = field.alloc((64, 64), fill_value=0.0)
+temp.data[28:36, 28:36] = 1.0   # hot spot
 
-```morphogen
-# hello.morph - Heat diffusion simulation
+# Diffuse for 50 steps
+for _ in range(50):
+    temp = field.diffuse(temp, rate=0.15, dt=0.1)
 
-use field, visual
-
-@state temp : Field2D<f32 [K]> = random_normal(
-    seed=42,
-    shape=(128, 128),
-    mean=300.0,
-    std=50.0
-)
-
-const KAPPA : f32 [m²/s] = 0.1
-
-flow(dt=0.01, steps=100) {
-    temp = diffuse(temp, rate=KAPPA, dt, iterations=20)
-    output colorize(temp, palette="fire", min=250.0, max=350.0)
-}
+print(f"Center: {temp.data[32, 32]:.4f}  Corner: {temp.data[0, 0]:.4f}")
+# Center: 0.0426  Corner: 0.0001
 ```
-
-Run it:
-
-```bash
-morphogen run hello.morph
-```
-
-You should see a visualization of heat spreading across the field, smoothing out over 100 timesteps.
 
 ---
 
 ## Core Concepts
 
-### 1. Temporal Model - `flow` blocks
+### 1. Domains
 
-Morphogen programs describe time-evolving systems through `flow` blocks:
+Every capability in Morphogen lives in a domain. Import the one you need:
 
-```morphogen
-flow(dt=0.01, steps=1000) {
-    # This block executes 1000 times with timestep 0.01
-    temp = diffuse(temp, rate=0.1, dt)
-    output colorize(temp, palette="fire")
-}
+```python
+from morphogen.stdlib import field       # 2D/3D grid operations
+from morphogen.stdlib import audio       # signal processing, WAV I/O
+from morphogen.stdlib import rigidbody   # 2D physics simulation
+from morphogen.stdlib import circuit     # analog circuit simulation
+from morphogen.stdlib import acoustics   # wave propagation
+from morphogen.stdlib import noise       # Perlin, fractal noise
+# ... 39 domains total
 ```
 
-**Parameters:**
-- `dt` - Timestep duration (in seconds or dimensionless)
-- `steps` - Number of iterations to execute
+### 2. Operators are functions
 
-### 2. State Management - `@state`
+Every domain exposes operators as plain Python functions. They're deterministic, take typed inputs, and return typed outputs:
 
-Persistent variables are declared with `@state`:
+```python
+from morphogen.stdlib.field import Field2D
+import morphogen.stdlib.field as field
 
-```morphogen
-@state vel : Field2D<Vec2<f32>> = zeros((256, 256))
-@state agents : Agents<Particle> = alloc(count=1000)
-
-flow(dt=0.01) {
-    vel = advect(vel, vel, dt)      # Updates vel for next step
-    agents = integrate(agents, dt)   # Updates agents for next step
-}
+f = field.random((128, 128), seed=42)     # Field2D
+f2 = field.diffuse(f, rate=0.1, dt=0.01) # Field2D
+g = field.gradient(f)                    # Field2D (gradient magnitude)
 ```
 
-**Without `@state`**, variables are local to each timestep.
+### 3. Cross-domain composition
 
-### 3. Type System with Physical Units
+The value is that typed objects pass directly between domains:
 
-Types can carry dimensional information:
+```python
+# AudioBuffer → circuit → AudioBuffer
+from morphogen.stdlib.audio import AudioBuffer, AudioOperations as audio
+from morphogen.stdlib.circuit import CircuitOperations as circuit
 
-```morphogen
-temp : Field2D<f32 [K]>           # Temperature in Kelvin
-pos : Vec2<f32 [m]>               # Position in meters
-vel : Vec2<f32 [m/s]>             # Velocity in m/s
-
-# Unit checking (annotations, not enforced yet)
-dist : f32 [m] = 10.0
-time : f32 [s] = 2.0
-speed = dist / time               # Implicitly: f32 [m/s]
+buf = AudioBuffer(np.sin(2*np.pi*440*t), 44100)   # Audio domain
+pedal = circuit.create(num_nodes=4, dt=1/44100)   # Circuit domain
+result = circuit.process_audio(pedal, buf, ...)    # audio ↔ circuit ↔ audio
 ```
 
-### 4. Deterministic Randomness
+### 4. Deterministic randomness
 
-All randomness is explicit via seeded functions:
+All random operators take a `seed` parameter. Same seed = same output everywhere:
 
-```morphogen
-@state field : Field2D<f32> = random_normal(
-    seed=42,      # Explicit seed
-    shape=(100, 100),
-    mean=0.0,
-    std=1.0
-)
-
-# Same seed → same output every time
+```python
+a = field.random((64, 64), seed=42)
+b = field.random((64, 64), seed=42)
+assert np.array_equal(a.data, b.data)   # always True
 ```
 
 ---
 
-## Four Dialects
+## Three Working Examples
 
-### 1. Field Dialect - Dense Grid Operations
+### Example 1 — Physics → Audio (rigidbody + audio)
 
-For simulations on spatial grids (PDEs, fluid dynamics, reaction-diffusion):
+Bouncing balls generate percussive impacts as WAV. See
+[`examples/canonical/01_physics_to_audio.py`](../examples/canonical/01_physics_to_audio.py).
 
-```morphogen
-use field
-
-@state temp : Field2D<f32> = random_normal(seed=42, shape=(256, 256))
-
-flow(dt=0.1, steps=100) {
-    # PDE operations
-    temp = diffuse(temp, rate=0.2, dt, iterations=20)
-    temp = advect(temp, velocity, dt)
-
-    # Stencil operations
-    let grad = gradient(temp)
-    let lap = laplacian(temp)
-
-    # Element-wise operations
-    temp = temp.map(|x| clamp(x, 0.0, 1.0))
-}
-```
-
-**Common operations:**
-- `diffuse()` - Heat/mass diffusion
-- `advect()` - Transport along velocity field
-- `project()` - Incompressibility constraint
-- `gradient()`, `laplacian()`, `divergence()` - Differential operators
-
-### 2. Agent Dialect - Sparse Particle Systems
-
-For agent-based simulations (particles, boids, crowds):
-
-```morphogen
-use agent
-
-struct Boid {
-    pos: Vec2<f32>
-    vel: Vec2<f32>
-}
-
-@state boids : Agents<Boid> = alloc(count=200, init=spawn_boid)
-
-fn spawn_boid(id: u32, rng: RNG) -> Boid {
-    return Boid {
-        pos: rng.uniform_vec2(min=(0, 0), max=(100, 100)),
-        vel: rng.normal_vec2(mean=(0, 0), std=(1, 1))
-    }
-}
-
-flow(dt=0.01, steps=1000) {
-    boids = boids.map(|b| {
-        vel: b.vel + flocking_force(b) * dt,
-        pos: b.pos + b.vel * dt
-    })
-}
-```
-
-**Status:** ✅ Production-ready as of v0.4.0
-
-### 3. Audio Dialect - Sound Synthesis and Processing
-
-For audio synthesis and processing:
-
-```morphogen
-use audio
-
-# Simple synthesis
-let pluck = noise(seed=1) |> lowpass(6000)
-let string = string(pluck, freq=220, t60=1.5)
-let final = string |> reverb(mix=0.12)
-
-# Real-time playback (v0.6.0+)
-audio.play(final)
-
-# Export to file (v0.6.0+)
-audio.save(final, "output.wav")
-```
-
-**Status:** ✅ Production-ready as of v0.5.0 (synthesis) and v0.6.0 (I/O)
-
-**Features:**
-- Oscillators (sine, saw, square, triangle, noise)
-- Filters (lowpass, highpass, bandpass, EQ)
-- Envelopes (ADSR, AR, exponential decay)
-- Effects (delay, reverb, chorus, flanger, limiter)
-- Physical modeling (Karplus-Strong strings, modal synthesis)
-
-### 4. Visual Dialect - Rendering and Composition
-
-For visualization and video export:
-
-```morphogen
-use visual
-
-# Colorize fields
-let field_vis = colorize(temp, palette="viridis")
-
-# Render agents (v0.6.0+)
-let agent_vis = visual.agents(
-    particles,
-    width=256,
-    height=256,
-    color_property='vel',
-    palette='fire',
-    size=3.0
-)
-
-# Layer composition (v0.6.0+)
-let combined = visual.composite(
-    field_vis,
-    agent_vis,
-    mode="add",
-    opacity=[1.0, 0.7]
-)
-
-# Video export (v0.6.0+)
-visual.video(frames, "animation.mp4", fps=30)
-
-output combined
-```
-
-**Palettes:** `grayscale`, `fire`, `viridis`, `coolwarm`
-
----
-
-## Complete Examples
-
-### Example 1: Reaction-Diffusion (Gray-Scott)
-
-Create `grayscott.morph`:
-
-```morphogen
-use field, visual
-
-@state u : Field2D<f32> = ones((256, 256))
-@state v : Field2D<f32> = zeros((256, 256))
-
-const Du : f32 = 0.16
-const Dv : f32 = 0.08
-const F : f32 = 0.060
-const K : f32 = 0.062
-
-flow(dt=1.0, steps=10000) {
-    # Gray-Scott reaction
-    let uvv = u * v * v
-    let du_dt = Du * laplacian(u) - uvv + F * (1.0 - u)
-    let dv_dt = Dv * laplacian(v) + uvv - (F + K) * v
-
-    u = u + du_dt * dt
-    v = v + dv_dt * dt
-
-    output colorize(v, palette="viridis")
-}
-```
-
-Run with:
 ```bash
-morphogen run grayscott.morph
+python examples/canonical/01_physics_to_audio.py
+# → examples/canonical/output/01_physics_to_audio.wav
 ```
 
-### Example 2: Particle System with Gravity
+### Example 2 — Circuit → Audio (circuit + audio)
 
-Create `particles.morph`:
+Guitar signal through a Tube Screamer soft-clipper circuit. See
+[`examples/canonical/02_circuit_to_audio.py`](../examples/canonical/02_circuit_to_audio.py).
 
-```morphogen
-use agent, visual
-
-struct Particle {
-    pos: Vec2<f32 [m]>
-    vel: Vec2<f32 [m/s]>
-    age: u32
-}
-
-@state particles : Agents<Particle> = alloc(count=1000, init=spawn)
-
-fn spawn(id: u32, rng: RNG) -> Particle {
-    return Particle {
-        pos: rng.uniform_vec2(min=(0, 0), max=(100, 100)),
-        vel: rng.normal_vec2(mean=(0, 0), std=(1, 1)),
-        age: 0
-    }
-}
-
-const GRAVITY : Vec2<f32 [m/s²]> = Vec2(0.0, -9.8)
-
-flow(dt=0.01, steps=1000) {
-    # Apply gravity
-    particles = particles.map(|p| {
-        vel: p.vel + GRAVITY * dt,
-        pos: p.pos + p.vel * dt,
-        age: p.age + 1
-    })
-
-    # Bounce off floor
-    particles = particles.map(|p| {
-        vel: if p.pos.y < 0.0 { Vec2(p.vel.x, -p.vel.y * 0.8) } else { p.vel },
-        pos: if p.pos.y < 0.0 { Vec2(p.pos.x, 0.0) } else { p.pos }
-    })
-
-    output visual.agents(particles, width=512, height=512, size=2.0)
-}
+```bash
+python examples/canonical/02_circuit_to_audio.py
+# → examples/canonical/output/02_circuit_ts.wav
 ```
 
-### Example 3: Simple Audio Synthesis
+### Example 3 — Fluid → Acoustics → Audio (3 domains)
 
-Create `synth.morph`:
+Navier-Stokes vortex shedding drives acoustic wave propagation, sampled by virtual microphones into a WAV. See
+[`examples/canonical/03_fluid_to_sound.py`](../examples/canonical/03_fluid_to_sound.py).
 
-```morphogen
-use audio
-
-# Generate a plucked string sound
-let excitation = noise(seed=7) |> lowpass(cutoff=6000) |> envexp(time=5ms)
-let string_tone = string(excitation, freq=220, t60=1.5)
-let final = string_tone |> reverb(mix=0.12) |> limiter(threshold=-1dB)
-
-# Play it (requires audio I/O dependencies)
-audio.play(final)
-
-# Or save to file
-audio.save(final, "pluck.wav")
+```bash
+python examples/canonical/03_fluid_to_sound.py
+# → examples/canonical/output/03_fluid_to_sound.wav
 ```
 
 ---
 
-## Project Structure
+## The `.morph` DSL (optional)
 
-A typical Morphogen project:
-
-```
-my-project/
-├── main.morph           # Main program
-├── lib/
-│   ├── forces.morph     # Custom force functions
-│   └── visuals.morph    # Custom visualizations
-├── examples/
-│   ├── 01_simple.morph
-│   └── 02_advanced.morph
-└── output/
-    ├── frames/          # Rendered frames
-    └── audio/           # Exported audio
-```
-
----
-
-## Running Morphogen Programs
-
-### Basic Execution
+Morphogen also includes a domain-specific language for describing time-evolving systems. The Python API is the recommended starting point, but the DSL is available:
 
 ```bash
-morphogen run program.morph
+morphogen run examples/01_hello_heat.morph   # run a .morph program
+morphogen check program.morph                # type-check only
 ```
 
-### With Arguments (future)
-
-```bash
-morphogen run program.morph --steps 10000 --dt 0.001
-```
-
-### Interactive Mode (future)
-
-```bash
-morphogen repl
-```
+DSL programs use `flow` blocks and `@state` declarations. See
+[`SPECIFICATION.md`](../SPECIFICATION.md) for the full language reference.
 
 ---
 
 ## Next Steps
 
-### 1. Explore Examples
-
-Check out the `examples/` directory for:
-- **Beginner**: `01_hello_heat.morph`, `02_pulsing_circle.morph`
-- **Intermediate**: `10_heat_equation.morph`, `11_gray_scott.morph`
-- **Advanced**: `v0_3_1_complete_demo.morph`, MLIR phase examples
-
-See `examples/README.md` for a complete guide.
-
-### 2. Read the Specification
-
-For complete language reference:
-- **[SPECIFICATION.md](../SPECIFICATION.md)** - Full language specification
-- **[LANGUAGE_REFERENCE.md](../LANGUAGE_REFERENCE.md)** - Quick reference guide
-- **[AUDIO_SPECIFICATION.md](../AUDIO_SPECIFICATION.md)** - Audio dialect details
-
-### 3. Understand the Architecture
-
-For implementors and advanced users:
-- **[ARCHITECTURE.md](../ARCHITECTURE.md)** - Morphogen Stack architecture
-- **[docs/v0.7.0_DESIGN.md](v0.7.0_DESIGN.md)** - MLIR integration roadmap
-
-### 4. Join the Community
-
-- **GitHub**: https://github.com/scottsen/morphogen
-- **Issues**: https://github.com/scottsen/morphogen/issues
-- **Discussions**: Share your creations and get help
-
----
-
-## Performance Tips
-
-### Field Operations
-
-1. **Field Size**: Start with 128×128 or 256×256 for experimentation
-   - Larger fields (512×512+) require more computation
-   - v0.7.0+ MLIR compilation significantly improves performance
-
-2. **Iteration Count**: For diffusion and projection:
-   - **Quick preview**: 10 iterations
-   - **Good quality**: 20 iterations (default)
-   - **High accuracy**: 40+ iterations
-
-3. **Timestep Selection**:
-   - Smaller `dt` = more stable but slower
-   - Larger `dt` = faster but may diverge
-   - Typical range: 0.001 to 0.1
-
-### Agent Operations
-
-1. **Agent Count**: Performance scales linearly
-   - 1,000 agents: Near-instant
-   - 10,000 agents: ~0.01s per frame
-   - 100,000+ agents: Consider spatial hashing optimizations
-
-2. **Force Calculations**: Use spatial hashing for N-body forces
-   ```morphogen
-   forces = compute_pairwise_forces(
-       agents,
-       radius=5.0,  # Interaction radius
-       force_func=gravity
-   )
-   ```
-
----
-
-## Troubleshooting
-
-### Import Errors
-
-If you see `ModuleNotFoundError: No module named 'morphogen'`:
-
-```bash
-# Reinstall with dependencies
-pip install -e .
-```
-
-### Audio I/O Not Working
-
-If `audio.play()` or `audio.save()` fail:
-
-```bash
-# Install I/O dependencies
-pip install -e ".[io]"
-```
-
-### MLIR Features Not Available (v0.7.0+)
-
-MLIR compilation requires additional setup:
-
-```bash
-# Install MLIR Python bindings (optional)
-pip install mlir -f https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest
-```
-
-If MLIR is not available, Morphogen falls back to Python NumPy interpreter.
-
-### Simulation Too Slow
-
-- Reduce field size: `(256, 256)` → `(128, 128)`
-- Reduce iterations: `iterations=40` → `iterations=20`
-- Enable MLIR compilation for 10-100x speedup (v0.7.0+)
-
----
-
-## Current Limitations
-
-### v0.6.0 (Stable)
-
-- ✅ Field operations (production-ready)
-- ✅ Agent operations (production-ready)
-- ✅ Audio synthesis (production-ready)
-- ✅ Audio/visual I/O (production-ready)
-- ⏳ Physical unit checking (annotations only, not enforced)
-- ⏳ Hot-reload (designed, not implemented)
-- ⏳ GPU acceleration (planned for v0.7.0 MLIR phases)
-
-### v0.7.0 (Development)
-
-- ✅ MLIR integration foundation (Phase 1)
-- ✅ Field operations dialect (Phase 2)
-- ✅ Temporal execution (Phase 3)
-- ✅ Agent operations dialect (Phase 4)
-- ✅ Audio operations dialect (Phase 5)
-- ✅ JIT/AOT compilation (Phase 6)
-- ⏳ GPU compilation (Phase 7, in progress)
-
-See [docs/v0.7.0_DESIGN.md](v0.7.0_DESIGN.md) for the complete roadmap.
+| Goal | Where to go |
+|------|-------------|
+| Use audio analysis | [`docs/usage/audio_analysis.md`](usage/audio_analysis.md) |
+| Build instrument models | [`docs/usage/instrument_model.md`](usage/instrument_model.md) |
+| More cross-domain examples | [`examples/canonical/`](../examples/canonical/) |
+| See all 39 domains | [`STATUS.md`](../STATUS.md) |
+| Understand architecture decisions | [`docs/adr/`](adr/) |
+| Full language spec | [`SPECIFICATION.md`](../SPECIFICATION.md) |
 
 ---
 
 ## Getting Help
 
-- **Documentation**: Check `docs/` directory for detailed guides
-- **Examples**: Browse `examples/` for working code
-- **Issues**: Report bugs or request features at https://github.com/scottsen/morphogen/issues
-- **Specification**: See `SPECIFICATION.md` for language details
-
----
-
-**Congratulations!** You're now ready to create your own simulations, sounds, and visualizations with Morphogen. Happy coding! 🎨🎵🔬
-
----
-
-**Version**: v0.6.0 (stable) / v0.7.0-dev (development)
-**Last Updated**: 2025-11-15
+- **Examples**: `examples/` directory — dozens of working programs
+- **Source**: Each domain is in `morphogen/stdlib/<domain>.py` with full docstrings
+- **Issues**: [github.com/scottsen/morphogen/issues](https://github.com/scottsen/morphogen/issues)

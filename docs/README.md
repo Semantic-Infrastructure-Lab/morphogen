@@ -108,16 +108,22 @@ Why key architectural decisions were made (12 records)
 - [011: Project Renaming (Morphogen/Philbrick)](adr/011-project-renaming-morphogen-philbrick.md)
 - [012: Universal Domain Translation](adr/012-universal-domain-translation.md) ⭐ **NEW**
 
+### 📗 [Usage Guides](usage/) ⭐ NEW
+Narrative how-to guides for specific domains — start here to *use* a domain
+- [Audio Analysis](usage/audio_analysis.md) — pitch, T60 decay, inharmonicity
+- [Instrument Model](usage/instrument_model.md) — analyze, synthesise, morph instruments
+
 ### 📖 [Guides](guides/)
 How-to documentation for implementers
-- [Domain Implementation Guide](guides/domain-implementation.md) - How to add new domains to Morphogen
+- [Domain Implementation Guide](guides/domain-implementation.md) — How to add new domains to Morphogen
 
 ### 💡 [Examples](examples/)
 Complete working examples demonstrating Morphogen capabilities
-- [Emergence Cross-Domain](examples/emergence-cross-domain.md)
-- [J-Tube Firepit Multiphysics](examples/j-tube-firepit-multiphysics.md)
 - [Kerbal Space Program Simulation](examples/kerbal-space-program.md)
 - [Racing AI Pipeline](examples/racing-ai-pipeline.md)
+- [Ambient Music Pipelines](examples/ambient-music-pipelines.md)
+
+See also: [`examples/canonical/`](../examples/canonical/) — 3 canonical cross-domain examples that run end-to-end
 
 ### 🎯 [Use Cases](use-cases/)
 Specific real-world applications

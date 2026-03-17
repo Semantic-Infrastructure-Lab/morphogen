@@ -32,7 +32,7 @@
 
 **Domains** ⭐:
 - ✅ **39 Production Domains** (fully registered, accessible via `use`)
-  - **606 operators total** (up from 386 in v0.11.0)
+  - **612 operators total** (up from 386 in v0.11.0)
   - All domains tested and documented
   - All legacy domains migrated to modern `@operator` system
   - Chemistry suite complete (9 domains)
@@ -40,7 +40,7 @@
   - Audio & synthesis complete (5 domains)
 
 **Testing**:
-- ✅ **1,705 comprehensive tests** (1,454 passing, 251 MLIR skipped)
+- ✅ **1,912 comprehensive tests** (1,688 passing, 206 skipped, 18 slow/MLIR-required)
 - ✅ All 39 domains have test coverage
 - ✅ Cross-domain integration validated
 - ✅ Phase 3 domains fully tested (fluid_jet, audio_analysis, instrument_model)
@@ -278,20 +278,25 @@
 ## Development Priorities
 
 ### P0 - Do Now (Current Sprint - Post v0.12.0)
-1. **Integration Examples for Phase 3 Domains**
-   - Create usage examples for fluid_jet, audio_analysis, instrument_model
-   - Cross-domain examples showcasing new capabilities
-   - Tutorial content for chemistry and specialized physics domains
+1. ~~**Integration Examples for Phase 3 Domains**~~ ✅ COMPLETE (heating-dawn-0316)
+   - ~~Create usage examples for fluid_jet, audio_analysis, instrument_model~~
+   - `examples/canonical/` — 3 working cross-domain examples (physics, circuit, fluid → audio)
+   - `docs/usage/audio_analysis.md` + `docs/usage/instrument_model.md` — narrative guides
 
 2. ~~**Test Coverage Expansion**~~ ✅ COMPLETE (2026-03-16)
    - ~~Expand audio_analysis tests (smoke → functional)~~ — 29 functional + 29 physics tests added
    - ~~Expand instrument_model tests (smoke → functional)~~ — 35 functional tests added
    - ~~Target: 30+ tests per domain~~ — exceeded; total suite now 1,912 tests
 
-3. **Documentation Polish**
-   - Add narrative usage examples for audio_analysis + instrument_model
+3. ~~**Documentation Polish (audio_analysis + instrument_model)**~~ ✅ COMPLETE (heating-dawn-0316)
+   - ~~Add narrative usage examples for audio_analysis + instrument_model~~
+
+4. **PyPI Packaging** — `pip install morphogen` in a clean venv
+   - pyproject.toml metadata, pinned deps, `morphogen` CLI entry point
+
+5. **Documentation polish** (remaining)
    - Chemistry domain tutorials
-   - Physics domain integration guides
+   - Cross-domain coupling guide ("how typed domain interfaces work")
 
 ### P1 - Next Quarter (Q1 2026 - v1.0 Prep)
 1. **Performance Benchmarking**

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation Audit (heating-dawn-0316, 2026-03-16)
+
+**Archived** (7 docs removed from repo):
+- `docs/DOMAINS.md` — broken content (raw README.md paste)
+- `docs/troubleshooting.md` — pre-rename era (references "Creative Computation DSL v0.2.2")
+- `docs/guides/DOMAIN_FINISHING_GUIDE.md` — obsolete (migration complete)
+- `docs/guides/DOMAIN_MIGRATION_GUIDE.md` — obsolete (migration complete, v0.12.0)
+- `docs/architecture/domain-architecture.md` — 108KB pre-impl design doc (superseded)
+- `docs/examples/emergence-cross-domain.md` — design doc, not verified examples
+- `docs/examples/j-tube-firepit-multiphysics.md` — design doc, historical only
+
+**Rewrote** `docs/getting-started.md`:
+- Updated from v0.6/v0.7 → v0.12.0
+- Python API as primary interface (vs DSL); added canonical examples as first programs
+- Fixed `morphogen --version` → `morphogen version`
+
+**Updated**: ROADMAP.md (stale counts), README.md (add usage/ nav), DOCUMENTATION_INDEX.md, ARCHIVE_HISTORY.md
+
 ### Documentation (heating-dawn-0316, 2026-03-16)
 
 - `docs/usage/audio_analysis.md` — narrative guide: pitch extraction, T60 decay, inharmonicity,
