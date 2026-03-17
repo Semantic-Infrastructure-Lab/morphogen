@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation (kufigi-0316, 2026-03-16)
+
+**7 domain usage tutorials + 2 pipeline/architecture guides** — all code verified against live API:
+- `docs/usage/field.md` — heat diffusion, reaction-diffusion, advection, gradient/laplacian, coupling
+- `docs/usage/rigidbody.md` — collisions, forces/impulses, raycasting, collision→audio pattern
+- `docs/usage/circuit.md` — RC filter, op-amp, guitar pedal, transient/AC analysis, `process_audio`
+- `docs/usage/molecular.md` — geometry optimisation, NVE/NVT MD, trajectory analysis
+- `docs/usage/fluid_jet.md` — single jets, entrainment, jet arrays, 2D field projection
+- `docs/usage/chemistry_pipeline.md` — ethylene hydrogenation: molecular→thermo→kinetics end-to-end
+- `docs/usage/cross_domain_coupling.md` — `DomainInterface` architecture; write + register your own
+
+**Canonical example 04** (`examples/canonical/04_analysis_to_instrument.py`):
+- `audio_analysis` → `instrument_model` → 8-note C major pentatonic melody WAV
+- Closes ROADMAP.md open item: "audio_analysis → instrument_model pipeline example"
+
+**Stale doc cleanup**:
+- `STATUS.md` — replaced 1,166-line v0.6-era doc with accurate 150-line v0.12.0 snapshot
+- `ECOSYSTEM_MAP.md` — stripped 6 "⭐ NEW - November 2025" stale labels
+- `docs/examples/README.md` — replaced dead link to archived j-tube doc
+
+**STRATEGY.md v1.0 status after kufigi-0316**:
+- ✅ Criterion #4 (domain tutorials for 5 most useful domains) — fully closed
+- ✅ All doc gap items from STRATEGY.md/ROADMAP.md — fully closed
+- Remaining: PyPI packaging only
+
 ### Documentation Audit (heating-dawn-0316, 2026-03-16)
 
 **Archived** (7 docs removed from repo):
