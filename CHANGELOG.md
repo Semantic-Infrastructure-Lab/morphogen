@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (echo-bastion-0316, 2026-03-17)
+
+**16/16 showcase + canonical + cross-domain examples now pass** — fixed API drift across 4 broken demos:
+
+- `noise.py` — `worley()`: added `scale` + `distance_func` alias params for API consistency
+- `sparse_linalg.py` — `build_laplacian_2d(nx, ny, dx)` wrapper added; `solve_sparse()` now returns `(x, info)` tuple with `converged`/`iterations`/`residual`
+- `image.py` — `ImageOperations.save(img, path)` added; `add`/`subtract` blend modes added
+- `terrain.py` — `memoryview.copy()` → `np.array()` in cross-domain heightmap transform
+- `composer.py` — re-raises `TypeError` as `ValueError` for auto-instantiation failures
+- `showcase/03` — `(width, height)` → `(height, width)` convention fixed across all noise calls; 3D `Field2D` reshape fixed; gradient tuple handling
+- `showcase/04` — 6× `(size,size,1)` Field2D reshape fixed; gradient tuple unpacking; `laplacian(dx=)` spurious kwarg removed
+- `showcase/05` — `diffusion_coeff` → `rate` kwarg corrected
+- `tests/test_sparse_linalg_extended.py` — updated 7 tests to unpack `(x, info)` tuple
+
+**Commits:** `4643c72` (controls domain), `b8f0114` (demo fixes)
+
 ### Added (infernal-oracle-0316, 2026-03-16)
 
 **`controls` domain** — 40th production domain, closes the feedback loop for dynamic simulations:
