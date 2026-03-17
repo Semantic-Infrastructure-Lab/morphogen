@@ -160,6 +160,15 @@ class TestCreation:
         img = image.compose(r, g, b, a_channel=a)
         assert img.channels == 4
 
+    def test_compose_uniform_channel_becomes_zero(self):
+        # Uniform channel (max == min) → normalized to zeros
+        r = np.ones((8, 8))  # uniform
+        g = np.linspace(0, 1, 64).reshape(8, 8)
+        b = np.linspace(0, 1, 64).reshape(8, 8)
+        img = image.compose(r, g, b)
+        # Uniform R channel should normalize to all zeros
+        assert np.allclose(img.data[:, :, 0], 0.0)
+
     def test_compose_normalizes_channels_independently(self):
         # R channel in [0, 2], G channel in [0, 1]
         # Both should be normalized to [0, 1]
@@ -215,6 +224,13 @@ class TestTransformations:
         img = make_rgb(h=20, w=20)
         rotated = image.rotate(img, angle=90.0)
         assert rotated.shape == (20, 20)
+
+    def test_rotate_reshape_true(self):
+        img = make_rgb(h=16, w=32)
+        # reshape=True triggers the if-branch in rotate
+        rotated = image.rotate(img, angle=45.0, reshape=True)
+        assert isinstance(rotated, Image)
+        assert np.all(np.isfinite(rotated.data))
 
     def test_rotate_preserves_channels(self):
         img = make_rgba(h=16, w=16)
@@ -456,6 +472,14 @@ class TestCompositing:
         result = image.overlay(base, over)
         # Result should be 50% between 0 and 1
         assert np.allclose(result.data[:, :, 0], 0.5, atol=0.01)
+
+    def test_overlay_rgb_overlay_no_mask_uses_ones(self):
+        # RGB overlay (no alpha) + no explicit mask → full coverage mask
+        base = image.rgb(0.0, 0.0, 0.0, 8, 8)
+        over = image.rgb(1.0, 1.0, 1.0, 8, 8)  # RGB, no alpha
+        result = image.overlay(base, over)
+        # Full mask (ones) → result should equal overlay
+        assert np.allclose(result.data[:, :, :3], over.data, atol=0.01)
 
     def test_overlay_mismatched_shapes_raises(self):
         base = make_rgb(h=16, w=16)

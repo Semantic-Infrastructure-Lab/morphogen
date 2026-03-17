@@ -275,16 +275,16 @@ class ImageOperations:
         Returns:
             Rotated image
         """
-        data = np.zeros_like(img.data)
+        # Rotate first channel to determine output shape (may differ when reshape=True)
+        first = ndimage.rotate(img.data[:, :, 0], angle, reshape=reshape, order=1)
+        data = np.zeros((*first.shape, img.channels), dtype=np.float32)
+        data[:, :, 0] = first
 
-        for c in range(img.channels):
+        for c in range(1, img.channels):
             data[:, :, c] = ndimage.rotate(img.data[:, :, c], angle,
-                                          reshape=reshape, order=1)
+                                           reshape=reshape, order=1)
 
-        if reshape:
-            return Image(data)
-        else:
-            return Image(data)
+        return Image(data)
 
     @staticmethod
     @operator(
