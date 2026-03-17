@@ -30,18 +30,18 @@ def organic_abstract_art():
 
     # Layer 1: Perlin noise base
     print("  - Layer 1: Perlin noise foundation...")
-    layer1 = noise.perlin2d((width, height), scale=0.005, octaves=6, seed=100)
+    layer1 = noise.perlin2d((height, width), scale=0.005, octaves=6, seed=100)
     layer1_norm = field.normalize(Field2D(layer1.data), 0.0, 1.0)
 
     # Layer 2: Marble swirls
     print("  - Layer 2: Marble swirls...")
-    layer2 = noise.marble((width, height), scale=0.01,
+    layer2 = noise.marble((height, width), scale=0.01,
                           turbulence_power=4.0, seed=200)
     layer2_norm = field.normalize(Field2D(layer2.data), 0.0, 1.0)
 
     # Layer 3: Worley cells
     print("  - Layer 3: Worley cellular pattern...")
-    layer3 = noise.worley((width, height), scale=0.02,
+    layer3 = noise.worley((height, width), scale=0.02,
                           distance_func='euclidean', seed=300)
     layer3_norm = field.normalize(Field2D(layer3.data), 0.0, 1.0)
 
@@ -214,7 +214,7 @@ def layered_composition():
 
     # Mid-layer: FBM clouds
     print("  - Layer 2: Cloudy texture...")
-    clouds = noise.fbm((width, height), scale=0.005, octaves=8,
+    clouds = noise.fbm((height, width), scale=0.005, octaves=8,
                        persistence=0.5, lacunarity=2.0, seed=111)
     clouds_norm = field.normalize(Field2D(clouds.data), 0.0, 1.0)
 
@@ -231,14 +231,14 @@ def layered_composition():
 
     # Foreground: Sharp cellular pattern
     print("  - Layer 3: Foreground details...")
-    cells = noise.worley((width, height), scale=0.02,
+    cells = noise.worley((height, width), scale=0.02,
                         distance_func='manhattan', seed=222)
     cells_norm = field.normalize(Field2D(cells.data), 0.0, 1.0)
 
     # Edge detection for outline effect
-    cells_field = Field2D(cells_norm.data.reshape(height, width, 1))
-    grad = field.gradient(cells_field)
-    grad_mag = field.magnitude(grad)
+    cells_field = Field2D(cells_norm.data.reshape(height, width))
+    grad_x, grad_y = field.gradient(cells_field)
+    grad_mag = Field2D(np.sqrt(grad_x.data**2 + grad_y.data**2))
     edges = field.normalize(grad_mag, 0.0, 1.0)
 
     # Colorize edges
@@ -268,7 +268,7 @@ def glitch_art_effect():
     print(f"  - Creating {width}x{height} base image...")
 
     # Create base pattern
-    base = noise.ridged_fbm((width, height), scale=0.01, octaves=5,
+    base = noise.ridged_fbm((height, width), scale=0.01, octaves=5,
                            persistence=0.6, lacunarity=2.0, seed=333)
     base_norm = field.normalize(Field2D(base.data), 0.0, 1.0)
 
@@ -283,8 +283,8 @@ def glitch_art_effect():
 
     # Create displacement map for glitch effect
     print("  - Generating glitch displacement...")
-    displace_x = noise.perlin2d((width, height), scale=0.5, octaves=2, seed=444)
-    displace_y = noise.perlin2d((width, height), scale=0.5, octaves=2, seed=555)
+    displace_x = noise.perlin2d((height, width), scale=0.5, octaves=2, seed=444)
+    displace_y = noise.perlin2d((height, width), scale=0.5, octaves=2, seed=555)
 
     # Normalize displacement
     dx_norm = field.normalize(Field2D(displace_x.data), -0.1, 0.1)
@@ -301,7 +301,7 @@ def glitch_art_effect():
     scanlines[::4, :] = 1.0  # Every 4th row
 
     # Add noise to scanlines
-    scan_noise = noise.perlin2d((width, height), scale=0.5, octaves=1, seed=666)
+    scan_noise = noise.perlin2d((height, width), scale=0.5, octaves=1, seed=666)
     scanlines = scanlines * (0.5 + 0.5 * scan_noise.data)
 
     pal_scan = palette.from_gradient([
@@ -329,7 +329,7 @@ def color_gradient_exploration():
 
     # Generate interesting noise pattern
     print("  - Generating turbulence base...")
-    turb = noise.turbulence((width, height), scale=0.01, octaves=6, seed=777)
+    turb = noise.turbulence((height, width), scale=0.01, octaves=6, seed=777)
     turb_norm = field.normalize(Field2D(turb.data), 0.0, 1.0)
 
     # Create cosine gradient with procedural parameters
@@ -364,15 +364,15 @@ def abstract_terrain_art():
 
     # Generate multiple terrain layers
     print("  - Layer 1: Mountain ranges...")
-    mountains = noise.ridged_fbm((width, height), scale=0.004, octaves=8,
+    mountains = noise.ridged_fbm((height, width), scale=0.004, octaves=8,
                                 persistence=0.6, lacunarity=2.2, seed=888)
 
     print("  - Layer 2: Valley floor...")
-    valleys = noise.fbm((width, height), scale=0.006, octaves=6,
+    valleys = noise.fbm((height, width), scale=0.006, octaves=6,
                        persistence=0.5, lacunarity=2.0, seed=999)
 
     print("  - Layer 3: Erosion patterns...")
-    erosion = noise.turbulence((width, height), scale=0.008, octaves=4, seed=1111)
+    erosion = noise.turbulence((height, width), scale=0.008, octaves=4, seed=1111)
 
     # Combine layers
     print("  - Combining terrain features...")

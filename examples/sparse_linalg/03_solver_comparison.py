@@ -224,7 +224,7 @@ def example_auto_solver():
     b = np.random.rand(n * n)
 
     t0 = time.time()
-    x = solve_sparse(A, b, method="auto", tol=1e-8)
+    x, _ = solve_sparse(A, b, method="auto", tol=1e-8)
     t1 = time.time()
     resid = np.linalg.norm(b - A @ x)
     print(f"    Selected method: direct solver (small matrix)")
@@ -238,7 +238,7 @@ def example_auto_solver():
     b = np.random.rand(n * n)
 
     t0 = time.time()
-    x = solve_sparse(A, b, method="auto", tol=1e-8)
+    x, _ = solve_sparse(A, b, method="auto", tol=1e-8)
     t1 = time.time()
     resid = np.linalg.norm(b - A @ x)
     print(f"    Selected method: CG (large symmetric matrix)")
@@ -253,7 +253,7 @@ def example_auto_solver():
     b = np.random.rand(n * n)
 
     t0 = time.time()
-    x = solve_sparse(A, b, method="auto", tol=1e-6)
+    x, _ = solve_sparse(A, b, method="auto", tol=1e-6)
     t1 = time.time()
     resid = np.linalg.norm(b - A @ x)
     print(f"    Selected method: BiCGSTAB (large nonsymmetric)")

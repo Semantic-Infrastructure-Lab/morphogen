@@ -230,8 +230,18 @@ class TransformPipeline:
         current_data = source_data
 
         for node in self.nodes:
-            # Create transform instance (or reuse if already created)
-            transform = node.transform_class(source_data=current_data, **kwargs)
+            # Create transform instance; fall back without source_data if class has custom __init__
+            try:
+                transform = node.transform_class(source_data=current_data, **kwargs)
+            except TypeError as e:
+                try:
+                    transform = node.transform_class(**kwargs)
+                except TypeError:
+                    raise ValueError(
+                        f"Cannot auto-instantiate {node.transform_class.__name__}: "
+                        f"it requires explicit configuration parameters. "
+                        f"Original error: {e}"
+                    ) from e
 
             # Execute transform
             current_data = transform.transform(current_data)

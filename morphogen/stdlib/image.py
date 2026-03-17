@@ -530,6 +530,10 @@ class ImageOperations:
             result_rgb = color.blend_difference(rgb_a, rgb_b)
         elif mode == "soft_light":
             result_rgb = color.blend_soft_light(rgb_a, rgb_b)
+        elif mode == "add":
+            result_rgb = np.clip(rgb_a + rgb_b, 0, 1)
+        elif mode == "subtract":
+            result_rgb = np.clip(rgb_a - rgb_b, 0, 1)
         else:
             raise ValueError(f"Unknown blend mode: {mode}")
 
@@ -755,6 +759,20 @@ class ImageOperations:
             Gradient-mapped image
         """
         return ImageOperations.apply_palette(img, gradient_palette, "luminance")
+
+    @staticmethod
+    def save(img, path: str) -> None:
+        """Save image to file.
+
+        Convenience wrapper around io_storage.save_image.
+
+        Args:
+            img: Image object or numpy array to save
+            path: Output file path (extension determines format)
+        """
+        from morphogen.stdlib.io_storage import save_image as _save_image
+        data = img.data if isinstance(img, Image) else np.asarray(img)
+        _save_image(path, data)
 
 
 # Create singleton instance for use as 'image' namespace

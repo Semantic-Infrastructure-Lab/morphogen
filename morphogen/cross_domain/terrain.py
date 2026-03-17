@@ -39,7 +39,7 @@ class TerrainToFieldInterface(DomainInterface):
 
         # Extract height data if wrapped in object
         if hasattr(heightmap, 'data'):
-            field_data = heightmap.data.copy()
+            field_data = np.array(heightmap.data)
         else:
             field_data = heightmap.copy()
 

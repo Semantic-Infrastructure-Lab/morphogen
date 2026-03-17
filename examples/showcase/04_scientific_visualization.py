@@ -65,13 +65,13 @@ def poisson_electrostatics():
 
     # Compute electric field: E = -∇φ
     print("  - Computing electric field (gradient)...")
-    phi_field = Field2D(potential.reshape(size, size, 1))
-    E_field = field.gradient(phi_field)
-    E_magnitude = field.magnitude(E_field)
+    phi_field = Field2D(potential)
+    E_x, E_y = field.gradient(phi_field)
+    E_magnitude = Field2D(np.sqrt(E_x.data**2 + E_y.data**2))
 
     # Visualize potential
     print("  - Creating potential visualization...")
-    potential_norm = field.normalize(Field2D(potential.reshape(size, size, 1)), 0.0, 1.0)
+    potential_norm = field.normalize(Field2D(potential), 0.0, 1.0)
 
     pal_potential = palette.from_gradient([
         (0.0, (0.0, 0.0, 0.5)),    # Negative (blue)
@@ -137,13 +137,13 @@ def heat_steady_state():
 
     # Compute heat flux: q = -k∇T
     print("  - Computing heat flux...")
-    T_field = Field2D(temperature.reshape(size, size, 1))
-    flux = field.gradient(T_field)
-    flux_magnitude = field.magnitude(flux)
+    T_field = Field2D(temperature)
+    flux_x, flux_y = field.gradient(T_field)
+    flux_magnitude = Field2D(np.sqrt(flux_x.data**2 + flux_y.data**2))
 
     # Visualize temperature
     print("  - Creating temperature visualization...")
-    T_norm = field.normalize(T_field, 0.0, 1.0)
+    T_norm = field.normalize(Field2D(temperature), 0.0, 1.0)
     pal_heat = palette.from_gradient([
         (0.0, (0.0, 0.0, 0.3)),    # Cold (dark blue)
         (0.25, (0.0, 0.5, 0.8)),   # Cool (blue)
@@ -212,7 +212,7 @@ def helmholtz_acoustics():
 
     # Visualize pressure field
     print("  - Creating acoustic pressure visualization...")
-    p_norm = field.normalize(Field2D(pressure.reshape(size, size, 1)), 0.0, 1.0)
+    p_norm = field.normalize(Field2D(pressure), 0.0, 1.0)
 
     # Use diverging colormap for pressure (positive/negative)
     pal_acoustic = palette.from_gradient([
@@ -353,10 +353,10 @@ def time_dependent_pde_with_checkpointing():
 
         # Solve implicit system
         # For demo, we use explicit forward Euler instead: T^(n+1) = T^n + α*dt*∇²T^n
-        T_field = Field2D(T.reshape(size, size, 1))
-        lap_T = field.laplacian(T_field, dx=1.0)
+        T_field = Field2D(T)
+        lap_T = field.laplacian(T_field)
 
-        T = T + alpha * dt * lap_T.data.squeeze()
+        T = T + alpha * dt * lap_T.data
 
         # Save checkpoints
         if step % 20 == 0:
@@ -435,7 +435,7 @@ def pde_comparison_suite():
     for sol, name in [(poisson_sol, "Poisson"),
                       (helmholtz_sol, "Helmholtz"),
                       (biharmonic_sol, "Biharmonic")]:
-        sol_norm = field.normalize(Field2D(sol.reshape(size, size, 1)), 0.0, 1.0)
+        sol_norm = field.normalize(Field2D(sol.reshape(size, size)), 0.0, 1.0)
         img = image.from_field(sol_norm.data, pal_sci)
         images.append(img)
         print(f"    {name}: range [{sol.min():.3f}, {sol.max():.3f}]")

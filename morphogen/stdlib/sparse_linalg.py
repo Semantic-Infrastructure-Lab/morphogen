@@ -327,7 +327,7 @@ def solve_sparse(
     b: np.ndarray,
     method: str = "auto",
     **kwargs
-) -> np.ndarray:
+) -> tuple:
     """Generic sparse solver with automatic method selection.
 
     Args:
@@ -337,10 +337,10 @@ def solve_sparse(
         **kwargs: Additional arguments passed to solver
 
     Returns:
-        Solution vector
+        Tuple of (solution_vector, info_dict) where info_dict contains solver metadata.
 
     Example:
-        x = sparse_linalg.solve_sparse(A, b, method="auto")
+        x, info = sparse_linalg.solve_sparse(A, b, method="auto")
     """
     if method == "auto":
         # Auto-select based on matrix properties
@@ -355,17 +355,21 @@ def solve_sparse(
             method = "bicgstab"
 
     if method == "cg":
-        x, _, _ = solve_cg(A, b, **kwargs)
+        x, iters, residual = solve_cg(A, b, **kwargs)
+        info = {"method": "cg", "converged": residual < 1e-10, "iterations": iters, "residual": residual}
     elif method == "bicgstab":
-        x, _, _ = solve_bicgstab(A, b, **kwargs)
+        x, iters, residual = solve_bicgstab(A, b, **kwargs)
+        info = {"method": "bicgstab", "converged": residual < 1e-10, "iterations": iters, "residual": residual}
     elif method == "gmres":
-        x, _, _ = solve_gmres(A, b, **kwargs)
+        x, iters, residual = solve_gmres(A, b, **kwargs)
+        info = {"method": "gmres", "converged": residual < 1e-10, "iterations": iters, "residual": residual}
     elif method == "direct":
         x = sp_linalg.spsolve(A, b)
+        info = {"method": "direct", "converged": True, "iterations": 1, "residual": 0.0}
     else:
         raise ValueError(f"Unknown solver method: {method}")
 
-    return x
+    return x, info
 
 
 # ============================================================================
@@ -572,6 +576,24 @@ def laplacian_2d(nx: int, ny: int, bc: str = "dirichlet") -> sparse.csr_matrix:
     else:
         raise ValueError(f"Unknown boundary condition: {bc}")
 
+    return L
+
+
+def build_laplacian_2d(nx: int, ny: int, dx: float = 1.0, bc: str = "dirichlet") -> sparse.csr_matrix:
+    """Alias for laplacian_2d with optional grid spacing dx.
+
+    Args:
+        nx: Number of grid points in x-direction
+        ny: Number of grid points in y-direction
+        dx: Grid spacing (divides the Laplacian by dx²)
+        bc: Boundary conditions ("dirichlet", "neumann", "periodic")
+
+    Returns:
+        Sparse CSR matrix of shape (nx*ny, nx*ny)
+    """
+    L = laplacian_2d(nx, ny, bc=bc)
+    if dx != 1.0:
+        L = L / (dx ** 2)
     return L
 
 

@@ -430,7 +430,7 @@ def create_audio_reactive_field(audio_buffer, width=400, height=400):
                 heat_field.data[y-5:y+5, x-5:x+5] += magnitude * 0.5
 
         # Diffuse
-        heat_field = field.diffuse(heat_field, diffusion_coeff=0.1, dt=0.1)
+        heat_field = field.diffuse(heat_field, rate=0.1, dt=0.1)
 
         # Decay
         heat_field.data *= 0.98

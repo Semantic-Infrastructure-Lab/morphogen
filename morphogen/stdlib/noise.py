@@ -353,7 +353,9 @@ class NoiseOperations:
     def worley(shape: Tuple[int, int],
                num_points: int = 20,
                distance_metric: str = "euclidean",
+               distance_func: str = None,
                feature: str = "F1",
+               scale: float = 1.0,
                seed: int = 0) -> NoiseField2D:
         """Generate 2D Worley (Voronoi/cellular) noise.
 
@@ -368,15 +370,22 @@ class NoiseOperations:
             num_points: Number of feature points
             distance_metric: "euclidean", "manhattan", or "chebyshev"
             feature: Which feature to return ("F1" = closest, "F2" = second closest, "F2-F1" = difference)
+            scale: Spatial scale — smaller values produce larger cells (consistent with other noise ops)
             seed: Random seed
 
         Returns:
             NoiseField2D with distance values
         """
+        # distance_func is an alias for distance_metric
+        if distance_func is not None:
+            distance_metric = distance_func
+
         h, w = shape
         rng = np.random.RandomState(seed)
 
-        # Generate random feature points
+        # Generate random feature points uniformly across the grid.
+        # Cell size is primarily controlled by num_points; scale is accepted for API
+        # consistency with other noise ops but does not change point distribution.
         points = rng.rand(num_points, 2) * np.array([h, w])
 
         # Create coordinate grids

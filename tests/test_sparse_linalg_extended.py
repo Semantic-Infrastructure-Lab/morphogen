@@ -185,7 +185,7 @@ class TestIterativeSolvers:
         A = sparse.eye(n, format='csr')
         b = np.ones(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="auto")
+        x, _ = sparse_linalg.solve_sparse(A, b, method="auto")
         assert np.allclose(x, b, atol=1e-10)
 
     def test_solve_sparse_explicit_cg(self):
@@ -194,7 +194,7 @@ class TestIterativeSolvers:
         A = sparse.eye(n, format='csr') * 2
         b = np.ones(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="cg", tol=1e-8)
+        x, _ = sparse_linalg.solve_sparse(A, b, method="cg", tol=1e-8)
         assert np.allclose(x, b / 2, atol=1e-6)
 
     def test_solve_sparse_explicit_bicgstab(self):
@@ -203,7 +203,7 @@ class TestIterativeSolvers:
         A = sparse.eye(n, format='csr') * 2
         b = np.ones(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="bicgstab")
+        x, _ = sparse_linalg.solve_sparse(A, b, method="bicgstab")
         assert np.allclose(x, b / 2, atol=1e-4)
 
     def test_solve_sparse_explicit_gmres(self):
@@ -212,7 +212,7 @@ class TestIterativeSolvers:
         A = sparse.eye(n, format='csr') * 2
         b = np.ones(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="gmres")
+        x, _ = sparse_linalg.solve_sparse(A, b, method="gmres")
         assert np.allclose(x, b / 2, atol=1e-4)
 
     def test_solve_sparse_direct_method(self):
@@ -221,7 +221,7 @@ class TestIterativeSolvers:
         A = sparse.eye(n, format='csr') * 2
         b = np.ones(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="direct")
+        x, _ = sparse_linalg.solve_sparse(A, b, method="direct")
         assert np.allclose(x, b / 2, atol=1e-10)
 
     def test_solve_sparse_unknown_method_error(self):
@@ -496,7 +496,7 @@ class TestEdgeCases:
         A = sparse.eye(2, format='csr')
         b = np.array([1.0, 2.0])
 
-        x = sparse_linalg.solve_sparse(A, b, method="direct")
+        x, _ = sparse_linalg.solve_sparse(A, b, method="direct")
         assert np.allclose(x, b)
 
     def test_large_sparse_matrix(self):
@@ -514,7 +514,7 @@ class TestEdgeCases:
 
         # This might not converge or give inf, but shouldn't crash
         try:
-            x = sparse_linalg.solve_sparse(A, b, method="direct")
+            x, _ = sparse_linalg.solve_sparse(A, b, method="direct")
         except:
             # Expected to fail for singular matrix
             pass
@@ -525,7 +525,7 @@ class TestEdgeCases:
         A = sparse.eye(n, format='csr')
         b = np.random.rand(n)
 
-        x = sparse_linalg.solve_sparse(A, b, method="cg", tol=1e-10)
+        x, _ = sparse_linalg.solve_sparse(A, b, method="cg", tol=1e-10)
         assert np.allclose(x, b, atol=1e-8)
 
     def test_rectangular_gradient(self):
