@@ -443,12 +443,11 @@ class ImageOperations:
         Returns:
             Eroded image
         """
-        data = np.zeros_like(img.data)
+        data = img.data.copy()
 
-        for c in range(img.channels):
-            data[:, :, c] = ndimage.grey_erosion(img.data[:, :, c],
-                                                 size=(3, 3),
-                                                 iterations=iterations)
+        for _ in range(iterations):
+            for c in range(img.channels):
+                data[:, :, c] = ndimage.grey_erosion(data[:, :, c], size=(3, 3))
 
         return Image(data)
 
@@ -470,12 +469,11 @@ class ImageOperations:
         Returns:
             Dilated image
         """
-        data = np.zeros_like(img.data)
+        data = img.data.copy()
 
-        for c in range(img.channels):
-            data[:, :, c] = ndimage.grey_dilation(img.data[:, :, c],
-                                                  size=(3, 3),
-                                                  iterations=iterations)
+        for _ in range(iterations):
+            for c in range(img.channels):
+                data[:, :, c] = ndimage.grey_dilation(data[:, :, c], size=(3, 3))
 
         return Image(data)
 

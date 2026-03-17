@@ -299,6 +299,10 @@ class FieldOperations:
         if method != "jacobi":
             raise NotImplementedError(f"Diffusion method '{method}' not implemented in MVP")
 
+        # Accept any field-like object with a .data attribute
+        if not isinstance(field, Field2D):
+            field = Field2D(field.data.copy())
+
         alpha = rate * dt
         h, w = field.shape
 
