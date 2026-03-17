@@ -17,13 +17,13 @@ beth_topics:
 
 ## The Honest Assessment
 
-Morphogen has real substance: 39 Python domain modules (hundreds to thousands of lines each), 606 operators, 1,912 tests, and a cross-domain coupling architecture that is genuinely novel. The ideas are good and differentiated. The execution has uneven areas.
+Morphogen has real substance: 39 Python domain modules (hundreds to thousands of lines each), 612 operators, 1,912 tests collected (1,688 pass on Python runtime), and a cross-domain coupling architecture that is genuinely novel. The ideas are good and differentiated. The execution has uneven areas.
 
 **What's solid:**
 - Python domain library — the `stdlib/` modules are real, implemented, and tested
 - Cross-domain coupling — the `cross_domain/` module with typed interfaces works
 - Core demos — guitar pedal, physics-to-audio, digital twin (partial), visual3d outputs
-- Test coverage — 1,912 tests, 0 skips on the Python runtime path
+- Test coverage — 1,688 tests pass on Python runtime; 206 skipped (MLIR not installed + unimplemented visual features); 18 slow/MLIR-required
 
 **What's aspirational:**
 - MLIR compilation — 207 tests currently skipped; not the runtime users actually use

@@ -221,8 +221,8 @@ morphogen run hello.morph
 
 **Current Status (v0.12.0):**
 - ✅ **39 production computational domains** (fully integrated with `use` statement)
-- ✅ **606 operators** accessible from Morphogen language
-- ✅ **1,912 tests passing** (207 MLIR tests skipped)
+- ✅ **612 operators** accessible from Morphogen language
+- ✅ **1,688 tests passing** (206 MLIR/unimplemented skipped, 18 slow/MLIR-required)
 - ✅ MLIR compilation pipeline complete (6 phases)
 - ✅ Python runtime with NumPy backend
 - ✅ All legacy domains migrated to modern `@operator` system
