@@ -191,7 +191,7 @@ Already part of Morphogen.Audio:
 
 **See:** [AUDIO_SPECIFICATION.md](AUDIO_SPECIFICATION.md)
 
-### 3.1a Ambient Music & Generative Audio ⭐ **NEW - November 2025**
+### 3.1a Ambient Music & Generative Audio
 
 **Status:** Proposed (ADR-009, Specification complete)
 
@@ -386,7 +386,7 @@ Eventually MLIR gives you:
 * Differentiable physics
 * Learned operators (replacing hand-tuned kernels)
 
-### 3.8 Circuit / Electrical Engineering ⭐ **NEW - November 2025**
+### 3.8 Circuit / Electrical Engineering
 
 **Status:** Architecture complete (PR #43) — **`docs/SPEC-CIRCUIT.md`** (1,136 lines)
 
@@ -399,7 +399,7 @@ The most natural domain for Morphogen — circuits ARE typed operator graphs!
 
 **See:** `examples/circuit/` (5 complete examples)
 
-### 3.9 Acoustics & Fluid Dynamics ⭐ **NEW - November 2025**
+### 3.9 Acoustics & Fluid Dynamics
 
 **Status:** Architecture complete (PR #44) — **`docs/DOMAIN_ARCHITECTURE.md`** sections 2.9, 2.10
 
@@ -411,7 +411,7 @@ Unified fluid + acoustic pipeline for exhaust systems, instruments, HVAC:
 
 **See:** `docs/USE_CASES/2-stroke-muffler-modeling.md`
 
-### 3.10 Instrument Modeling ⭐ **NEW - November 2025**
+### 3.10 Instrument Modeling
 
 **Status:** Architecture complete (PR #45) — **`docs/SPEC-TIMBRE-EXTRACTION.md`** (752 lines)
 
@@ -423,7 +423,7 @@ The "holy grail" of audio DSP — recordings → synthesis models:
 
 **Use case:** Record acoustic guitar → extract timbre → synthesize new MIDI notes
 
-### 3.11 Optimization ⭐ **NEW - November 2025**
+### 3.11 Optimization
 
 **Status:** Architecture complete (PR #48) — **`docs/LEARNINGS/OPTIMIZATION_ALGORITHMS_CATALOG.md`** (1,529 lines)
 
@@ -436,7 +436,7 @@ The "holy grail" of audio DSP — recordings → synthesis models:
 
 **Cross-domain:** Optimize J-tube geometry, muffler design, PID tuning, filter parameters
 
-### 3.12 Multi-Physics Engineering ⭐ **NEW - November 2025**
+### 3.12 Multi-Physics Engineering
 
 **Status:** Architecture complete (PR #47) — **`docs/SPEC-PHYSICS-DOMAINS.md`** (1,079 lines)
 

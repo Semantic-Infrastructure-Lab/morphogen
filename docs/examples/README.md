@@ -106,7 +106,7 @@ Demonstrates how Morphogen can model KSP-style physics (orbital mechanics, aerod
 - [specifications/physics-domains.md](../specifications/physics-domains.md) — Physics operator specifications
 - [ADR-002: Cross-Domain Architectural Patterns](../adr/002-cross-domain-architectural-patterns.md) — Reference systems and anchors
 - [specifications/geometry.md](../specifications/geometry.md) — TiaCAD integration for part geometry
-- [examples/j-tube-firepit-multiphysics.md](./j-tube-firepit-multiphysics.md) — Combustion domain for engines
+- [examples/canonical/03_fluid_to_sound.py](../../examples/canonical/03_fluid_to_sound.py) — Fluid dynamics → acoustics → audio (working, runnable)
 
 ---
 
