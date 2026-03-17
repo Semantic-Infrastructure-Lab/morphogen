@@ -232,6 +232,7 @@ def register_stdlib_domains() -> None:
         ("fluid_jet", "morphogen.stdlib.fluid_jet", "Jet flow dynamics and mixing"),
         ("audio_analysis", "morphogen.stdlib.audio_analysis", "Audio signal processing and timbre analysis"),
         ("instrument_model", "morphogen.stdlib.instrument_model", "Musical instrument modeling and synthesis"),
+        ("controls", "morphogen.stdlib.controls", "Control systems: PID, LQR, Kalman filter, state-space"),
     ]
 
     for name, module_path, description in domains:

@@ -47,6 +47,12 @@ from .terrain import (
 # Vision → Field
 from .vision_field import VisionToFieldInterface
 
+# Controls ↔ Physics
+from .controls_physics import (
+    PhysicsToControlsInterface,
+    ControlsToPhysicsInterface,
+)
+
 # Graph → Visual
 from .graph_visual import GraphToVisualInterface
 
@@ -101,6 +107,9 @@ __all__ = [
     'FieldToAgentInterface',
     'AgentToFieldInterface',
     'PhysicsToAudioInterface',
+    # Controls ↔ Physics
+    'PhysicsToControlsInterface',
+    'ControlsToPhysicsInterface',
     # Phase 2 transforms
     'AudioToVisualInterface',
     'FieldToAudioInterface',

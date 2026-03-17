@@ -34,6 +34,7 @@ from . import electrochem
 
 # Base-level domains
 from . import integrators
+from . import controls
 from . import io_storage
 from . import sparse_linalg
 from .flappy import flappy, Bird, Pipe, GameState, FlappyOperations
@@ -100,6 +101,7 @@ __all__ = [
 
     # Base-level domains
     "integrators",
+    "controls",
     "io_storage",
     "sparse_linalg",
     "flappy", "Bird", "Pipe", "GameState", "FlappyOperations",

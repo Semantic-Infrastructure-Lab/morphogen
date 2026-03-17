@@ -1,7 +1,7 @@
 # Morphogen — Implementation Status
 
 **Version:** v0.12.0 → v1.0 (Q2 2026)
-**Updated:** 2026-03-16 (kufigi-0316)
+**Updated:** 2026-03-16 (infernal-oracle-0316)
 
 ---
 
@@ -9,9 +9,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Domains | 39 production |
-| Operators | 612 registered |
-| Tests passing | 1,703 |
+| Domains | 40 production |
+| Operators | 627 registered |
+| Tests passing | 1,777 |
 | Tests skipped | 209 (MLIR not installed) |
 | Test failures | 0 |
 | Python runtime | ✅ fully functional |

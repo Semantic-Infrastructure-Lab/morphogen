@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (infernal-oracle-0316, 2026-03-16)
+
+**`controls` domain** — 40th production domain, closes the feedback loop for dynamic simulations:
+- `morphogen/stdlib/controls.py` — 15 operators across 5 layers (PID, state-space, LQR, Kalman, Bode)
+- `tests/test_controls.py` — 74 tests covering all operators; correctness verified against scipy references
+- `morphogen/cross_domain/controls_physics.py` — `PhysicsToControlsInterface` + `ControlsToPhysicsInterface`
+- `docs/usage/controls.md` — tutorial: PID temperature control, LQR double integrator, Kalman 1D tracking
+
+**Domain count: 39 → 40 | Test count: 1,703 → 1,777**
+
 ### Documentation (kufigi-0316, 2026-03-16)
 
 **7 domain usage tutorials + 2 pipeline/architecture guides** — all code verified against live API:

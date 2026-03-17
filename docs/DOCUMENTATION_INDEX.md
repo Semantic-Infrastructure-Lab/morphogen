@@ -33,6 +33,18 @@
 
 ---
 
+### docs/DOMAIN_EXPANSION.md
+**Purpose**: Post-v1.0 domain expansion plan — 8 candidate domains (controls, fem, orbit, epidemiology, photonics, quantum, economics, robotics) with operator specs, effort estimates, and cross-domain compositions each unlocks
+**Key Sections**:
+- Tier 1 (controls, fem, orbit, epidemiology) — high impact, strong cross-domain stories
+- Tier 2 (photonics, quantum, robotics, economics) — strong value, more specialized
+- Tier 3 — niche or long-horizon candidates
+- Recommended implementation order + per-domain effort summary
+
+**Navigate**: `reveal docs/DOMAIN_EXPANSION.md`
+
+---
+
 ### docs/STRATEGY.md
 **Purpose**: Strategic path to v1.0 — honest assessment of what's real vs. aspirational, what to work on, what to defer, and the post-v1.0 vision
 **Key Sections**:
@@ -231,6 +243,7 @@ Narrative how-to guides for specific domains — start here if you want to
 | `docs/usage/audio_analysis.md` | `audio_analysis` | Pitch tracking, harmonic decay, T60, inharmonicity, feeding into `instrument_model` |
 | `docs/usage/instrument_model.md` | `instrument_model` | Analyse recordings, synthesise notes, morph instruments, SynthParams |
 | `docs/usage/fluid_jet.md` | `fluid_jet` | Single jets, entrainment, jet arrays, projecting to 2D field, coupling to acoustics |
+| `docs/usage/controls.md` | `controls` | PID temperature control, LQR double integrator, Kalman 1D tracking, rigidbody coupling |
 
 ### Pipeline and Architecture Guides
 
