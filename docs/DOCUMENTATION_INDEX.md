@@ -215,6 +215,28 @@
 
 ---
 
+## Usage Guides (2 documents) ⭐ NEW
+
+Narrative how-to guides for specific domains — start here if you want to
+*use* a domain rather than understand its internals.
+
+### docs/usage/audio_analysis.md ⭐ NEW
+**Purpose**: Narrative guide to the `audio_analysis` domain
+**Covers**: Pitch extraction (`track_fundamental`), harmonic decay (`fit_exponential_decay`),
+T60 measurement (`measure_t60`), inharmonicity, feeding results into `instrument_model`
+
+**Navigate**: `reveal docs/usage/audio_analysis.md`
+
+### docs/usage/instrument_model.md ⭐ NEW
+**Purpose**: Narrative guide to the `instrument_model` domain
+**Covers**: Analysing a recording (`analyze_instrument`), synthesising notes
+(`synthesize_note`), morphing between instruments (`morph_instruments`), saving/loading models,
+tuning `SynthParams`
+
+**Navigate**: `reveal docs/usage/instrument_model.md`
+
+---
+
 ## Guides (8 documents)
 
 ### docs/guides/domain-implementation.md

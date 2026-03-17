@@ -114,12 +114,12 @@ examples/canonical/
 
 ### Documentation Gaps
 
-| Gap | What's Needed |
-|-----|--------------|
-| audio_analysis narrative | "Here's how to analyze a signal, extract pitch and T60, use the results" |
-| instrument_model narrative | "Here's how to model a guitar string, morph between instruments" |
-| cross_domain coupling guide | "Here's how typed domain interfaces work, here's how to write one" |
-| chemistry domain tutorial | One worked example through the molecular → thermo → kinetics pipeline |
+| Gap | Status | What's Needed |
+|-----|--------|--------------|
+| audio_analysis narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/audio_analysis.md` |
+| instrument_model narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/instrument_model.md` |
+| cross_domain coupling guide | open | "Here's how typed domain interfaces work, here's how to write one" |
+| chemistry domain tutorial | open | One worked example through the molecular → thermo → kinetics pipeline |
 
 ---
 

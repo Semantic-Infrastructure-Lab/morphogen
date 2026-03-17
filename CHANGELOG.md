@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation (heating-dawn-0316, 2026-03-16)
+
+- `docs/usage/audio_analysis.md` — narrative guide: pitch extraction, T60 decay, inharmonicity,
+  feeding results into instrument_model; all code examples verified to run
+- `docs/usage/instrument_model.md` — narrative guide: analyze recording → synthesise note →
+  morph between instruments → save/load; covers SynthParams tuning
+- `docs/DOCUMENTATION_INDEX.md` updated with new Usage Guides section
+
 ### Added (heating-dawn-0316, 2026-03-16)
 
 - `examples/canonical/` — 3 canonical cross-domain examples, all run end-to-end and produce WAV output
