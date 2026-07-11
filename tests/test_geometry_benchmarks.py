@@ -5,9 +5,20 @@ geometry operations, especially computationally expensive algorithms like
 Delaunay triangulation, Voronoi diagrams, and mesh operations.
 
 Run with: pytest tests/test_geometry_benchmarks.py --benchmark-only
+
+Requires the ``pytest-benchmark`` plugin (part of the ``dev`` extra:
+``pip install -e ".[dev]"``). When it is absent — e.g. a bare
+``pip install -e .`` — the whole module skips cleanly instead of erroring at
+``benchmark`` fixture setup, so the default test run stays green out of the box.
 """
 
 import pytest
+
+pytest.importorskip(
+    "pytest_benchmark",
+    reason="pytest-benchmark not installed (install the 'dev' extra to run benchmarks)",
+)
+
 import numpy as np
 from morphogen.stdlib.geometry import (
     # Primitives

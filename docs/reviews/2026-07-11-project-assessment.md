@@ -9,6 +9,15 @@
 > This is a point-in-time engineering assessment, not a roadmap change. It records reproducible
 > findings so they can be triaged. Nothing in the product runtime was modified to produce it.
 
+> **Resolution status (updated 2026-07-11):** All three findings are now closed.
+> **#1** (CLI TypeChecker crash) — fixed; `morphogen run`/`check` work on every runnable
+> example, guarded by `tests/test_morph_examples_smoke.py` and `tests/test_cli.py`.
+> **#2** (no end-to-end CLI test) — closed by that smoke suite over all committed `.morph` files.
+> **#3** (undeclared deps / clean out-of-box run) — `pillow` and `scipy` are now runtime
+> `dependencies`; `pytest-benchmark` is in the `dev` extra; `tests/test_geometry_benchmarks.py`
+> now `importorskip`s the plugin so a bare `pip install -e .` run skips benchmarks cleanly
+> instead of erroring; the 10 stray root-level scripts were relocated/removed in a prior session.
+
 ---
 
 ## TL;DR
