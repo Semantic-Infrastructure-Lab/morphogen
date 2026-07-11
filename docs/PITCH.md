@@ -61,9 +61,9 @@ flow(dt=0.1ms) {
 
 ## What Makes It Different
 
-**39 production domains** — physics, chemistry (9 domains), audio synthesis, circuit simulation, fluid dynamics, geometry, neural networks, procedural graphics, and more — all sharing one type system, one scheduler, one compiler.
+**Broad domain coverage** — physics, chemistry, audio synthesis, circuit simulation, fluid dynamics, geometry, neural networks, procedural graphics, and more, with a shared composition surface.
 
-**Deterministic by design** — bitwise-identical results across runs, platforms, and GPU vendors. Scientific rigor is a first-class guarantee.
+**Deterministic by design** — reproducible execution is a core goal. Today the most credible path is the Python/NumPy runtime; stronger cross-platform guarantees belong to the longer-term compiler trajectory.
 
 **Category-theoretic foundations** — domains are categories, operators are morphisms, cross-domain translations are functors. Composition is algebra, not glue. The compiler optimizes via natural transformations (e.g., `fft ∘ filter ∘ ifft` becomes a single frequency-domain filter automatically).
 
@@ -83,9 +83,9 @@ The platform is the direct computational continuation: complex emergent behavior
 
 ## Where It Is
 
-**v0.12.0** (December 2025) — 1,912 tests, all 39 domains accessible via `use` statement, MLIR compilation pipeline complete.
+**v0.12.0** — strongest today as a Python-first cross-domain library with a broad stdlib, working examples, and an active test suite.
 
-**Targeting v1.0** in Q2 2026: PyPI packaging, polished documentation, tutorial series, community infrastructure.
+**Targeting v1.0**: packaging/install polish, documentation coherence, and a tighter canonical example surface.
 
 ---
 

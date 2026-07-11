@@ -1,166 +1,83 @@
-# Morphogen — Implementation Status
+# Morphogen — Current Status
 
-**Version:** v0.12.0 → v1.0 (Q2 2026)
-**Updated:** 2026-03-16 (infernal-oracle-0316)
+**Version:** v0.12.0 toward v1.0  
+**Updated:** 2026-04-17
 
 ---
 
 ## At a Glance
 
-| Metric | Value |
-|--------|-------|
-| Domains | 40 production |
-| Operators | 627 registered |
-| Tests passing | 1,777 |
-| Tests skipped | 209 (MLIR not installed) |
-| Test failures | 0 |
-| Python runtime | ✅ fully functional |
-| MLIR compilation | ⏳ deferred to post-v1.0 |
+Morphogen is currently strongest as a **Python-first cross-domain computation library** with:
 
----
+- a large multi-domain stdlib
+- working cross-domain examples
+- a broad automated test suite
+- a partial DSL surface that now handles the documented hello-world path
+- MLIR/compiler work that exists, but is not yet the primary user surface
 
-## What Works Right Now
+## What Works Reliably Today
 
-**Python library** — install from source, import domains, run simulations:
+### Python library
 
-```python
-from morphogen.stdlib.field import alloc, diffuse
-from morphogen.stdlib.rigidbody import PhysicsWorld2D, step_world
-from morphogen.stdlib.circuit import create, add_resistor, process_audio
-from morphogen.stdlib.molecular import load_smiles, run_md
-from morphogen.stdlib.audio import AudioBuffer, save
-```
+The Python API is the most credible and best-supported interface today.
 
-**Cross-domain composition** — typed interfaces between any two domains:
+Examples that were re-run successfully during the April 17 review/repair passes:
 
-```python
-from morphogen.cross_domain.physics_audio import PhysicsToAudioInterface
-```
+- `examples/canonical/01_physics_to_audio.py`
+- `examples/showcase/07_physical_instrument.py`
+- `examples/showcase/08_digital_twin.py`
+- `examples/cross_domain/fluid_acoustics_audio.py`
 
-**Canonical cross-domain examples** — all run end-to-end and produce WAV output:
+### `.morph` CLI basics
 
-```bash
-python examples/canonical/01_physics_to_audio.py     # rigidbody → audio
-python examples/canonical/02_circuit_to_audio.py     # circuit → audio
-python examples/canonical/03_fluid_to_sound.py       # field → acoustics → audio
-python examples/canonical/04_analysis_to_instrument.py  # analysis → model → audio
-```
+The documented hello-world path works again:
 
-**Showcase demos** — all 8 exit clean:
+- `python -m morphogen.cli check examples/01_hello_heat.morph`
+- `python -m morphogen.cli run examples/01_hello_heat.morph --steps 1`
 
-```bash
-python examples/showcase/07_physical_instrument.py
-python examples/showcase/08_digital_twin.py
-# (all 01–08 run)
-```
+The CLI also now reports `flow(...)` execution more accurately and applies `--steps` to flow blocks.
 
----
+### Test suite
 
-## Domain Status (39 Domains)
+The suite is broad and useful, but some parts are environment-sensitive.
 
-### Core Simulation
+Verified recently:
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `field` | ✅ Production | `alloc`, `diffuse`, `advect`, `laplacian`, `gradient`, `divergence`, `curl`, `project` |
-| `rigidbody` | ✅ Production | `create_circle_body`, `create_box_body`, `step_world`, `detect_collisions`, `raycast` |
-| `agents` | ✅ Production | `alloc`, `map`, `filter`, `reduce`, force fields, field sampling |
-| `temporal` | ✅ Production | Multirate scheduling, state management |
-| `integrators` | ✅ Production | RK4, Verlet, Euler, adaptive steppers |
-| `statemachine` | ✅ Production | Discrete event automata |
-| `graph` | ✅ Production | Graph IR, traversal, spectral |
-| `neural` | ✅ Production | Feedforward, activation fns, gradient ops |
-| `optimization` | ✅ Production | CMA-ES, DE, PSO, Bayesian |
-| `genetic` | ✅ Production | Crossover, mutation, selection, fitness |
-| `sparse_linalg` | ✅ Production | CG, GMRES, LU, sparse matrix ops |
+- `pytest tests/test_cli.py tests/test_runtime.py tests/test_use_statement.py` → `74 passed`
+- `pytest tests/test_visual3d.py` → `53 passed, 5 skipped`
 
-### Audio / Signal
+The fragile `visual3d` screenshot/render tests are now opt-in via:
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `audio` | ✅ Production | Oscillators, filters, effects, `AudioBuffer`, `save`, `load` |
-| `audio_analysis` | ✅ Production | `track_fundamental`, `track_partials`, `fit_exponential_decay`, `measure_t60` |
-| `instrument_model` | ✅ Production | `analyze_instrument`, `synthesize_note`, `morph_instruments` |
-| `signal` | ✅ Production | DSP: FFT, convolution, resampling, windowing |
-| `acoustics` | ✅ Production | Pressure wave propagation, room acoustics |
-| `noise` | ✅ Production | Perlin, simplex, fractal, spectral noise |
+- `MORPHOGEN_RUN_VISUAL3D_RENDER_TESTS=1`
 
-### Geometry / Graphics
+This keeps the default suite stable on machines where VTK off-screen rendering is unreliable.
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `geometry` | ✅ Production | Mesh ops, boolean, Delaunay, Voronoi |
-| `terrain` | ✅ Production | Heightmaps, erosion, procedural generation |
-| `visual` | ✅ Production | 2D agents/layers, composite, video export |
-| `visual3d` | ✅ Production | 3D scene, camera, mesh, PyVista rendering |
-| `color` | ✅ Production | Colorspace conversions, palettes |
-| `palette` | ✅ Production | Palette generation and interpolation |
-| `image` | ✅ Production | Load/save/transform images |
-| `vision` | ✅ Production | Computer vision ops |
+## What Is Primary vs Secondary
 
-### Fluids / Physics
+### Primary surface
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `fluid_jet` | ✅ Production | `jet_from_tube`, `jet_reynolds`, `jet_field_2d`, `create_jet_array_radial` |
-| `fluid_network` | ✅ Production | Pipe network flow, pressure, Reynolds |
-| `thermal_ode` | ✅ Production | ODE-based thermal systems |
+- Python API
+- examples and tutorials
+- cross-domain composition patterns
+- deterministic NumPy-based runtime
 
-### Chemistry Suite
+### Secondary / in-progress surface
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `molecular` | ✅ Production | `load_smiles`, `optimize_geometry`, `run_md`, `calculate_temperature` |
-| `thermo` | ✅ Production | `enthalpy_of_reaction`, `gibbs_free_energy`, `equilibrium_constant` |
-| `kinetics` | ✅ Production | `arrhenius`, `integrate_ode`, `batch_reactor`, `cstr`, `pfr` |
-| `qchem` | ✅ Production | Quantum chemistry operators (semi-empirical) |
-| `electrochem` | ✅ Production | Electrochemistry, Butler-Volmer |
-| `catalysis` | ✅ Production | Heterogeneous catalysis, TOF |
-| `transport` | ✅ Production | Mass/heat transfer coefficients |
-| `multiphase` | ✅ Production | Multiphase flow |
-| `combustion_light` | ✅ Production | Combustion with spectral emission |
+- `.morph` DSL expansion beyond the currently supported/documented path
+- MLIR/native compilation as a general user-facing runtime
+- fully portable headless `visual3d` screenshot rendering
 
-### Electronics
+## Known Limitations
 
-| Domain | Status | Key Operators |
-|--------|--------|--------------|
-| `circuit` | ✅ Production | `create`, `add_*`, `dc_analysis`, `ac_analysis`, `transient_analysis`, `process_audio` |
-| `cellular` | ✅ Production | Cellular automata (Conway, custom rules) |
+- Packaging metadata is improved but still duplicated across `pyproject.toml` and `setup.py`
+- Public docs still contain some stale counts and historical claims
+- Real VTK screenshot rendering remains environment-sensitive
+- Some advanced roadmap language still reflects aspiration more than current default usage
+- PyPI release/distribution work is not yet complete
 
----
+## Recommended Reading
 
-## What Does Not Work
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| MLIR compilation | ⏳ Deferred | 209 tests skipped; NumPy runtime is production-ready |
-| `.morph` DSL expansion | ⏳ Deferred | Parser + lexer work for simple programs; Python API is v1.0 interface |
-| GPU acceleration | ⏳ Post-v1.0 | Planned for v1.2 |
-| `pip install morphogen` | 🚧 Not yet | PyPI packaging is the remaining pre-v1.0 item |
-| Conformer generation | ⚠️ Stub | `load_smiles` 3D conformer generation requires RDKit |
-
----
-
-## Test Suite Breakdown
-
-```
-1,703 passed
-  209 skipped (MLIR Python bindings not installed)
-    0 failed
-    8 warnings (deprecation, expected)
-```
-
-Run: `python -m pytest --tb=short -q` (~90 seconds)
-
-Slow tests (benchmarks): `python -m pytest --benchmark-only`
-
----
-
-## Navigation
-
-- **What to build next** → [docs/STRATEGY.md](docs/STRATEGY.md)
-- **Detailed roadmap** → [docs/ROADMAP.md](docs/ROADMAP.md)
-- **Domain tutorials** → [docs/usage/](docs/usage/)
-- **Canonical examples** → [examples/canonical/](examples/canonical/)
-- **Cross-domain coupling** → [docs/usage/cross_domain_coupling.md](docs/usage/cross_domain_coupling.md)
-- **History** → [CHANGELOG.md](CHANGELOG.md)
+- **Where the project is going:** [docs/STRATEGY.md](docs/STRATEGY.md)
+- **What is being fixed right now:** [docs/PROGRESS_2026-04-17.md](docs/PROGRESS_2026-04-17.md)
+- **Roadmap framing:** [docs/ROADMAP.md](docs/ROADMAP.md)
+- **Project review:** [docs/PROJECT_REVIEW_2026-04-17.md](docs/PROJECT_REVIEW_2026-04-17.md)

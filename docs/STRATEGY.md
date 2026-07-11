@@ -17,23 +17,23 @@ beth_topics:
 
 ## The Honest Assessment
 
-Morphogen has real substance: 39 Python domain modules (hundreds to thousands of lines each), 612 operators, 1,912 tests collected (1,688 pass on Python runtime), and a cross-domain coupling architecture that is genuinely novel. The ideas are good and differentiated. The execution has uneven areas.
+Morphogen has real substance: a large Python domain library, a broad test suite, working cross-domain examples, and a coupling architecture that is genuinely differentiated. The ideas are good. The execution still has uneven areas.
 
 **What's solid:**
 - Python domain library — the `stdlib/` modules are real, implemented, and tested
 - Cross-domain coupling — the `cross_domain/` module with typed interfaces works
-- Core demos — guitar pedal, physics-to-audio, digital twin (partial), visual3d outputs
-- Test coverage — 1,688 tests pass on Python runtime; 206 skipped (MLIR not installed + unimplemented visual features); 18 slow/MLIR-required
+- Core demos — physics-to-audio, digital twin, physical instrument, and fluid/acoustics/audio all run
+- Test coverage — broad enough to support real regression fixing, though some render-path tests are environment-sensitive
 
 **What's aspirational:**
-- MLIR compilation — 207 tests currently skipped; not the runtime users actually use
+- MLIR compilation — important long-term work, but not the runtime users primarily use today
 - The `.morph` DSL — parser and lexer exist, but the Python API is already good
 - "Bitwise identical across GPU vendors" — true only once MLIR lands; today it's NumPy
 
 **What needs immediate work:**
-- Several showcase demos have surface-level API bugs (`visual.Visual`, `io_storage.save_image`) that make them crash partway through
-- No `pip install morphogen` yet
-- The most compelling story (cross-domain composition) isn't documented with working end-to-end examples
+- Packaging/install path still needs finish work
+- Top-level docs still contain stale counts and conflicting status claims
+- Real `visual3d` screenshot rendering is still environment-sensitive
 
 ---
 
@@ -83,17 +83,11 @@ Not aspirational claims about MLIR — honest description of the Python library 
 
 ## Immediate Work (Pre-v1.0, in priority order)
 
-### Fix Broken Demos
+### Keep Canonical Demos Healthy
 
-Several showcase demos crash on fixable API bugs. These are the highest-leverage fixes because they turn existing work into usable demos:
+The highest-leverage demo work now is less about reviving obviously broken scripts and more about preserving a trustworthy showcase set with smoke coverage.
 
-| Demo | Bug | Fix |
-|------|-----|-----|
-| `examples/cross_domain/fluid_acoustics_audio.py` | `visual.Visual` not an attribute | Import `Visual` from correct location |
-| `examples/showcase/07_physical_instrument.py` | `io_storage.save_image` API mismatch | Check current io_storage API |
-| `examples/showcase/08_digital_twin.py` | Crashes in demo 2 | Debug heat exchanger section |
-
-### PyPI Packaging
+### Packaging And Install Path
 
 `pip install morphogen` is the gateway to adoption. This needs:
 - `pyproject.toml` / `setup.py` with proper metadata
@@ -101,9 +95,9 @@ Several showcase demos crash on fixable API bugs. These are the highest-leverage
 - Basic `morphogen` CLI entry point
 - Test that installation works in a clean virtualenv
 
-### Three Canonical Cross-Domain Examples ✅ DONE (heating-dawn-0316)
+### Canonical Cross-Domain Examples
 
-`examples/canonical/` — all three run end-to-end and produce WAV output:
+`examples/canonical/` is the right shape for the project’s public surface:
 
 ```
 examples/canonical/
@@ -114,18 +108,11 @@ examples/canonical/
 
 ### Documentation Gaps
 
-| Gap | Status | What's Needed |
-|-----|--------|--------------|
-| audio_analysis narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/audio_analysis.md` |
-| instrument_model narrative | ✅ DONE (heating-dawn-0316) | `docs/usage/instrument_model.md` |
-| field domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/field.md` |
-| rigidbody domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/rigidbody.md` |
-| circuit domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/circuit.md` |
-| molecular domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/molecular.md` |
-| fluid_jet narrative | ✅ DONE (kufigi-0316) | `docs/usage/fluid_jet.md` |
-| cross_domain coupling guide | ✅ DONE (kufigi-0316) | `docs/usage/cross_domain_coupling.md` |
-| chemistry domain tutorial | ✅ DONE (kufigi-0316) | `docs/usage/chemistry_pipeline.md` |
-| audio_analysis → instrument_model pipeline | ✅ DONE (kufigi-0316) | `examples/canonical/04_analysis_to_instrument.py` |
+The highest-priority documentation gap now is not missing pages so much as **status coherence**:
+
+- README, roadmap, strategy, and status docs should not disagree about what is primary
+- exact counts should be used sparingly unless they are actively maintained
+- docs should clearly separate "works today" from "planned"
 
 ---
 

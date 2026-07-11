@@ -211,7 +211,7 @@ morphogen run hello.morph
 ```
 
 **Next steps:**
-- Try the [examples](examples/) directory (24 working examples)
+- Try the [examples](examples/) directory
 - Read [Getting Started](docs/getting-started.md) for a guided tutorial
 - Explore the [domain catalog](docs/DOMAINS.md) to see what's possible
 
@@ -220,12 +220,11 @@ morphogen run hello.morph
 ## 🚀 Project Status & v1.0 Roadmap
 
 **Current Status (v0.12.0):**
-- ✅ **39 production computational domains** (fully integrated with `use` statement)
-- ✅ **612 operators** accessible from Morphogen language
-- ✅ **1,688 tests passing** (206 MLIR/unimplemented skipped, 18 slow/MLIR-required)
-- ✅ MLIR compilation pipeline complete (6 phases)
 - ✅ Python runtime with NumPy backend
-- ✅ All legacy domains migrated to modern `@operator` system
+- ✅ Broad multi-domain stdlib and cross-domain examples
+- ✅ Active test suite and documentation set
+- ⏳ MLIR compilation work exists, but the Python runtime is the current primary surface
+- 📍 See [STATUS.md](STATUS.md) for the latest counts and implementation status
 
 **v1.0 Release Plan (24 weeks):**
 

@@ -1,10 +1,10 @@
 # Morphogen Roadmap
 
-**Current Version**: v0.12.0 (December 2025)
-**Next Milestone**: v1.0 - Production Release (Q2 2026)
-**Previous**: v0.11.0 (November 2025) - Project renamed to Morphogen
+**Current Version**: v0.12.0  
+**Next Milestone**: v1.0  
+**Updated**: 2026-04-17
 
-> **Single source of truth** for Morphogen's development roadmap. For detailed status, see [STATUS.md](../STATUS.md).
+> Roadmap document for direction and priorities. For current implementation status, see [STATUS.md](../STATUS.md). For recent repair work, see [PROGRESS_2026-04-17.md](PROGRESS_2026-04-17.md).
 
 ---
 
@@ -17,79 +17,17 @@
 
 ---
 
-## Current Status (v0.12.0)
+## Current Status
 
-**Released**: December 2025
+Morphogen currently has:
 
-### What's Complete ✅
+- a substantial Python runtime and stdlib
+- working cross-domain examples
+- a broad test suite
+- a DSL surface that is usable for documented introductory flows, but not yet the main product interface
+- compiler/MLIR work that remains secondary to the Python API in present-day usage
 
-**Core Infrastructure**:
-- ✅ Full language frontend (lexer, parser, type system)
-- ✅ Python runtime interpreter
-- ✅ USE statement (domain imports working)
-- ✅ Cross-domain transform registry (18 transforms)
-- ✅ MLIR compilation pipeline (6 phases complete)
-
-**Domains** ⭐:
-- ✅ **39 Production Domains** (fully registered, accessible via `use`)
-  - **612 operators total** (up from 386 in v0.11.0)
-  - All domains tested and documented
-  - All legacy domains migrated to modern `@operator` system
-  - Chemistry suite complete (9 domains)
-  - Physics suite complete (8 domains)
-  - Audio & synthesis complete (5 domains)
-
-**Testing**:
-- ✅ **1,912 comprehensive tests** (1,688 passing, 206 skipped, 18 slow/MLIR-required)
-- ✅ All 39 domains have test coverage
-- ✅ Cross-domain integration validated
-- ✅ Phase 3 domains fully tested (fluid_jet, audio_analysis, instrument_model)
-
-### v0.12.0 Migration Complete ✅
-
-**All Three Phases Completed**:
-
-✅ **Phase 1: High-Value Chemistry**
-- Domains: molecular, thermal_ode, fluid_network
-- Status: COMPLETE (all domains registered and tested)
-
-✅ **Phase 2: Chemistry Suite**
-- Domains: qchem, thermo, kinetics, electrochem, catalysis, transport
-- Status: COMPLETE (unified chemistry stack operational)
-
-✅ **Phase 3: Specialized Physics**
-- Domains: multiphase, combustion, fluid_jet, audio_analysis, instrument_model
-- Status: COMPLETE (all domains registered, 25 new tests added)
-
-**Achievement**: All 39 domains now accessible via `use` statement. Legacy migration complete.
-
-### Remaining Gaps ⚠️
-
-**3D Visualization** ✅ COMPLETE (2026-01-05):
-- 26 operators implemented in `visual3d.py`
-- 55 tests passing
-- See [Visual3D Quick Reference](reference/visual3d-quickref.md) for API
-
-**Molecular Features** ✅ COMPLETE (2026-03-16):
-- Geometry optimization: L-BFGS-B via scipy, element-pair bond parameters (mountain-rainbow-0316)
-- `run_md`: NVE + NVT (Langevin) with Maxwell-Boltzmann initialization, fs→ps unit fix (hudite-0316)
-- Trajectory analysis: `calculate_temperature`, `calculate_rmsd`, `radius_of_gyration` (mountain-rainbow-0316)
-- 2 tests remain skipped (conformer generation API mismatch — pre-existing, separate issue)
-
-**Test Coverage** ✅ COMPLETE (2026-03-16):
-- audio_analysis: 29 functional tests + 29 physics-level invariant tests (`test_audio_analysis.py`, `test_audio_physics.py`)
-- instrument_model: 35 functional tests + shared physics fixtures (`test_instrument_model.py`, `test_audio_physics.py`)
-- Total test count: **1,912** (up from 1,705 at v0.12.0)
-
-**Integration Examples** ✅ COMPLETE (2026-03-16, kufigi-0316):
-- `docs/usage/field.md` — Field domain narrative (heat diffusion, reaction-diffusion, advection)
-- `docs/usage/rigidbody.md` — Rigidbody narrative (collisions, forces, raycasting, → audio)
-- `docs/usage/circuit.md` — Circuit narrative (RC filter, op-amp, guitar pedal, transient/AC)
-- `docs/usage/molecular.md` — Molecular narrative (geometry opt, MD, trajectory analysis)
-- `docs/usage/fluid_jet.md` — Fluid jet narrative (single jets, entrainment, jet arrays, → field)
-- `docs/usage/chemistry_pipeline.md` — Chemistry pipeline: molecular → thermo → kinetics
-- `docs/usage/cross_domain_coupling.md` — How to write DomainInterface subclasses + registry
-- `examples/canonical/04_analysis_to_instrument.py` — audio_analysis → instrument_model → WAV
+This roadmap assumes the **Python-first** path remains the most practical route to v1.0.
 
 ---
 
@@ -100,15 +38,14 @@
 
 ### Three-Track Strategy
 
-#### Track 1: Language Evolution
-**Weeks 1-13** (Language maturity)
+#### Track 1: Language Surface
+**Goal:** make the language and CLI honest, stable, and predictable
 
-**Key Features**:
-- Type inference improvements
-- Error messaging enhancement
-- Standard library expansion
-- Cross-domain composition patterns
-- Performance optimizations
+**Key Work**:
+- CLI and DSL regression fixes
+- clearer error messages
+- keep the documented `.morph` path working
+- avoid expanding language surface faster than it can be tested
 
 **Deliverables**:
 - Improved developer experience
@@ -116,14 +53,14 @@
 - Comprehensive language docs
 - Performance benchmarks
 
-#### Track 2: Critical Domains
-**Weeks 1-12** (Domain polish)
+#### Track 2: Domain And Example Polish
+**Goal:** strengthen the Python API and the examples that demonstrate it
 
-**Key Domains**:
-- Circuit domain enhancements (AC/transient analysis)
-- Fluid dynamics improvements
-- Chemistry domain integration examples
-- Physics cross-domain patterns
+**Key Work**:
+- keep canonical examples runnable
+- improve cross-domain documentation
+- fix broken or misleading showcase surfaces
+- harden environment-sensitive areas like `visual3d`
 
 **Deliverables**:
 - Production-quality domain implementations
@@ -131,16 +68,14 @@
 - Performance benchmarks per domain
 - Domain-specific tutorials
 
-#### Track 3: Adoption & Polish
-**Weeks 1-24** (Community prep)
+#### Track 3: Packaging And Adoption
+**Goal:** make installation, onboarding, and positioning coherent
 
 **Key Work**:
-- PyPI packaging and release
-- Comprehensive documentation
-- Tutorial series (beginner → advanced)
-- Example gallery
-- Community infrastructure (Discord, docs site)
-- Marketing and positioning
+- unify packaging metadata
+- complete the path to `pip install morphogen`
+- reconcile top-level docs and status messaging
+- improve beginner-to-canonical onboarding
 
 **Deliverables**:
 - `pip install morphogen` working
@@ -152,41 +87,28 @@
 ### v1.0 Success Criteria
 
 **Technical Requirements**:
-- ✅ 40+ production domains
-- ✅ 500+ operators
-- ✅ USE statement fully working
-- ✅ MLIR compilation working
-- ✅ Test coverage >85%
-- ✅ Performance benchmarks established
+- stable Python runtime and CLI for documented entry paths
+- canonical cross-domain examples that run end-to-end
+- test suite that runs reliably in common local/CI environments
+- packaging/install story that is internally consistent
 
 **User Experience**:
-- ✅ `pip install morphogen` works
-- ✅ Getting started guide <10 minutes
-- ✅ Comprehensive API docs
-- ✅ 10+ showcase examples
-- ✅ Tutorial series complete
-- ✅ Error messages helpful
+- `pip install morphogen` or equivalent install path works cleanly
+- getting started path is short and accurate
+- README/docs reflect what is primary today
+- examples are discoverable and trustworthy
 
 **Community**:
-- ✅ GitHub Discussions active
-- ✅ Discord community established
-- ✅ Documentation site polished
-- ✅ Contributing guide clear
-- ✅ Code of conduct published
+- contributors can run the important tests without environment surprises
+- docs point to one coherent current-state story
+- contribution and packaging surfaces are low-friction
 
-### Release Schedule (Target)
+### Immediate Priorities
 
-**Week 22-23**: Release Candidate
-- Feature freeze
-- Bug fixing only
-- Documentation polish
-- Performance validation
-
-**Week 24**: v1.0 Launch
-- PyPI release
-- Documentation site live
-- Social media announcement
-- Community launch event
+1. Keep the Python-first surface stable.
+2. Eliminate stale or contradictory docs/status claims.
+3. Finish packaging cleanup and installation validation.
+4. Keep render/GUI-dependent tests opt-in or well-gated.
 
 ---
 
@@ -276,7 +198,7 @@
 - ✅ Audio_Analysis (9 ops) - Spectral analysis
 - ✅ Instrument_Model (12 ops) - Physical modeling synthesis
 
-**Total (v0.12.0)**: 39 production domains, 606 operators, 1,705 tests
+**Total (v0.12.0)**: broad multi-domain stdlib, substantial operator surface, and a large automated test suite
 
 ---
 
@@ -291,7 +213,7 @@
 2. ~~**Test Coverage Expansion**~~ ✅ COMPLETE (2026-03-16)
    - ~~Expand audio_analysis tests (smoke → functional)~~ — 29 functional + 29 physics tests added
    - ~~Expand instrument_model tests (smoke → functional)~~ — 35 functional tests added
-   - ~~Target: 30+ tests per domain~~ — exceeded; total suite now 1,912 tests
+   - keep domain-level regression coverage healthy
 
 3. ~~**Documentation Polish (audio_analysis + instrument_model)**~~ ✅ COMPLETE (heating-dawn-0316)
    - ~~Add narrative usage examples for audio_analysis + instrument_model~~
@@ -305,7 +227,7 @@
 
 ### P1 - Next Quarter (Q1 2026 - v1.0 Prep)
 1. **Performance Benchmarking**
-   - Establish baseline metrics across all 39 domains
+   - Establish baseline metrics across the major domain groups
    - Domain-specific benchmarks
    - Optimization opportunities identification
 
@@ -346,7 +268,7 @@
 - [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) - Full doc index
 
 ### Planning
-- [Performance Research](planning/PERFORMANCE_INFRASTRUCTURE_RESEARCH.md) - GPU optimization
+- [STRATEGY.md](STRATEGY.md) - strategic framing and v1 positioning
 - [ARCHIVE_HISTORY.md](ARCHIVE_HISTORY.md) - Historical documents moved to `~/Archive/morphogen/`
 
 ### Development
@@ -356,6 +278,6 @@
 
 ---
 
-**Last Updated**: 2026-01-05
+**Last Updated**: 2026-04-17
 **Next Review**: Monthly (first week of each month)
 **Maintainer**: See [CONTRIBUTING.md](../CONTRIBUTING.md)

@@ -24,7 +24,7 @@ Morphogen is building toward something transformative: a universal platform wher
 
 **Before contributing:**
 
-1. **Explore the architecture** — Read [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/domain-architecture.md](docs/architecture/domain-architecture.md)
+1. **Explore the architecture** — Read [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/README.md](docs/architecture/README.md)
 2. **Understand the vision** — Check [README.md](README.md) and [docs/philosophy/](docs/philosophy/)
 3. **Review existing work** — Look at [open issues](https://github.com/scottsen/morphogen/issues) and [pull requests](https://github.com/scottsen/morphogen/pulls)
 4. **Check the status** — See [STATUS.md](STATUS.md) for current implementation status
@@ -80,7 +80,7 @@ Help implement new domains to expand Morphogen's capabilities:
 
 **Resources:**
 - [Domain Implementation Guide](docs/guides/domain-implementation.md)
-- [Domain Architecture](docs/architecture/domain-architecture.md)
+- [Architecture Documentation](docs/architecture/README.md)
 - [Existing domain specifications](docs/specifications/)
 
 ### 2. Core Infrastructure
