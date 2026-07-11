@@ -6,6 +6,12 @@
 
 > Roadmap document for direction and priorities. For current implementation status, see [STATUS.md](../STATUS.md). For recent repair work, see [PROGRESS_2026-04-17.md](PROGRESS_2026-04-17.md).
 
+> ⚠️ **The actionable work now lives in [/BACKLOG.md](../BACKLOG.md).** Every concrete
+> P0 item below is checked ✅ done; what remains here is direction/vision. The real,
+> prioritized, evidence-based work list — grounded in the 2026-07-11 code-reality audit
+> ([docs/reviews/2026-07-11-code-reality-and-paths-forward.md](reviews/2026-07-11-code-reality-and-paths-forward.md))
+> — is in BACKLOG.md. Start there.
+
 ---
 
 ## Quick Navigation
