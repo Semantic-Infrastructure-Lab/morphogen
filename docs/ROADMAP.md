@@ -223,9 +223,11 @@ This roadmap assumes the **Python-first** path remains the most practical route 
    verified (guarded by `tests/test_packaging.py`). **PyPI publication is not
    a goal** — git-based install is the distribution story for v1.0.
 
-5. **Documentation polish** (remaining)
-   - Chemistry domain tutorials
-   - Cross-domain coupling guide ("how typed domain interfaces work")
+5. **Documentation polish**
+   - Chemistry domain tutorials (remaining)
+   - ~~Cross-domain coupling guide ("how typed domain interfaces work")~~ ✅
+     `docs/usage/cross_domain_coupling.md` — includes the `@DomainTransform`
+     shorthand with real `input_types` validation
 
 ### P1 - Next Quarter (Q1 2026 - v1.0 Prep)
 1. **Performance Benchmarking**
