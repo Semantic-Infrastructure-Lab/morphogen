@@ -30,7 +30,6 @@ def test_stateful_params_config():
     print("✅ State management correctly configured")
     print(f"   - EXECUTOR-MANAGED: phase (type: {EXECUTOR_MANAGED_STATE['phase'].__name__})")
     print(f"   - OPERATOR-MANAGED: filter_state ({OPERATOR_MANAGED_STATE['filter_state']} samples)")
-    return True
 
 
 def test_phase_state_auto_creation():
@@ -63,7 +62,6 @@ def test_phase_state_auto_creation():
     print("✅ Phase state automatically created")
     print(f"   - State type: {type(phase_state).__name__}")
     print(f"   - Phase value: {phase_state:.6f} radians")
-    return True
 
 
 def test_phase_continuity():
@@ -108,7 +106,6 @@ def test_phase_continuity():
     print(f"   - Chunks processed: {num_chunks}")
     print(f"   - Max error vs continuous: {max_error:.2e}")
     print(f"   - Continuity quality: {'EXCELLENT' if max_error < 1e-6 else 'GOOD'}")
-    return True
 
 
 def test_filter_state_auto_creation():
@@ -147,7 +144,6 @@ def test_filter_state_auto_creation():
     print(f"   - State type: {type(filter_state).__name__}")
     print(f"   - State size: {len(filter_state.data)} samples (biquad [z1, z2])")
     print(f"   - State values: [{filter_state.data[0]:.6f}, {filter_state.data[1]:.6f}]")
-    return True
 
 
 def test_filter_state_continuity():
@@ -203,7 +199,6 @@ def test_filter_state_continuity():
     print(f"   - Chunks processed: {num_chunks}")
     print(f"   - Max error vs continuous: {max_error:.2e}")
     print(f"   - Continuity quality: {'EXCELLENT' if max_error < 1e-6 else 'GOOD'}")
-    return True
 
 
 def test_state_isolation():
@@ -247,7 +242,6 @@ def test_state_isolation():
     print(f"   - osc_A phase: {phase_A:.6f} radians")
     print(f"   - osc_B phase: {phase_B:.6f} radians")
     print(f"   - States are independent: True")
-    return True
 
 
 def main():

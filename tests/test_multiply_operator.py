@@ -48,7 +48,7 @@ def test_ring_modulation():
     modulator = audio.sine(freq=modulator_freq, duration=0.5, sample_rate=48000)
 
     # Ring modulation
-    ring_mod = audio.multiply(carrier, modulator, gain=1.0)
+    ring_mod = audio.multiply(carrier, modulator, gain_val=1.0)
 
     print(f"Carrier: {carrier_freq}Hz")
     print(f"Modulator: {modulator_freq}Hz")
@@ -85,7 +85,7 @@ def test_amplitude_modulation():
     )
 
     # Apply envelope via multiplication
-    shaped = audio.multiply(saw, envelope, gain=1.0)
+    shaped = audio.multiply(saw, envelope, gain_val=1.0)
 
     print(f"Sawtooth: {saw.num_samples} samples")
     print(f"Envelope: {envelope.num_samples} samples")
@@ -153,9 +153,9 @@ def test_gain_parameter():
     sig2 = audio.sine(freq=220.0, duration=0.1, sample_rate=48000)
 
     # Test with different gains
-    result_unity = audio.multiply(sig1, sig2, gain=1.0)
-    result_half = audio.multiply(sig1, sig2, gain=0.5)
-    result_double = audio.multiply(sig1, sig2, gain=2.0)
+    result_unity = audio.multiply(sig1, sig2, gain_val=1.0)
+    result_half = audio.multiply(sig1, sig2, gain_val=0.5)
+    result_double = audio.multiply(sig1, sig2, gain_val=2.0)
 
     rms_unity = np.sqrt(np.mean(result_unity.data ** 2))
     rms_half = np.sqrt(np.mean(result_half.data ** 2))
