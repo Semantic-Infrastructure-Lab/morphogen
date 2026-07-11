@@ -57,7 +57,7 @@ Welcome to the Morphogen documentation! This guide will help you navigate the do
 **Critical Path to v1.0:**
 - **3D Visualization**: PyVista integration, camera, lighting, scene graph (12 weeks)
 - **Molecular Features**: Geometry optimization, MD simulations
-- **Community**: PyPI, docs, tutorials
+- **Community**: docs, tutorials (git-based install, not PyPI)
 
 See [ROADMAP.md](ROADMAP.md) for complete details and implementation tracking.
 

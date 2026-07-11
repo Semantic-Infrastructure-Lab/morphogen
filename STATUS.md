@@ -82,8 +82,8 @@ This keeps the default suite stable on machines where VTK off-screen rendering i
 - Real VTK screenshot rendering remains environment-sensitive
 - Some advanced roadmap language still reflects aspiration more than current default usage
 - `pip install .` now succeeds in a clean virtualenv and installs a working
-  `morphogen` CLI (guarded by `tests/test_packaging.py`); the actual PyPI
-  upload/release automation is still pending
+  `morphogen` CLI (guarded by `tests/test_packaging.py`); git-based install
+  is the distribution story for v1.0 — PyPI publication is not a goal
 
 ## Recommended Reading
 

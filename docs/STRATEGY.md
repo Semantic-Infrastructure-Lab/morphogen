@@ -61,8 +61,8 @@ This reframing changes the success criteria and what work actually matters.
 
 ### v1.0 Success = These 5 Things
 
-**1. `pip install morphogen` works.**
-A researcher should be able to install Morphogen and run a cross-domain simulation in under 10 minutes. Currently there's no PyPI package. This is the single most important unblocked task.
+**1. `pip install` from a git checkout works cleanly.**
+A researcher should be able to clone the repo, `pip install .`, and run a cross-domain simulation in under 10 minutes. **PyPI publication is explicitly out of scope** — git-based install is the distribution story for v1.0.
 
 **2. Five showcase demos run end-to-end without errors.**
 Right now several demos crash on API mismatches. Five clean, visually compelling demos are more valuable than 50 partial ones.
@@ -89,11 +89,11 @@ The highest-leverage demo work now is less about reviving obviously broken scrip
 
 ### Packaging And Install Path
 
-`pip install morphogen` is the gateway to adoption. This needs:
-- `pyproject.toml` / `setup.py` with proper metadata
-- Dependencies pinned (numpy, scipy, etc.)
-- Basic `morphogen` CLI entry point
-- Test that installation works in a clean virtualenv
+`pip install .` from a git checkout is the gateway to adoption (not PyPI). This needed:
+- `pyproject.toml` with proper metadata ✅
+- Dependencies pinned (numpy, scipy, etc.) ✅
+- Basic `morphogen` CLI entry point ✅
+- Test that installation works in a clean virtualenv ✅ (`tests/test_packaging.py`)
 
 ### Canonical Cross-Domain Examples
 
@@ -122,7 +122,9 @@ The highest-priority documentation gap now is not missing pages so much as **sta
 
 ## What NOT to Work On (Before v1.0)
 
-**MLIR compilation expansion.** The 207 skipped tests represent real future value, but investing here before PyPI and working demos is premature optimization. The NumPy runtime is fast enough for all current use cases.
+**MLIR compilation expansion.** The 207 skipped tests represent real future value, but investing here before working demos is premature optimization. The NumPy runtime is fast enough for all current use cases.
+
+**PyPI publication.** Not a v1.0 goal. Git-based install (`pip install .` from a checkout) is the distribution story; revisit publishing only if/when there's a concrete adoption need for it.
 
 **More domains.** 39 is enough. Depth and examples on existing domains beat breadth.
 

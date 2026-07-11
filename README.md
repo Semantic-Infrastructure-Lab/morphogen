@@ -238,7 +238,7 @@ Morphogen is on an aggressive path to v1.0 with a three-track strategy:
    - **Target: 50+ domains**
 
 3. **Track 3 - Adoption & Polish** (ongoing)
-   - PyPI release (alpha in week 4)
+   - Git-based install path (not PyPI)
    - 5 showcase examples with videos
    - 7 progressive tutorials
    - Complete API documentation

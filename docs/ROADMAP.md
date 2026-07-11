@@ -73,12 +73,12 @@ This roadmap assumes the **Python-first** path remains the most practical route 
 
 **Key Work**:
 - unify packaging metadata
-- complete the path to `pip install morphogen`
+- complete the path to `pip install .` from a git checkout (PyPI is not a goal)
 - reconcile top-level docs and status messaging
 - improve beginner-to-canonical onboarding
 
 **Deliverables**:
-- `pip install morphogen` working
+- `pip install .` from a git checkout working
 - Polished documentation site
 - 10+ showcase examples
 - Community channels established
@@ -93,7 +93,7 @@ This roadmap assumes the **Python-first** path remains the most practical route 
 - packaging/install story that is internally consistent
 
 **User Experience**:
-- `pip install morphogen` or equivalent install path works cleanly
+- `pip install .` from a git checkout (or equivalent) works cleanly
 - getting started path is short and accurate
 - README/docs reflect what is primary today
 - examples are discoverable and trustworthy
@@ -218,11 +218,10 @@ This roadmap assumes the **Python-first** path remains the most practical route 
 3. ~~**Documentation Polish (audio_analysis + instrument_model)**~~ ✅ COMPLETE (heating-dawn-0316)
    - ~~Add narrative usage examples for audio_analysis + instrument_model~~
 
-4. **PyPI Packaging** — `pip install morphogen` in a clean venv
-   - ~~pyproject.toml metadata, pinned deps, `morphogen` CLI entry point~~ ✅
-     clean-venv `pip install .` works; wheel scoped to the `morphogen` package;
-     CLI entry point verified (guarded by `tests/test_packaging.py`)
-   - Remaining: publish to PyPI + release automation
+4. ~~**Packaging**~~ ✅ COMPLETE — `pip install .` from a git checkout works in
+   a clean venv; wheel scoped to the `morphogen` package; CLI entry point
+   verified (guarded by `tests/test_packaging.py`). **PyPI publication is not
+   a goal** — git-based install is the distribution story for v1.0.
 
 5. **Documentation polish** (remaining)
    - Chemistry domain tutorials
@@ -240,7 +239,6 @@ This roadmap assumes the **Python-first** path remains the most practical route 
    - Example gallery expansion (target: 50+ examples)
 
 3. **Community Infrastructure**
-   - PyPI release automation
    - Documentation site updates
    - Tutorial series expansion
 
@@ -251,7 +249,6 @@ This roadmap assumes the **Python-first** path remains the most practical route 
    - Cross-domain patterns
 
 2. **Community Infrastructure**
-   - PyPI release automation
    - Documentation site
    - Tutorial series
 

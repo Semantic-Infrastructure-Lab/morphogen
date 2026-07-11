@@ -51,7 +51,7 @@
 - The Honest Assessment (what's solid, aspirational, broken)
 - The Strategic Choice (Python API-first vs DSL-first)
 - What v1.0 Should Actually Be (5 concrete success criteria)
-- Immediate Work (fix broken demos, PyPI, canonical examples)
+- Immediate Work (fix broken demos, packaging, canonical examples)
 - What NOT to Work On Before v1.0
 - Post-v1.0 Vision (symbolic execution, MLIR, category-theoretic optimization, Philbrick)
 
