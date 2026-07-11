@@ -125,12 +125,8 @@ class ConstantFoldingPass(OptimizationPass):
         """
         # Check for constant marker
         if ssa_name.startswith("%c"):
-            try:
-                # Try to extract numeric value
-                # Real implementation would track constant definitions
-                return None  # Simplified: don't parse
-            except:
-                pass
+            # Real implementation would track constant definitions; simplified: don't parse
+            return None
         return None
 
     _ARITH_OPS = {

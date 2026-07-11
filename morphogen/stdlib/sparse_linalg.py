@@ -403,8 +403,8 @@ def incomplete_cholesky(A: sparse.spmatrix) -> sparse.linalg.LinearOperator:
         # Attempt incomplete Cholesky
         ilu = sp_linalg.spilu(A.tocsc())
         return sp_linalg.LinearOperator(A.shape, ilu.solve)
-    except:
-        # Fallback to incomplete LU
+    except (RuntimeError, ValueError):
+        # Factorization failed (e.g. singular / not factorizable) -> fall back to incomplete LU
         import warnings
         warnings.warn("Incomplete Cholesky failed, using incomplete LU instead")
         return incomplete_lu(A)

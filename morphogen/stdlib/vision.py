@@ -652,8 +652,8 @@ class VisionOperations:
                     flow = np.linalg.lstsq(A, b, rcond=None)[0]
                     flow_x[i, j] = flow[0]
                     flow_y[i, j] = flow[1]
-                except:
-                    pass
+                except np.linalg.LinAlgError:
+                    pass  # singular window (no texture) -> leave flow at 0
 
         return flow_x, flow_y
 
