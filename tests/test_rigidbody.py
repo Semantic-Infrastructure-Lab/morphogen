@@ -26,6 +26,8 @@ from morphogen.stdlib.rigidbody import (
     clear_forces,
     integrate_body,
     detect_circle_circle_collision,
+    detect_circle_box_collision,
+    detect_box_box_collision,
     detect_collisions,
     resolve_collision,
     step_world,
@@ -253,6 +255,114 @@ def test_detect_collisions_world():
     assert len(contacts) == 1
     assert contacts[0].body_a == 0
     assert contacts[0].body_b == 1
+
+
+def test_circle_box_collision_no_overlap():
+    """Test no collision when a circle is well clear of a box."""
+    circle = create_circle_body(np.array([5.0, 0.0]), radius=0.5, mass=1.0)
+    box = create_box_body(np.array([0.0, 0.0]), width=1.0, height=1.0, mass=1.0)
+    circle.id = 0
+    box.id = 1
+
+    contact = detect_circle_box_collision(circle, box)
+    assert contact is None
+
+
+def test_circle_box_collision_overlap():
+    """Test collision detection when a circle overlaps an axis-aligned box edge."""
+    circle = create_circle_body(np.array([1.2, 0.0]), radius=0.5, mass=1.0)
+    box = create_box_body(np.array([0.0, 0.0]), width=2.0, height=2.0, mass=1.0)
+    circle.id = 0
+    box.id = 1
+
+    contact = detect_circle_box_collision(circle, box)
+
+    assert contact is not None
+    assert contact.body_a == 0  # circle
+    assert contact.body_b == 1  # box
+    # Box half-width is 1.0; circle center at 1.2 with radius 0.5
+    assert np.isclose(contact.penetration, 0.3)
+    assert np.allclose(contact.normal, [-1.0, 0.0])  # circle -> box points left
+
+
+def test_circle_box_collision_rotated_box():
+    """Test circle-box collision against a 45-degree rotated box."""
+    box = create_box_body(np.array([0.0, 0.0]), width=2.0, height=2.0, mass=1.0)
+    box.rotation = np.pi / 4  # rotate 45 degrees
+    circle = create_circle_body(np.array([1.5, 0.0]), radius=0.3, mass=1.0)
+    circle.id = 0
+    box.id = 1
+
+    contact = detect_circle_box_collision(circle, box)
+    assert contact is not None
+    assert contact.penetration > 0
+
+
+def test_circle_box_collision_center_inside_box():
+    """Test the edge case where the circle center is embedded in the box."""
+    circle = create_circle_body(np.array([0.3, 0.0]), radius=0.2, mass=1.0)
+    box = create_box_body(np.array([0.0, 0.0]), width=4.0, height=4.0, mass=1.0)
+    circle.id = 0
+    box.id = 1
+
+    contact = detect_circle_box_collision(circle, box)
+    assert contact is not None
+    assert contact.penetration > 0
+
+
+def test_box_box_collision_no_overlap():
+    """Test no collision when two axis-aligned boxes don't overlap."""
+    body_a = create_box_body(np.array([0.0, 0.0]), width=1.0, height=1.0, mass=1.0)
+    body_b = create_box_body(np.array([5.0, 0.0]), width=1.0, height=1.0, mass=1.0)
+    body_a.id = 0
+    body_b.id = 1
+
+    contact = detect_box_box_collision(body_a, body_b)
+    assert contact is None
+
+
+def test_box_box_collision_overlap():
+    """Test collision detection when two axis-aligned boxes overlap."""
+    body_a = create_box_body(np.array([0.0, 0.0]), width=2.0, height=2.0, mass=1.0)
+    body_b = create_box_body(np.array([1.5, 0.0]), width=2.0, height=2.0, mass=1.0)
+    body_a.id = 0
+    body_b.id = 1
+
+    contact = detect_box_box_collision(body_a, body_b)
+
+    assert contact is not None
+    assert contact.body_a == 0
+    assert contact.body_b == 1
+    # Half-widths are 1.0 each; centers 1.5 apart -> overlap of 0.5 on the x axis
+    assert np.isclose(contact.penetration, 0.5)
+    assert np.allclose(contact.normal, [1.0, 0.0])  # A -> B points right
+
+
+def test_box_box_collision_rotated():
+    """Test SAT box-box collision when one box is rotated 45 degrees."""
+    body_a = create_box_body(np.array([0.0, 0.0]), width=2.0, height=2.0, mass=1.0)
+    body_b = create_box_body(np.array([1.4, 0.0]), width=1.0, height=1.0, mass=1.0)
+    body_b.rotation = np.pi / 4
+    body_a.id = 0
+    body_b.id = 1
+
+    contact = detect_box_box_collision(body_a, body_b)
+    assert contact is not None
+    assert contact.penetration > 0
+
+
+def test_detect_collisions_world_mixed_shapes():
+    """Test broad-phase dispatch handles circle-box and box-box pairs."""
+    world = PhysicsWorld2D()
+    world.add_body(create_circle_body(np.array([0.0, 0.0]), radius=0.5, mass=1.0))
+    world.add_body(create_box_body(np.array([0.7, 0.0]), width=1.0, height=1.0, mass=1.0))
+    world.add_body(create_box_body(np.array([0.7, 5.0]), width=1.0, height=1.0, mass=1.0))
+
+    contacts = detect_collisions(world)
+
+    # Only the circle (id=0) and first box (id=1) should be in contact
+    assert len(contacts) == 1
+    assert {contacts[0].body_a, contacts[0].body_b} == {0, 1}
 
 
 # ============================================================================

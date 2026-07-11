@@ -445,6 +445,145 @@ def detect_circle_circle_collision(
 @operator(
     domain="rigidbody",
     category=OpCategory.QUERY,
+    signature="(circle_body: RigidBody2D, box_body: RigidBody2D) -> Optional[Contact]",
+    deterministic=True,
+    doc="Detect collision between a circle and a (possibly rotated) box"
+)
+def detect_circle_box_collision(
+    circle_body: RigidBody2D,
+    box_body: RigidBody2D
+) -> Optional[Contact]:
+    """Detect collision between a circle and a (possibly rotated) box.
+
+    Args:
+        circle_body: Circle-shaped body
+        box_body: Box-shaped body
+
+    Returns:
+        Contact (body_a=circle, body_b=box; normal points circle -> box) or
+        None if not colliding
+    """
+    radius = circle_body.shape_params["radius"]
+    width = box_body.shape_params["width"]
+    height = box_body.shape_params["height"]
+    hw, hh = width / 2.0, height / 2.0
+
+    # Transform circle center into the box's local (unrotated) frame
+    cos_r = np.cos(box_body.rotation)
+    sin_r = np.sin(box_body.rotation)
+    rel = circle_body.position - box_body.position
+    local_x = rel[0] * cos_r + rel[1] * sin_r
+    local_y = -rel[0] * sin_r + rel[1] * cos_r
+
+    inside = abs(local_x) <= hw and abs(local_y) <= hh
+    closest_x = np.clip(local_x, -hw, hw)
+    closest_y = np.clip(local_y, -hh, hh)
+
+    if inside:
+        # Circle center is embedded in the box: push out through the nearest wall
+        dx = hw - abs(local_x)
+        dy = hh - abs(local_y)
+        if dx < dy:
+            closest_x = hw if local_x >= 0 else -hw
+        else:
+            closest_y = hh if local_y >= 0 else -hh
+
+    # Closest box-surface point, back in world space
+    world_closest = box_body.position + np.array([
+        closest_x * cos_r - closest_y * sin_r,
+        closest_x * sin_r + closest_y * cos_r,
+    ])
+
+    delta = world_closest - circle_body.position  # circle -> box surface
+    distance = np.linalg.norm(delta)
+
+    if inside:
+        normal = -delta / distance if distance > 1e-9 else np.array([1.0, 0.0])
+        penetration = radius + distance
+    else:
+        if distance >= radius:
+            return None
+        normal = delta / distance if distance > 1e-9 else np.array([1.0, 0.0])
+        penetration = radius - distance
+
+    tangent = np.array([-normal[1], normal[0]])
+
+    return Contact(
+        body_a=circle_body.id,
+        body_b=box_body.id,
+        point=world_closest,
+        normal=normal,
+        penetration=penetration,
+        tangent=tangent
+    )
+
+
+def _box_axes(body: RigidBody2D) -> np.ndarray:
+    """Unit edge-normal axes of a possibly-rotated box, in world space."""
+    cos_r = np.cos(body.rotation)
+    sin_r = np.sin(body.rotation)
+    return np.array([[cos_r, sin_r], [-sin_r, cos_r]])
+
+
+@operator(
+    domain="rigidbody",
+    category=OpCategory.QUERY,
+    signature="(body_a: RigidBody2D, body_b: RigidBody2D) -> Optional[Contact]",
+    deterministic=True,
+    doc="Detect collision between two (possibly rotated) boxes via SAT"
+)
+def detect_box_box_collision(
+    body_a: RigidBody2D,
+    body_b: RigidBody2D
+) -> Optional[Contact]:
+    """Detect collision between two boxes using the Separating Axis Theorem.
+
+    Args:
+        body_a: First box body
+        body_b: Second box body
+
+    Returns:
+        Contact if the boxes overlap on every candidate axis, None otherwise.
+        The contact point is approximated as the midpoint between the two
+        body centers (sufficient for the impulse solver; not exact clipping).
+    """
+    verts_a = get_body_vertices(body_a)
+    verts_b = get_body_vertices(body_b)
+
+    min_overlap = np.inf
+    min_axis = None
+
+    for axis in np.vstack([_box_axes(body_a), _box_axes(body_b)]):
+        proj_a = verts_a @ axis
+        proj_b = verts_b @ axis
+        overlap = min(proj_a.max(), proj_b.max()) - max(proj_a.min(), proj_b.min())
+        if overlap <= 0:
+            return None  # separating axis found -> no collision
+        if overlap < min_overlap:
+            min_overlap = overlap
+            min_axis = axis
+
+    # Orient the axis of minimum penetration to point from A to B
+    normal = min_axis
+    if np.dot(body_b.position - body_a.position, normal) < 0:
+        normal = -normal
+
+    contact_point = (body_a.position + body_b.position) / 2.0
+    tangent = np.array([-normal[1], normal[0]])
+
+    return Contact(
+        body_a=body_a.id,
+        body_b=body_b.id,
+        point=contact_point,
+        normal=normal,
+        penetration=min_overlap,
+        tangent=tangent
+    )
+
+
+@operator(
+    domain="rigidbody",
+    category=OpCategory.QUERY,
     signature="(world: PhysicsWorld2D) -> List[Contact]",
     deterministic=True,
     doc="Detect all collisions in the world (broad phase + narrow phase)"
@@ -466,12 +605,20 @@ def detect_collisions(world: PhysicsWorld2D) -> List[Contact]:
 
     for i, body_a in enumerate(world.bodies):
         for body_b in world.bodies[i + 1:]:
-            # Check shape type compatibility
+            contact = None
             if body_a.shape_type == ShapeType.CIRCLE and body_b.shape_type == ShapeType.CIRCLE:
                 contact = detect_circle_circle_collision(body_a, body_b)
-                if contact is not None:
-                    contacts.append(contact)
-            # TODO: Add box-box, circle-box, polygon collisions
+            elif body_a.shape_type == ShapeType.CIRCLE and body_b.shape_type == ShapeType.BOX:
+                contact = detect_circle_box_collision(body_a, body_b)
+            elif body_a.shape_type == ShapeType.BOX and body_b.shape_type == ShapeType.CIRCLE:
+                contact = detect_circle_box_collision(body_b, body_a)
+            elif body_a.shape_type == ShapeType.BOX and body_b.shape_type == ShapeType.BOX:
+                contact = detect_box_box_collision(body_a, body_b)
+            # ShapeType.POLYGON has no constructor/vertex support yet, so it
+            # can't actually appear on a body today; nothing to dispatch to.
+
+            if contact is not None:
+                contacts.append(contact)
 
     return contacts
 
