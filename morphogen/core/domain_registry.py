@@ -219,7 +219,6 @@ def register_stdlib_domains() -> None:
         ("geometry", "morphogen.stdlib.geometry", "2D/3D geometry, spatial operations, and mesh processing"),
         ("circuit", "morphogen.stdlib.circuit", "Circuit and electrical simulation"),
         ("molecular", "morphogen.stdlib.molecular", "Molecular structure, mechanics, and dynamics"),
-        ("qchem", "morphogen.stdlib.qchem", "Quantum chemistry calculations and ML potential energy surfaces"),
         ("thermo", "morphogen.stdlib.thermo", "Thermodynamic properties and equations of state"),
         ("thermal_ode", "morphogen.stdlib.thermal_ode", "1D thermal modeling and heat transfer"),
         ("fluid_network", "morphogen.stdlib.fluid_network", "1D fluid network modeling"),

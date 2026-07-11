@@ -1,14 +1,20 @@
-"""QChemDomain - Quantum chemistry calculations and ML potential energy surfaces.
+"""QChem — EXPERIMENTAL / NOT IMPLEMENTED. Do not use for real numbers.
 
-This module provides interfaces to quantum chemistry codes (DFT, ab initio),
-semi-empirical methods, and machine learning surrogate models for molecular
-energies and forces. Essential for reaction mechanism studies and materials design.
+⚠️  This is *not* a validated Morphogen domain. Unlike the rigorous domains
+(circuit, integrators, controls, thermo, …) which are checked against analytic
+ground truth, **every energy/force/frequency function here returns a fabricated
+placeholder** (e.g. a flat ``-0.5 Hartree`` per electron) and emits a stub warning.
+It is API scaffolding for a future interface to real QM codes (ORCA, Psi4,
+Gaussian) and ML potentials — the "production" bodies exist only in docstrings.
 
-Specification: docs/specifications/chemistry.md
+It lives under ``morphogen.stdlib.experimental`` and is deliberately **not**
+auto-imported by ``morphogen.stdlib`` nor counted among the domains, so its
+fabricated numbers cannot be mistaken for validated physics (BACKLOG P0-3). To
+poke at the intended interface you must import it explicitly:
 
-Note: For production use, this module interfaces with external QM codes (ORCA, Psi4,
-Gaussian, Q-Chem) and ML frameworks (SchNet, DimeNet, PaiNN). Current implementation
-provides the API structure with placeholder implementations.
+    from morphogen.stdlib.experimental import qchem   # you asked for the stub
+
+Specification (aspirational): docs/specifications/chemistry.md
 """
 
 import numpy as np
@@ -20,6 +26,13 @@ import tempfile
 import os
 
 from morphogen.core.operator import operator, OpCategory
+
+warnings.warn(
+    "morphogen.stdlib.experimental.qchem is NOT implemented: every energy/force "
+    "function returns a fabricated placeholder, not real physics. It is not a "
+    "validated domain. See the module docstring.",
+    stacklevel=2,
+)
 
 
 # ============================================================================
@@ -50,7 +63,7 @@ class QMSettings:
 
 # Import Molecule type from molecular module
 try:
-    from .molecular import Molecule
+    from ..molecular import Molecule
 except ImportError:
     # Fallback if running standalone
     Molecule = None

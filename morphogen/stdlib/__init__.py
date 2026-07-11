@@ -25,7 +25,8 @@ from .instrument_model import instrument, InstrumentModelOperations, InstrumentM
 # Chemistry domains
 from . import molecular
 from . import kinetics
-from . import qchem
+# qchem is NOT a validated domain — it fabricates numbers. Retired to
+# morphogen.stdlib.experimental.qchem (BACKLOG P0-3); import it explicitly if needed.
 from . import transport
 from . import multiphase
 from . import thermo
@@ -92,7 +93,7 @@ __all__ = [
     # Chemistry domains
     "molecular",
     "kinetics",
-    "qchem",
+    # "qchem" removed — not validated (fabricates numbers); now experimental.qchem (P0-3)
     "transport",
     "multiphase",
     "thermo",
