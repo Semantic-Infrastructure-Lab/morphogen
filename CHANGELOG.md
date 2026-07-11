@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Shipped (meteoric-star-0711, 2026-07-11)
+
+**The coupling substrate is built, and the P0 credibility gaps are closed.**
+
+- **`morphogen.coupling`** — the North-Star layer now ships: `couple(subsystems, steps, dt)`
+  co-advances rigorous domains with per-timestep feedback (sequential co-sim, ZOH, multi-rate).
+  Flagship 3-domain demo (thermal ↔ mechanics ↔ control cold-start). 11 tests guard it.
+  See `docs/usage/coupled_simulation.md`.
+- **Credibility pass:** determinism is now real (seed applied, not just stored — P0-1); the
+  non-functional auto-composition engine is retired (P0-2); fabricating `qchem` is quarantined
+  out of the domain namespace (P0-3); README + PITCH reframed library-first with honest tiered
+  domain counts (P1-2/P0-4); `cli.cmd_run` complexity 27 → 4 (P2-1).
+
 ### Direction (chaotic-star-0711, 2026-07-11)
 
 **Composition thesis tested and retired; coupling substrate identified as the buildable North Star.**

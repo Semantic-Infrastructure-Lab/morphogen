@@ -29,53 +29,40 @@ Priorities: **P0** = says-something-false-or-broken that ships today (credibilit
 
 ## P0 — Correctness & credibility (things currently false or broken)
 
-### P0-1 — Make determinism real, or stop claiming it
-"Deterministic" is in Morphogen's one-line identity, but `global_seed`/`--seed` is stored
-(`runtime.py:250`) and **never applied** to any RNG (no `np.random.seed`/`default_rng`
-consumes it; profiles unenforced).
-- **Do:** thread a seeded `numpy.random.Generator` from `ExecutionContext.global_seed` through
-  execution so stdlib RNG draws are reproducible; make `strict/repro/live` actually branch —
-  OR remove the determinism claim from README/PITCH/identity until it's true.
-- **Accept:** running the same `.morph`/API program twice with a fixed seed yields
-  bit-identical output, proven by a new `tests/test_determinism.py`; OR the claim is gone.
-- **Evidence:** `grep -rn global_seed morphogen/`; `03_aspirational_stack` finding #5.
+### P0-1 — Make determinism real, or stop claiming it  ·  ✅ DONE 2026-07-11 (meteoric-star)
+"Deterministic" is in Morphogen's one-line identity, but `global_seed`/`--seed` was stored
+(`runtime.py:250`) and **never applied** to any RNG.
+- **Done:** `ExecutionContext.__init__` now *applies* the seed — seeds the process-global
+  RNGs the stdlib actually uses (`np.random`: 77 call sites; stdlib `random`) and exposes a
+  dedicated seeded `context.rng` Generator; added `apply_seed(seed)` to reseed midstream.
+  `tests/test_determinism.py` (6 tests) proves same-seed→identical output for np.random,
+  stdlib random, and context.rng, that different seeds diverge, and that a real stdlib code
+  path (`flappy.random_controller`) reproduces. (`strict/repro/live` profiles don't exist in
+  the runtime — that part of the old claim was aspirational; not added.)
 
-### P0-2 — Retire the cross-domain composer  ·  DECIDED → option (b), by P1-1
-`TransformPipeline.__call__` (`composer.py:215`) raises `ValueError` on every registered
-built-in (it passes `source_data=` which every `__init__` rejects). The showcase
-(`examples/cross_domain/01_transform_composition.py:164-180`) hides the guaranteed failure in
-a `try/except` that prints "Pipeline creation note." No test executes the composer.
-- **P1-1 settled the fix-or-retire question: RETIRE (option b).** The experiment
-  ([composition-vs-glue](docs/reviews/2026-07-11-composition-vs-glue-experiment.md)) showed the
-  composer runs 0/5 advertised pairs, is used by 1 of 93 examples, and — even if fixed — solves
-  no real problem: hand-glue was equal-or-fewer LOC in every task. There is no case for fixing it.
-- **Do:** delete `auto_compose` / `TransformPipeline` / registry-as-engine (or quarantine it,
-  clearly labeled "experimental, non-functional"); keep the bridges usable by direct
-  instantiation. Remove the failure-hiding `try/except` from the example.
-- **Accept:** the composer is gone (or unmistakably quarantined) and no example pretends it
-  works; a test asserts the chosen reality. No user loses anything (1/93 examples used it, and
-  that one never ran).
-- **Evidence:** runtime-confirmed `ValueError`; `01_cross_domain` finding #3; P1-1 experiment.
+### P0-2 — Retire the cross-domain composer  ·  ✅ DONE 2026-07-11 (meteoric-star)
+- **Done:** `composer.py` gutted to keep only what always worked — `find_transform_path()`
+  (registry BFS, discovers routes, runs nothing) and `compose()` (chain explicitly-built
+  interfaces). The broken engine (`TransformComposer`/`TransformPipeline`/`BatchTransformComposer`/
+  `auto_compose`) removed; `cross_domain.__init__` raises a guiding `AttributeError` on the
+  retired names pointing to `compose()`/`find_transform_path()`/`morphogen.coupling`. Example 01
+  lost its failure-hiding `try/except` + dead composer-stats section; Part 4 now shows real
+  `compose()` chaining. `tests/test_composer_retired.py` (8 tests) asserts the chosen reality.
 
-### P0-3 — Remove or relabel `qchem` (ships fabricated numbers)
-`stdlib/qchem.py` — every function `warnings.warn("...stub")` and returns `-0.5 * n_electrons`
-placeholder energies, inside a library advertised as "physically rigorous, production-quality."
-- **Do:** delete qchem, or move it behind a clearly-labeled `experimental/`-style namespace
-  that cannot be mistaken for a validated domain; drop it from the domain count.
-- **Accept:** no code path returns fabricated physical quantities under a "domain" banner.
-- **Evidence:** `reveal morphogen/stdlib/qchem.py`; `02_stdlib_depth` "the one that is fake."
-- **Scope (re-verified chaotic-star-0711):** `qchem` is the *only* wholesale-fabricated
-  domain (21 stub markers, every function returns placeholder numbers). Do **not** strip the
-  peripheral, honestly-flagged stubs in real domains — `molecular.load_smiles`/`to_smiles`
-  (RDKit-replaceable I/O, not the validated MM core) and `multiphase`'s ideal-K fallback
-  branch are fine to keep; just don't count them as validated physics.
+### P0-3 — Remove or relabel `qchem` (ships fabricated numbers)  ·  ✅ DONE 2026-07-11 (meteoric-star)
+- **Done:** `morphogen/stdlib/qchem.py` → `morphogen/stdlib/experimental/qchem.py`, behind a
+  loud module docstring + import-time warning ("NOT implemented, not a domain"). Removed from
+  `morphogen.stdlib` auto-import and `__all__`, and from the core domain registry (dropped from
+  the domain count). Still importable explicitly (`morphogen.stdlib.experimental.qchem`) for the
+  interface sketch, but never as a validated domain. `tests/test_experimental_quarantine.py`
+  (3 tests) guards it. Peripheral honestly-flagged stubs in real domains left intact as noted.
 
-### P0-4 — Correct the domain-count / "rigorous" claims
-"39 rigorous domains" (README/ROADMAP/STATUS) is inflated: ~11 rigorous + ~5 applied + ~24
-utilities across 44 modules; flappy is a game.
-- **Do:** state honest tiers — rigorous scientific / applied engineering / utilities — with
-  the real counts. Keep the utilities (they're good); just stop calling them rigorous physics.
-- **Accept:** every doc that gives a count gives the same, honest, tiered count.
+### P0-4 — Correct the domain-count / "rigorous" claims  ·  ◐ PARTIAL 2026-07-11 (meteoric-star)
+"39 rigorous domains" is inflated: ~11 rigorous + ~5 applied + ~24 utilities.
+- **Done:** README + PITCH now state the honest tiered count (~11 rigorous + ~5 applied + ~24
+  utilities). STATUS/ROADMAP no longer carry an inflated count.
+- **Remaining (P3-3 territory):** `docs/DOMAINS.md` still lists a flat catalog — reconcile it
+  to the same tiered language when doing the P3 doc pass.
 
 ---
 
@@ -94,11 +81,11 @@ Two tasks implemented twice + an engine probe:
   lower spectral centroid; ~1,112 LOC of MNA/Newton-Raphson you'd otherwise rewrite).
 - **Decides P0-2 → retire (b); confirms Path A is the whole product; elevates P0-1/Path C.**
 
-### P1-2 — Reframe the front door around the real asset
-- **Do:** rewrite README top + PITCH to lead with "a tested Python library of rigorous,
-  interoperable scientific domains," not "universal deterministic category-theoretic platform."
-  Move MLIR/symbolic/category-theory to a clearly-labeled "north-star, not built" section.
-- **Accept:** a new reader in 60 seconds understands what actually works today.
+### P1-2 — Reframe the front door around the real asset  ·  ✅ DONE 2026-07-11 (meteoric-star)
+- **Done:** README top + PITCH rewritten to lead with "a tested Python library of rigorous,
+  interoperable scientific domains" + the coupling substrate, with a real Python code sample
+  (not fictional `.morph`). MLIR/symbolic/category-theory/`.morph` moved to a clearly-labeled
+  "north star, not built" section in both. A new reader now sees today's reality first.
 
 ### P1-3 — Make one demo undeniable
 Depth on one beats breadth on four. Circuit→audio ("design a guitar pedal, hear it") is the
@@ -113,17 +100,17 @@ found that all three founding visions (transform algebra, cross-domain tool reus
 multiphysics/"model an engine") reduce to **one missing layer**: an intelligent driver that
 co-advances/routes across the rigorous domains. It was designed across ~10 spec/ADR docs and
 never built. Two faces, very different cost:
-- **Feedback co-advance driver (multiphysics/engine) — BOUNDED & PROVEN.** The smallest honest
-  instance already exists: [`experiments/coupled-feedback/engine_governor.py`](experiments/coupled-feedback/)
-  couples `integrators` ↔ `controls` with real per-timestep feedback in **~15 lines**; governor
-  holds idle under a load lurch (RMS err 13.7) where a fairly-tuned open loop droops to ~540 RPM
-  (136.3) — **~10× win** on honest disturbance-rejection. This is distinct from the (retired)
-  one-shot composer.
-  - **Do:** generalize the ~15-line loop into a small reusable co-simulation stepper (shared
-    typed state/ports, per-step feedback, later multi-rate) over 2–3 rigorous domains; ship
-    one engine-flavored coupled demo (e.g. combustion/thermo → pressure → mechanics → acoustics).
-  - **Accept:** a documented `couple([...], steps)`-style driver + one coupled demo that a user
-    could not trivially get from any single-domain library; a test guards it.
+- **Feedback co-advance driver (multiphysics/engine) — ✅ DONE 2026-07-11 (meteoric-star).**
+  The ~15-line proof (`engine_governor.py`) is now a real library module:
+  **`morphogen/coupling/`** — `Subsystem` + `couple(subsystems, steps, dt, ...)`, a sequential
+  (Gauss–Seidel) co-simulation driver with zero-order hold, multi-rate via `stride`, and
+  deterministic output. Guarded by `tests/test_coupling.py` (11 tests: ordering, multi-rate,
+  determinism, validation + the value claim — coupled governor beats open loop >5×, 3-domain
+  warm-up couples). Flagship demo `experiments/coupled-feedback/coupled_engine.py` scales it to
+  **three** mutually-coupled rigorous domains (thermal ↔ mechanics ↔ control — a cold-start
+  warm-up the governor self-relaxes through). Documented in `docs/usage/coupled_simulation.md`.
+  - **Next (optional deepening):** a genuinely different flagship (combustion/thermo → pressure
+    → mechanics → acoustics) and multi-rate demo; the substrate already supports both.
 - **Transform planner (cost-model routing) — RESEARCH BET, do NOT gate the above on it.** e-graph /
   equality-saturation territory; even Poisson-spectral isn't shown. Park in P4.
 
@@ -131,9 +118,9 @@ never built. Two faces, very different cost:
 
 ## P2 — Code-health regressions (nobody's re-run health since March)
 
-- **P2-1** — `cli.py:cmd_run` complexity regressed to **27** (March "fixed" it to 10).
-  Re-extract; `reveal 'ast://morphogen?complexity>20'` should return 0. Also remove duplicate
-  imports / unused `optimize_module` import in `cli.py`.
+- **P2-1** — ✅ DONE 2026-07-11 (meteoric-star). `cmd_run` decomposed 27 → **4** (extracted
+  `_report_type_errors` / `_execute_program` / `_execute_flow_blocks` / `_execute_step_blocks`);
+  nothing in `cli.py` now exceeds 20. Unused `optimize_module` import removed. 39 cli tests green.
 - **P2-2** — New circular-import cycle in `mlir/dialects/__init__.py` (5 files). Break it, and
   add a lint rule against the `__init__`-level re-import pattern so it stops recurring.
 - **P2-3** — Re-baseline health and wire it into CI: `reveal overview morphogen/` (today 84.7/100,
