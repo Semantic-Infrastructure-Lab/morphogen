@@ -37,6 +37,12 @@ The documented hello-world path works again:
 
 The CLI also now reports `flow(...)` execution more accurately and applies `--steps` to flow blocks.
 
+10 of the 24 committed `.morph` examples run cleanly today; the rest use
+planned-but-unimplemented DSL syntax and are marked `xfail`. All 24 are now
+exercised end-to-end through the CLI by `tests/test_morph_examples_smoke.py`,
+so the class of bug that broke the hello-world path cannot silently return.
+See [examples/README.md](examples/README.md) for the working-vs-planned list.
+
 ### Test suite
 
 The suite is broad and useful, but some parts are environment-sensitive.
@@ -45,6 +51,8 @@ Verified recently:
 
 - `pytest tests/test_cli.py tests/test_runtime.py tests/test_use_statement.py` → `74 passed`
 - `pytest tests/test_visual3d.py` → `53 passed, 5 skipped`
+- `pytest tests/test_morph_examples_smoke.py` → `21 passed, 28 xfailed` (CLI over every example)
+- `pytest tests/test_canonical_examples_smoke.py` → `5 passed` (flagship cross-domain demos)
 
 The fragile `visual3d` screenshot/render tests are now opt-in via:
 
@@ -69,7 +77,7 @@ This keeps the default suite stable on machines where VTK off-screen rendering i
 
 ## Known Limitations
 
-- Packaging metadata is improved but still duplicated across `pyproject.toml` and `setup.py`
+- Packaging metadata now lives solely in `pyproject.toml`; `setup.py` is a thin compatibility shim
 - Public docs still contain some stale counts and historical claims
 - Real VTK screenshot rendering remains environment-sensitive
 - Some advanced roadmap language still reflects aspiration more than current default usage

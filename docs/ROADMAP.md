@@ -207,7 +207,7 @@ This roadmap assumes the **Python-first** path remains the most practical route 
 ### P0 - Do Now (Current Sprint - Post v0.12.0)
 1. ~~**Integration Examples for Phase 3 Domains**~~ ✅ COMPLETE (heating-dawn-0316)
    - ~~Create usage examples for fluid_jet, audio_analysis, instrument_model~~
-   - `examples/canonical/` — 3 working cross-domain examples (physics, circuit, fluid → audio)
+   - `examples/canonical/` — 4 working cross-domain examples (physics, circuit, fluid → audio; audio_analysis → instrument), CI-guarded by `tests/test_canonical_examples_smoke.py`
    - `docs/usage/audio_analysis.md` + `docs/usage/instrument_model.md` — narrative guides
 
 2. ~~**Test Coverage Expansion**~~ ✅ COMPLETE (2026-03-16)

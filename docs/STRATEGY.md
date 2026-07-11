@@ -101,10 +101,14 @@ The highest-leverage demo work now is less about reviving obviously broken scrip
 
 ```
 examples/canonical/
-  01_physics_to_audio.py   ✅  rigidbody → audio (collision detection fixed)
-  02_circuit_to_audio.py   ✅  audio ↔ circuit → audio (overdrive + Tube Screamer)
-  03_fluid_to_sound.py     ✅  field → acoustics → audio (3-domain pipeline)
+  01_physics_to_audio.py       ✅  rigidbody → audio (collision detection fixed)
+  02_circuit_to_audio.py       ✅  audio ↔ circuit → audio (overdrive + Tube Screamer)
+  03_fluid_to_sound.py         ✅  field → acoustics → audio (3-domain pipeline)
+  04_analysis_to_instrument.py ✅  audio_analysis → instrument_model (analysis-driven synthesis)
 ```
+
+All four now run end-to-end and are guarded by `tests/test_canonical_examples_smoke.py`,
+so a regression in the flagship demos fails CI.
 
 ### Documentation Gaps
 
