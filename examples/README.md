@@ -4,6 +4,37 @@ This directory contains comprehensive examples demonstrating Morphogen's capabil
 
 ---
 
+## ✅ Which `.morph` examples run today
+
+The `.morph` DSL is a **secondary, in-progress surface** — the primary, fully
+supported interface is the Python API (see the Python Integration section below).
+Every `.morph` file here is exercised end-to-end by
+`tests/test_morph_examples_smoke.py`. The following run cleanly today with both
+`morphogen check` and `morphogen run`:
+
+| Example | Domain focus |
+|---------|--------------|
+| `01_hello_heat.morph` ⭐ **START HERE** | field diffusion + visual |
+| `02_pulsing_circle.morph` | field + visual |
+| `03_wave_ripples.morph` | wave field |
+| `10_heat_equation.morph` | field / PDE |
+| `11_gray_scott.morph` | reaction-diffusion |
+| `v0_3_1_velocity_calculation.morph` | scalar/struct compute |
+| `v0_3_1_struct_physics.morph` | structs |
+| `v0_3_1_recursive_factorial.morph` | functions/recursion |
+| `v0_3_1_lambdas_and_flow.morph` | lambdas + `flow` |
+| `v0_3_1_complete_demo.morph` | combined language features |
+
+The geometry (`20`–`25`), circuit (`circuit/`), `04_random_walk`,
+`05_gradient_flow`, and `use_statement_demo` examples exercise **planned
+DSL syntax the parser/runtime does not implement yet** (range literals, array
+indexing, `&`/`°` operators, `Vec2` value constructors, and domain namespaces
+not yet wired into the interpreter). They are kept in-tree, marked `xfail` in the
+smoke test, and will start passing automatically when those features land. Until
+then, prefer the Python API for those domains.
+
+---
+
 ## 🎯 Quick Navigation
 
 - [Beginner Examples](#tier-1-beginner-examples-) - Start here!
