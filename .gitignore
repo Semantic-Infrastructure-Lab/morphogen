@@ -88,8 +88,7 @@ dmypy.json
 *.mp3
 *.gif
 *.flac
-!mvp_test_output.png
-!examples/output_*.png
+*.ccdsl
 
 # Generated showcase outputs (test artifacts)
 examples/outputs/
