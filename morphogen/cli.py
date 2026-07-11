@@ -126,6 +126,14 @@ def _run_steps(runtime, step_blocks, max_steps):
     return step_count
 
 
+def _override_flow_steps(flow_blocks, step_count):
+    """Override flow block step counts from the CLI."""
+    from morphogen.ast.nodes import Literal
+
+    for flow_block in flow_blocks:
+        flow_block.steps = Literal(step_count)
+
+
 def cmd_run(args):
     """Run a DSL program."""
     if not args.file.exists():
@@ -138,7 +146,7 @@ def cmd_run(args):
         from morphogen.parser.parser import parse
         from morphogen.ast.visitors import TypeChecker
         from morphogen.runtime.runtime import Runtime, ExecutionContext
-        from morphogen.ast.nodes import Step
+        from morphogen.ast.nodes import Flow, Step
 
         source = args.file.read_text()
         program = parse(source)
@@ -158,12 +166,28 @@ def cmd_run(args):
 
         runtime = Runtime(context)
 
-        init_statements = [s for s in program.statements if not isinstance(s, Step)]
+        init_statements = [
+            s for s in program.statements
+            if not isinstance(s, (Step, Flow))
+        ]
         step_blocks = [s for s in program.statements if isinstance(s, Step)]
+        flow_blocks = [s for s in program.statements if isinstance(s, Flow)]
+
+        if args.steps is not None and flow_blocks:
+            _override_flow_steps(flow_blocks, args.steps)
 
         print("Initializing...")
         for stmt in init_statements:
             runtime.execute_statement(stmt)
+
+        if flow_blocks and step_blocks:
+            print("Warning: Found both flow and step blocks; executing flow blocks first")
+
+        if flow_blocks:
+            print(f"Executing {len(flow_blocks)} flow block(s)...")
+            for flow_block in flow_blocks:
+                runtime.execute_statement(flow_block)
+            print("Execution completed")
 
         if step_blocks:
             if len(step_blocks) > 1:
@@ -174,7 +198,8 @@ def cmd_run(args):
                 sys.exit(1)
             step_count = _run_steps(runtime, step_blocks, max_steps)
             print(f"\nExecution completed ({step_count} steps)")
-        else:
+
+        if not flow_blocks and not step_blocks:
             print("No step blocks found, executing program once")
 
         print("Done!")

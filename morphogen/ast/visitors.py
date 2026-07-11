@@ -1,6 +1,7 @@
 """Visitor pattern for AST traversal."""
 
 from typing import Any
+import importlib
 from .nodes import *
 
 
@@ -54,6 +55,27 @@ class ASTVisitor:
         elements = [self.visit(elem) for elem in node.elements]
         return tuple(elements)
 
+    def visit_lambda(self, node: Lambda) -> Any:
+        """Visit a lambda expression."""
+        return (node.params, self.visit(node.body))
+
+    def visit_block(self, node: Block) -> Any:
+        """Visit a block expression."""
+        return [self.visit(stmt) for stmt in node.statements]
+
+    def visit_if_else(self, node: IfElse) -> Any:
+        """Visit an if/else expression."""
+        return (
+            self.visit(node.condition),
+            self.visit(node.then_expr),
+            self.visit(node.else_expr),
+        )
+
+    def visit_struct_literal(self, node: StructLiteral) -> Any:
+        """Visit a struct literal expression."""
+        fields = {name: self.visit(value) for name, value in node.field_values.items()}
+        return (node.struct_name, fields)
+
     def visit_assignment(self, node: Assignment) -> Any:
         """Visit an assignment."""
         value = self.visit(node.value)
@@ -82,6 +104,40 @@ class ASTVisitor:
         """Visit a compose statement."""
         return [self.visit(mod) for mod in node.modules]
 
+    def visit_link(self, node: Link) -> Any:
+        """Visit a link statement."""
+        target = self.visit(node.target)
+        return (target, node.metadata)
+
+    def visit_flow(self, node: Flow) -> Any:
+        """Visit a flow block."""
+        dt = self.visit(node.dt) if node.dt else None
+        steps = self.visit(node.steps) if node.steps else None
+        substeps = self.visit(node.substeps) if node.substeps else None
+        body = [self.visit(stmt) for stmt in node.body]
+        return (dt, steps, substeps, body)
+
+    def visit_function(self, node: Function) -> Any:
+        """Visit a function definition."""
+        body = [self.visit(stmt) for stmt in node.body]
+        return (node.name, node.params, node.return_type, body)
+
+    def visit_struct(self, node: Struct) -> Any:
+        """Visit a struct definition."""
+        return (node.name, node.fields)
+
+    def visit_return(self, node: Return) -> Any:
+        """Visit a return statement."""
+        return self.visit(node.value) if node.value else None
+
+    def visit_use(self, node: Use) -> Any:
+        """Visit a use statement."""
+        return (node.domains, node.aliases)
+
+    def visit_output(self, node: Output) -> Any:
+        """Visit an output statement."""
+        return self.visit(node.value)
+
     def visit_type_annotation(self, node: TypeAnnotation) -> Any:
         """Visit a type annotation."""
         return (node.base_type, node.type_params, node.unit)
@@ -99,6 +155,71 @@ class TypeChecker(ASTVisitor):
     def __init__(self):
         self.symbol_table: dict[str, 'Type'] = {}
         self.errors: List[str] = []
+        self._initialize_builtin_symbols()
+
+    def _initialize_builtin_symbols(self) -> None:
+        """Seed the type checker with runtime-style builtins."""
+        builtin_names = {
+            "field", "visual", "agents", "audio",
+            "sqrt", "sin", "cos", "tan", "abs", "min", "max",
+            "floor", "ceil", "exp", "log", "pow", "pi", "e",
+            "dt",
+        }
+        for name in builtin_names:
+            self.symbol_table.setdefault(name, None)
+
+    def _push_scope(self, bindings: dict[str, Any]) -> dict[str, Any]:
+        """Temporarily bind names in the symbol table and return overwritten entries."""
+        previous = {}
+        for name, value in bindings.items():
+            if name in self.symbol_table:
+                previous[name] = self.symbol_table[name]
+            self.symbol_table[name] = value
+        return previous
+
+    def _pop_scope(self, bindings: dict[str, Any], previous: dict[str, Any]) -> None:
+        """Restore symbol table after a temporary scope."""
+        for name in bindings:
+            if name in previous:
+                self.symbol_table[name] = previous[name]
+            else:
+                self.symbol_table.pop(name, None)
+
+    def _import_domain_symbols(self, domain_name: str) -> None:
+        """Register a domain namespace plus any explicit exports for type checking."""
+        self.symbol_table[domain_name] = None
+
+        module_path = f"morphogen.stdlib.{domain_name}"
+        if domain_name == "agent":
+            module_path = "morphogen.stdlib.agents"
+
+        try:
+            module = importlib.import_module(module_path)
+        except ImportError:
+            return
+
+        exports = getattr(module, "__all__", [])
+        for name in exports:
+            self.symbol_table.setdefault(name, None)
+
+    def visit_literal(self, node: Literal) -> Any:
+        """Infer a basic DSL type from a literal."""
+        from .types import BaseType, ScalarType
+
+        if isinstance(node.value, bool):
+            return ScalarType(BaseType.BOOL)
+        if isinstance(node.value, int):
+            return ScalarType(BaseType.I32)
+        if isinstance(node.value, float):
+            return ScalarType(BaseType.F32)
+        return None
+
+    def visit_program(self, node: Program) -> Any:
+        """Visit a program in source order."""
+        results = []
+        for stmt in node.statements:
+            results.append(self.visit(stmt))
+        return results
 
     def _validate_unit_expression(self, unit_str: Optional[str]) -> bool:
         """Validate that a unit expression is parseable.
@@ -233,6 +354,51 @@ class TypeChecker(ASTVisitor):
 
         # Return the function's return type (to be determined from signature)
         # This is simplified - real implementation would look up function signatures
+        return None
+
+    def visit_use(self, node: Use) -> Any:
+        """Type-check a use statement."""
+        for domain_name in node.domains:
+            self._import_domain_symbols(domain_name)
+        return None
+
+    def visit_function(self, node: Function) -> Any:
+        """Register a function name and type-check its body in a local scope."""
+        self.symbol_table[node.name] = None
+
+        param_bindings = {param_name: None for param_name, _ in node.params}
+        previous = self._push_scope(param_bindings)
+        try:
+            for stmt in node.body:
+                self.visit(stmt)
+        finally:
+            self._pop_scope(param_bindings, previous)
+        return None
+
+    def visit_lambda(self, node: Lambda) -> Any:
+        """Type-check a lambda body with its parameters in scope."""
+        param_bindings = {param_name: None for param_name in node.params}
+        previous = self._push_scope(param_bindings)
+        try:
+            return self.visit(node.body)
+        finally:
+            self._pop_scope(param_bindings, previous)
+
+    def visit_flow(self, node: Flow) -> Any:
+        """Type-check a flow block with dt available in scope."""
+        if node.dt:
+            self.visit(node.dt)
+        if node.steps:
+            self.visit(node.steps)
+        if node.substeps:
+            self.visit(node.substeps)
+
+        previous = self._push_scope({"dt": None})
+        try:
+            for stmt in node.body:
+                self.visit(stmt)
+        finally:
+            self._pop_scope({"dt": None}, previous)
         return None
 
     def _resolve_type_annotation(self, annotation: TypeAnnotation) -> 'Type':

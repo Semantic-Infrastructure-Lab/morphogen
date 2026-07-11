@@ -2,6 +2,7 @@
 
 import pytest
 import numpy as np
+from morphogen.parser.parser import parse
 from morphogen.runtime.runtime import Runtime, ExecutionContext
 from morphogen.stdlib.field import field, Field2D
 
@@ -279,3 +280,30 @@ class TestRuntimeState:
         # State should be preserved
         assert runtime.context.has_variable('temp')
         assert runtime.context.get_variable('temp').shape == (32, 32)
+
+
+class TestRuntimeControlBlocks:
+    """Tests for step and substep execution."""
+
+    def test_execute_step_block_uses_body(self):
+        """Step blocks should execute their body and advance one timestep."""
+        ctx = ExecutionContext(global_seed=1)
+        runtime = Runtime(ctx)
+
+        program = parse("step { x = 1 }")
+        runtime.execute_statement(program.statements[0])
+
+        assert runtime.context.get_variable('x') == 1
+        assert runtime.context.timestep == 1
+
+    def test_execute_substep_block_uses_body(self):
+        """Substep blocks should execute their body N times and advance each substep."""
+        ctx = ExecutionContext(global_seed=1)
+        runtime = Runtime(ctx)
+        runtime.context.set_variable('x', 0)
+
+        program = parse("substep(2) { x = x + 1 }")
+        runtime.execute_statement(program.statements[0])
+
+        assert runtime.context.get_variable('x') == 2
+        assert runtime.context.timestep == 2

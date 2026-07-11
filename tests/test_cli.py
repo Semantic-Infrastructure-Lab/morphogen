@@ -202,6 +202,66 @@ class TestCmdRun:
             assert 'Type error 1' in captured.out
             assert 'Continuing execution anyway' in captured.out
 
+    def test_run_program_with_use_statement(self, tmp_path):
+        """Run should support programs that begin with a use statement."""
+        test_file = tmp_path / "test_use.morph"
+        test_file.write_text("use field\nx = 42\n")
+
+        args = Mock()
+        args.file = test_file
+        args.profile = 'medium'
+        args.seed = 42
+        args.steps = None
+        args.param = None
+
+        cmd_run(args)
+
+    def test_run_flow_program_reports_flow_execution(self, tmp_path, capsys):
+        """Run should report flow blocks instead of saying no step blocks were found."""
+        test_file = tmp_path / "test_flow.morph"
+        test_file.write_text("flow(steps=2) { x = 1 }\n")
+
+        args = Mock()
+        args.file = test_file
+        args.profile = 'medium'
+        args.seed = 42
+        args.steps = None
+        args.param = None
+
+        cmd_run(args)
+
+        captured = capsys.readouterr()
+        assert 'Executing 1 flow block' in captured.out
+        assert 'No step blocks found' not in captured.out
+
+    def test_run_overrides_flow_steps_with_cli_steps(self, tmp_path):
+        """CLI --steps should override flow block step counts."""
+        from morphogen.ast.nodes import Flow, Program, Literal
+
+        test_file = tmp_path / "test_flow_override.morph"
+        test_file.write_text("flow(steps=5) { x = 1 }\n")
+
+        flow = Flow(dt=None, steps=Literal(5), substeps=None, body=[])
+        program = Program([flow])
+
+        args = Mock()
+        args.file = test_file
+        args.profile = 'medium'
+        args.seed = 42
+        args.steps = 1
+        args.param = None
+
+        with patch('morphogen.parser.parser.parse', return_value=program), \
+             patch('morphogen.ast.visitors.TypeChecker') as mock_checker, \
+             patch('morphogen.runtime.runtime.Runtime'):
+            mock_checker_instance = Mock()
+            mock_checker_instance.errors = []
+            mock_checker.return_value = mock_checker_instance
+
+            cmd_run(args)
+
+        assert flow.steps.value == 1
+
     def test_run_with_parameters(self, tmp_path):
         """Test running with parameter overrides."""
         test_file = tmp_path / "test.morph"
@@ -376,6 +436,20 @@ class TestCmdRun:
 
 class TestCmdCheck:
     """Tests for the check command."""
+
+    def test_check_program_with_use_statement(self, tmp_path, capsys):
+        """Check should handle a program that imports domains via use."""
+        test_file = tmp_path / "test_use.morph"
+        test_file.write_text("use field\nx = 42\n")
+
+        args = Mock()
+        args.file = test_file
+        args.strict = False
+
+        cmd_check(args)
+
+        captured = capsys.readouterr()
+        assert 'No type errors found' in captured.out
 
     def test_check_file_not_found(self, capsys):
         """Test check with non-existent file."""
