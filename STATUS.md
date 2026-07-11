@@ -66,8 +66,14 @@ This keeps the default suite stable on machines where VTK off-screen rendering i
 
 - Python API
 - examples and tutorials
-- cross-domain composition patterns
-- deterministic NumPy-based runtime
+- the rigorous domain library (~11 physics-validated domains) + hand-composed cross-domain demos
+
+> **Correction (2026-07-11):** earlier drafts listed "cross-domain composition patterns" and a
+> "deterministic NumPy-based runtime" as primary surfaces. Both are inaccurate: the composition
+> *engine* does not execute and is being retired (see the composition-vs-glue experiment), and
+> `global_seed` is stored but never applied to any RNG, so the runtime is not yet deterministic
+> (BACKLOG P0-1). Cross-domain work today = calling rigorous domains and writing a few lines of
+> glue, as the canonical demos do.
 
 ### Secondary / in-progress surface
 
@@ -87,7 +93,8 @@ This keeps the default suite stable on machines where VTK off-screen rendering i
 
 ## Recommended Reading
 
+- **The honest, current picture (start here):** [docs/reviews/](docs/reviews/) — reality audit,
+  the composition-vs-glue experiment, and the vision-vs-reality grounding, in reading order
+- **The actionable work:** [BACKLOG.md](BACKLOG.md)
 - **Where the project is going:** [docs/STRATEGY.md](docs/STRATEGY.md)
-- **What is being fixed right now:** [docs/PROGRESS_2026-04-17.md](docs/PROGRESS_2026-04-17.md)
-- **Roadmap framing:** [docs/ROADMAP.md](docs/ROADMAP.md)
-- **Project review:** [docs/PROJECT_REVIEW_2026-04-17.md](docs/PROJECT_REVIEW_2026-04-17.md)
+- **Roadmap framing (self-flagged stale — see BACKLOG):** [docs/ROADMAP.md](docs/ROADMAP.md)

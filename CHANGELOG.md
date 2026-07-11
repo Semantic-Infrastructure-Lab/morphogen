@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Direction (chaotic-star-0711, 2026-07-11)
+
+**Composition thesis tested and retired; coupling substrate identified as the buildable North Star.**
+
+- Ran the decisive composition-vs-glue experiment (BACKLOG P1-1): data-plumbing composition does
+  **not** beat hand-glue and the composer engine runs 0/5 pairs → **decision: retire the composer**;
+  the product is the rigorous domain *library*. See `docs/reviews/2026-07-11-composition-vs-glue-experiment.md`.
+- Grounded the founding vision against code: the transform-algebra, tool-reuse, and coupled-multiphysics
+  ("model an engine") visions all reduce to **one unbuilt layer** — a per-timestep coupling driver over
+  the domains. Proved it is ~15 lines and materially useful via a runnable engine-governor demo
+  (`experiments/coupled-feedback/`, ~10× disturbance rejection). See `docs/reviews/2026-07-11-vision-vs-reality.md`.
+
 ### Tests (clearing-cloud-0317, 2026-03-17)
 
 **134 new tests targeting the lowest-coverage output modules and cross-domain pipelines:**
