@@ -160,7 +160,13 @@ class DomainTransform:
         self.transform_fn = None
 
     def __call__(self, fn):
-        """Register the decorated function as a transform."""
+        """Wrap the decorated function in a DomainInterface-compatible class.
+
+        The original function stays callable as-is for inline use, and the
+        generated ``DomainInterface`` subclass is attached to it as
+        ``fn.interface`` so the transform can be validated and registered rather
+        than silently discarded.
+        """
         self.transform_fn = fn
         self.name = self.name or fn.__name__
         self.description = self.description or fn.__doc__
@@ -177,14 +183,43 @@ class DomainTransform:
                 return fn(source_data)
 
             def validate(iself) -> bool:
-                # Basic type checking if types specified
-                if outer_self.input_types:
-                    # TODO: Implement type validation
-                    pass
+                """Check that source_data matches the declared input types.
+
+                When ``input_types`` is declared on the decorator, the first
+                positional input (``source_data``) is validated against the
+                first declared type. Declared types may be a single ``type``,
+                a tuple of types, or ``None`` (meaning "accept anything").
+                Raises ``TypeError`` on a mismatch so a bad cross-domain flow
+                fails loudly instead of silently producing garbage.
+                """
+                if not outer_self.input_types:
+                    return True
+
+                if iself.source_data is None:
+                    return True  # nothing to check yet
+
+                # input_types maps parameter name -> expected type; the
+                # transform receives source_data as its first argument, so
+                # validate against the first declared parameter's type.
+                first_param, expected = next(iter(outer_self.input_types.items()))
+                if expected is None:
+                    return True
+                if not isinstance(iself.source_data, expected):
+                    exp_name = getattr(expected, "__name__", str(expected))
+                    raise TypeError(
+                        f"{outer_self.source} -> {outer_self.target} transform "
+                        f"'{outer_self.name}' expects '{first_param}' of type "
+                        f"{exp_name}, got {type(iself.source_data).__name__}"
+                    )
                 return True
 
         # Store metadata
         TransformInterface.__name__ = f"{self.source}To{self.target.capitalize()}Transform"
         TransformInterface.__doc__ = self.description
+
+        # Attach the interface class to the function so it isn't discarded.
+        # Inline callers still use `fn` directly; interface-based callers use
+        # `fn.interface()` to get validation + transformation.
+        fn.interface = TransformInterface
 
         return fn

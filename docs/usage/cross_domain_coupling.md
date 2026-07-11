@@ -259,9 +259,28 @@ def field_row_to_waveform(field, row: int = 64):
     return field.data[row, :].astype(np.float32)
 ```
 
-The decorator wraps the function in a `DomainInterface`-compatible class and
-registers it if called on a class. For inline use, the function remains callable
-as-is.
+For inline use the function remains callable as-is
+(`field_row_to_waveform(field, row=64)`). The decorator also attaches the
+generated `DomainInterface` subclass to the function as `fn.interface`, so you
+can drive it through the validating interface path when you want type checks:
+
+```python
+interface = field_row_to_waveform.interface()
+waveform = interface(field)   # runs validate() then transform()
+```
+
+If you declare `input_types` on the decorator, `validate()` enforces them — the
+first input is checked against the first declared type and a `TypeError` is
+raised on a mismatch, so a bad cross-domain flow fails loudly instead of
+silently producing garbage:
+
+```python
+@DomainTransform(source="field", target="audio", input_types={"field": np.ndarray})
+def field_row_to_waveform(field):
+    return field[64, :].astype(np.float32)
+```
+
+With no `input_types` declared, validation is permissive.
 
 ---
 

@@ -440,6 +440,86 @@ def test_cross_domain_registry_extended():
     print("✓ Extended cross-domain registry test passed")
 
 
+# ============================================================================
+# DomainTransform decorator tests
+# ============================================================================
+
+def test_domain_transform_inline_callable():
+    """The decorated function stays callable as-is for inline use."""
+    from morphogen.cross_domain.base import DomainTransform
+
+    @DomainTransform(source="field", target="audio", description="row -> waveform")
+    def field_row_to_waveform(field, row: int = 0):
+        return np.asarray(field)[row, :].astype(np.float32)
+
+    field = np.arange(9, dtype=np.float32).reshape(3, 3)
+    out = field_row_to_waveform(field, row=1)
+    assert np.allclose(out, [3.0, 4.0, 5.0])
+
+
+def test_domain_transform_exposes_interface():
+    """The decorator attaches a DomainInterface subclass instead of discarding it."""
+    from morphogen.cross_domain.base import DomainTransform
+
+    @DomainTransform(source="field", target="audio")
+    def field_row_to_waveform(field):
+        return np.asarray(field)[0, :]
+
+    assert hasattr(field_row_to_waveform, "interface")
+    assert issubclass(field_row_to_waveform.interface, DomainInterface)
+    assert field_row_to_waveform.interface.source_domain == "field"
+    assert field_row_to_waveform.interface.target_domain == "audio"
+
+
+def test_domain_transform_type_validation_accepts_valid():
+    """Declared input_types accept a matching source_data via __call__."""
+    from morphogen.cross_domain.base import DomainTransform
+
+    @DomainTransform(
+        source="field",
+        target="audio",
+        input_types={"field": np.ndarray},
+    )
+    def field_row_to_waveform(field):
+        return np.asarray(field)[0, :]
+
+    interface = field_row_to_waveform.interface()
+    result = interface(np.zeros((3, 3)))  # validate + transform
+    assert result.shape == (3,)
+
+
+def test_domain_transform_type_validation_rejects_invalid():
+    """Declared input_types reject a mismatched source_data with TypeError."""
+    from morphogen.cross_domain.base import DomainTransform
+
+    @DomainTransform(
+        source="field",
+        target="audio",
+        input_types={"field": np.ndarray},
+    )
+    def field_row_to_waveform(field):
+        return np.asarray(field)[0, :]
+
+    interface = field_row_to_waveform.interface()
+    try:
+        interface("not an array")  # should fail validation
+        assert False, "expected TypeError for mismatched input type"
+    except TypeError as exc:
+        assert "expects" in str(exc)
+
+
+def test_domain_transform_no_types_skips_validation():
+    """With no declared input_types, validation is permissive (returns True)."""
+    from morphogen.cross_domain.base import DomainTransform
+
+    @DomainTransform(source="field", target="audio")
+    def passthrough(x):
+        return x
+
+    interface = passthrough.interface()
+    assert interface.validate() is True
+
+
 if __name__ == "__main__":
     test_field_to_agent_basic()
     test_field_to_agent_vector_field()
