@@ -148,18 +148,9 @@ def cmd_run(args):
         from morphogen.parser.parser import parse
         from morphogen.ast.visitors import TypeChecker
         from morphogen.runtime.runtime import Runtime, ExecutionContext
-        from morphogen.ast.nodes import Flow, Step
 
-        source = args.file.read_text()
-        program = parse(source)
-
-        checker = TypeChecker()
-        checker.visit(program)
-        if checker.errors:
-            print("\nType errors found:")
-            for error in checker.errors:
-                print(f"  - {error}")
-            print("\nContinuing execution anyway...")
+        program = parse(args.file.read_text())
+        _report_type_errors(TypeChecker, program)
 
         context = ExecutionContext(global_seed=args.seed)
         context.set_config("profile", args.profile)
@@ -167,43 +158,7 @@ def cmd_run(args):
             _apply_params(context, args.param)
 
         runtime = Runtime(context)
-
-        init_statements = [
-            s for s in program.statements
-            if not isinstance(s, (Step, Flow))
-        ]
-        step_blocks = [s for s in program.statements if isinstance(s, Step)]
-        flow_blocks = [s for s in program.statements if isinstance(s, Flow)]
-
-        if args.steps is not None and flow_blocks:
-            _override_flow_steps(flow_blocks, args.steps)
-
-        print("Initializing...")
-        for stmt in init_statements:
-            runtime.execute_statement(stmt)
-
-        if flow_blocks and step_blocks:
-            print("Warning: Found both flow and step blocks; executing flow blocks first")
-
-        if flow_blocks:
-            print(f"Executing {len(flow_blocks)} flow block(s)...")
-            for flow_block in flow_blocks:
-                runtime.execute_statement(flow_block)
-            print("Execution completed")
-
-        if step_blocks:
-            if len(step_blocks) > 1:
-                print("Warning: Multiple step blocks found, executing all sequentially")
-            max_steps = args.steps if args.steps else float('inf')
-            if max_steps == float('inf') and not _has_visual_output(step_blocks):
-                print("Error: Infinite loop without visual output. Use --steps or add visual.output()")
-                sys.exit(1)
-            step_count = _run_steps(runtime, step_blocks, max_steps)
-            print(f"\nExecution completed ({step_count} steps)")
-
-        if not flow_blocks and not step_blocks:
-            print("No step blocks found, executing program once")
-
+        _execute_program(runtime, program, args)
         print("Done!")
 
     except Exception as e:
@@ -211,6 +166,62 @@ def cmd_run(args):
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def _report_type_errors(TypeChecker, program):
+    """Type-check and report errors, but continue (run is best-effort)."""
+    checker = TypeChecker()
+    checker.visit(program)
+    if checker.errors:
+        print("\nType errors found:")
+        for error in checker.errors:
+            print(f"  - {error}")
+        print("\nContinuing execution anyway...")
+
+
+def _execute_program(runtime, program, args):
+    """Partition a program into init/flow/step blocks and execute each in order."""
+    from morphogen.ast.nodes import Flow, Step
+
+    init_statements = [s for s in program.statements if not isinstance(s, (Step, Flow))]
+    step_blocks = [s for s in program.statements if isinstance(s, Step)]
+    flow_blocks = [s for s in program.statements if isinstance(s, Flow)]
+
+    if args.steps is not None and flow_blocks:
+        _override_flow_steps(flow_blocks, args.steps)
+
+    print("Initializing...")
+    for stmt in init_statements:
+        runtime.execute_statement(stmt)
+
+    if flow_blocks and step_blocks:
+        print("Warning: Found both flow and step blocks; executing flow blocks first")
+    if flow_blocks:
+        _execute_flow_blocks(runtime, flow_blocks)
+    if step_blocks:
+        _execute_step_blocks(runtime, step_blocks, args)
+    if not flow_blocks and not step_blocks:
+        print("No step blocks found, executing program once")
+
+
+def _execute_flow_blocks(runtime, flow_blocks):
+    """Run every flow block once."""
+    print(f"Executing {len(flow_blocks)} flow block(s)...")
+    for flow_block in flow_blocks:
+        runtime.execute_statement(flow_block)
+    print("Execution completed")
+
+
+def _execute_step_blocks(runtime, step_blocks, args):
+    """Run step blocks for --steps iterations (guarding infinite loops)."""
+    if len(step_blocks) > 1:
+        print("Warning: Multiple step blocks found, executing all sequentially")
+    max_steps = args.steps if args.steps else float('inf')
+    if max_steps == float('inf') and not _has_visual_output(step_blocks):
+        print("Error: Infinite loop without visual output. Use --steps or add visual.output()")
+        sys.exit(1)
+    step_count = _run_steps(runtime, step_blocks, max_steps)
+    print(f"\nExecution completed ({step_count} steps)")
 
 
 def cmd_check(args):
@@ -281,7 +292,7 @@ def cmd_mlir(args):
     try:
         from morphogen.parser.parser import parse
         from morphogen.mlir.compiler import MLIRCompiler
-        from morphogen.mlir.optimizer import optimize_module, create_default_pipeline
+        from morphogen.mlir.optimizer import create_default_pipeline
 
         # Parse source file
         source = args.file.read_text()
