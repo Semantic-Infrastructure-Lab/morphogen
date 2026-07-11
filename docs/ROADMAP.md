@@ -219,7 +219,10 @@ This roadmap assumes the **Python-first** path remains the most practical route 
    - ~~Add narrative usage examples for audio_analysis + instrument_model~~
 
 4. **PyPI Packaging** — `pip install morphogen` in a clean venv
-   - pyproject.toml metadata, pinned deps, `morphogen` CLI entry point
+   - ~~pyproject.toml metadata, pinned deps, `morphogen` CLI entry point~~ ✅
+     clean-venv `pip install .` works; wheel scoped to the `morphogen` package;
+     CLI entry point verified (guarded by `tests/test_packaging.py`)
+   - Remaining: publish to PyPI + release automation
 
 5. **Documentation polish** (remaining)
    - Chemistry domain tutorials

@@ -7,8 +7,10 @@ from pathlib import Path
 
 def main():
     """Main CLI entry point."""
+    from morphogen import __version__
+
     parser = argparse.ArgumentParser(
-        description="Creative Computation DSL v0.2.2 - A typed, deterministic simulation language"
+        description=f"Creative Computation DSL v{__version__} - A typed, deterministic simulation language"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
