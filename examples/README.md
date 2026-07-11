@@ -104,7 +104,7 @@ morphogen run examples/03_wave_ripples.morph
 
 Real simulations demonstrating multiple Morphogen features working together.
 
-### `04_random_walk.morph`
+### `04_random_walk.morph` ⚠️ not runnable yet — see status table above (needs range-literal syntax)
 Watch random walkers create beautiful diffusion patterns from simple stochastic rules.
 
 ```bash
@@ -119,7 +119,7 @@ morphogen run examples/04_random_walk.morph
 
 ---
 
-### `05_gradient_flow.morph`
+### `05_gradient_flow.morph` ⚠️ not runnable yet — see status table above (needs `Vec2` constructor support)
 Mesmerizing color gradients swirl and mix under a rotating velocity field.
 
 ```bash
@@ -233,6 +233,12 @@ morphogen run examples/v0_3_1_velocity_calculation.morph
 ---
 
 ## Cross-Domain Geometry Examples 🔷
+
+⚠️ **None of the `.morph` files below run yet** — they use array/index and
+struct/brace syntax the parser doesn't implement (see the status table at the
+top of this file). They describe the *intended* geometry domain integration
+and are kept as a design reference; use the geometry domain from the Python
+API today instead.
 
 Showcasing the new geometry domain with cross-domain integration. These examples demonstrate how geometry operations combine with physics, fields, agents, and procedural generation.
 
@@ -499,7 +505,10 @@ python examples/generate_portfolio_outputs.py
 
 ## MLIR Development (Phase Examples)
 
-Examples demonstrating MLIR compilation infrastructure (v0.7.0+).
+Examples demonstrating MLIR compilation infrastructure (v0.7.0+). **MLIR is not
+part of the v1.0 Python-first surface** (see [docs/STRATEGY.md](../docs/STRATEGY.md))
+— these are compiler-internals examples for contributors working on that track,
+not part of the getting-started path.
 
 > **Note:** Requires MLIR Python bindings. Install with:
 > `pip install mlir -f https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest`
@@ -775,11 +784,16 @@ pip install mlir -f https://github.com/makslevental/mlir-wheels/releases/expande
 
 ```bash
 # Check installation
-kairo --version
+morphogen --version
 
 # Reinstall if needed
 pip install -e .
 ```
+
+If the example is one of the geometry (`20`-`25`), `circuit/`, `04_random_walk`,
+`05_gradient_flow`, or `use_statement_demo` files, it isn't a broken install —
+see the status table at the top of this file. Those use DSL syntax the parser
+doesn't implement yet and are expected to fail.
 
 ### Missing dependencies
 
@@ -845,11 +859,10 @@ For each new example, add to this README:
 
 ## Additional Resources
 
-- **[docs/GETTING_STARTED.md](../docs/GETTING_STARTED.md)** - Complete beginner's guide
+- **[docs/getting-started.md](../docs/getting-started.md)** - Beginner's guide
 - **[SPECIFICATION.md](../SPECIFICATION.md)** - Full language reference
-- **[ARCHITECTURE.md](../ARCHITECTURE.md)** - System architecture
-- **[docs/v0.7.0_DESIGN.md](../docs/v0.7.0_DESIGN.md)** - MLIR integration roadmap
-- **[AUDIO_SPECIFICATION.md](../AUDIO_SPECIFICATION.md)** - Audio dialect details
+- **[docs/STRATEGY.md](../docs/STRATEGY.md)** - Path to v1.0, what's primary vs. aspirational
+- **[STATUS.md](../STATUS.md)** - Current implementation status
 
 ---
 
@@ -859,5 +872,5 @@ Explore, experiment, and create amazing simulations, sounds, and visualizations 
 
 ---
 
-**Last Updated:** 2025-11-15
-**Version:** v0.6.0 (stable) / v0.7.0-dev (development)
+**Last Updated:** 2026-07-11
+**Version:** v0.12.0
