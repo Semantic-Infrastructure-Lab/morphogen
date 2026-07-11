@@ -500,7 +500,7 @@ class Runtime:
             step: Step AST node
         """
         # Execute all statements in the step
-        for stmt in step.statements:
+        for stmt in step.body:
             self.execute_statement(stmt)
 
         # Advance timestep (swap buffers)
@@ -521,7 +521,7 @@ class Runtime:
 
         # Execute n times
         for _ in range(n):
-            for stmt in substep.statements:
+            for stmt in substep.body:
                 self.execute_statement(stmt)
             self.context.advance_timestep()
 

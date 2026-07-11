@@ -1,7 +1,11 @@
 """Tests for visual3d module - 3D visualization capabilities."""
 
+import os
 import pytest
 import numpy as np
+
+
+RENDER_TESTS_ENABLED = os.environ.get("MORPHOGEN_RUN_VISUAL3D_RENDER_TESTS") == "1"
 
 
 class TestVisual3DTypes:
@@ -341,6 +345,10 @@ class TestLighting:
         assert ambient.intensity == 0.3
 
 
+@pytest.mark.skipif(
+    not RENDER_TESTS_ENABLED,
+    reason="Set MORPHOGEN_RUN_VISUAL3D_RENDER_TESTS=1 to run real visual3d render tests",
+)
 class TestRendering:
     """Test 3D rendering (requires PyVista)."""
 
@@ -402,7 +410,6 @@ class TestRendering:
         mesh = visual3d.mesh_from_field(heightmap, scale_z=5.0)
         camera = visual3d.camera((50, 50, 30), (16, 16, 0))
 
-        # Custom lights
         lights = [
             visual3d.light((50, 50, 50), color=(1.0, 0.9, 0.8), light_type="point"),
             visual3d.light(color=(0.2, 0.2, 0.3), intensity=0.5, light_type="ambient"),
@@ -426,7 +433,6 @@ class TestRendering:
         """Test rendering an isosurface."""
         from morphogen.stdlib import visual3d
 
-        # Create sphere SDF
         x, y, z = np.mgrid[-2:2:32j, -2:2:32j, -2:2:32j]
         volume = np.sqrt(x**2 + y**2 + z**2)
 
@@ -459,6 +465,51 @@ class TestRendering:
         image = visual3d.render_3d(mesh, camera=camera, width=400, height=300)
 
         assert image.shape == (300, 400)
+
+
+class TestRenderingEnvironment:
+    """Test rendering environment helpers without invoking VTK rendering."""
+
+    def test_display_is_usable_false_without_display(self, monkeypatch):
+        """No DISPLAY should be treated as unusable."""
+        from morphogen.stdlib.visual3d import Visual3DOperations
+
+        monkeypatch.delenv("DISPLAY", raising=False)
+        assert Visual3DOperations._display_is_usable() is False
+
+    def test_display_is_usable_false_when_probe_fails(self, monkeypatch):
+        """A failing display probe should mark the display unusable."""
+        from morphogen.stdlib.visual3d import Visual3DOperations
+
+        monkeypatch.setenv("DISPLAY", ":0.0")
+        monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/xdpyinfo")
+
+        class Result:
+            returncode = 1
+
+        monkeypatch.setattr("subprocess.run", lambda *args, **kwargs: Result())
+
+        assert Visual3DOperations._display_is_usable() is False
+
+    def test_ensure_headless_backend_clears_bad_display(self, monkeypatch):
+        """Bad displays should be cleared before falling back to xvfb."""
+        from morphogen.stdlib.visual3d import Visual3DOperations
+
+        monkeypatch.setenv("DISPLAY", ":0.0")
+        monkeypatch.setattr(Visual3DOperations, "_display_is_usable", lambda display=None: False)
+        monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/Xvfb")
+
+        called = {"xvfb": False}
+
+        class DummyPV:
+            @staticmethod
+            def start_xvfb():
+                called["xvfb"] = True
+
+        Visual3DOperations._ensure_headless_rendering_backend(DummyPV)
+
+        assert "DISPLAY" not in __import__("os").environ
+        assert called["xvfb"] is True
 
 
 class TestMolecularVisualization:

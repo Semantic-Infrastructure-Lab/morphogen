@@ -19,6 +19,9 @@ Phase 2 - Advanced Surfaces:
 
 from dataclasses import dataclass, field as dataclass_field
 from typing import Optional, Union, Callable, Tuple, List
+import os
+import shutil
+import subprocess
 import numpy as np
 
 from morphogen.core.operator import operator, OpCategory
@@ -368,6 +371,40 @@ class Visual3DOperations:
     # ==========================================================================
     # Mesh Creation Operators
     # ==========================================================================
+
+    @staticmethod
+    def _display_is_usable(display: Optional[str] = None) -> bool:
+        """Return True when the current X display appears reachable."""
+        target = display if display is not None else os.environ.get("DISPLAY")
+        if not target:
+            return False
+
+        probe = shutil.which("xdpyinfo") or shutil.which("xset")
+        if probe is None:
+            return True
+
+        try:
+            result = subprocess.run(
+                [probe, "-display", target],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                timeout=2,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+        return result.returncode == 0
+
+    @staticmethod
+    def _ensure_headless_rendering_backend(pv) -> None:
+        """Ensure PyVista has a usable display or xvfb fallback."""
+        if Visual3DOperations._display_is_usable():
+            return
+
+        os.environ.pop("DISPLAY", None)
+        if shutil.which("Xvfb") is not None:
+            pv.start_xvfb()
 
     @staticmethod
     @operator(
@@ -878,10 +915,8 @@ class Visual3DOperations:
         import pyvista as pv
         from morphogen.stdlib.visual import Visual
 
-        # Configure for headless rendering if no display available
-        import os
-        if 'DISPLAY' not in os.environ:
-            pv.start_xvfb()
+        # Configure a safe display backend before VTK creates a render window.
+        Visual3DOperations._ensure_headless_rendering_backend(pv)
 
         plotter = pv.Plotter(
             off_screen=True,
