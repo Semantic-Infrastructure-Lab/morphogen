@@ -1,0 +1,3 @@
+# generated run artifacts (regenerate with: python engine_governor.py)
+*.wav
+*.png
