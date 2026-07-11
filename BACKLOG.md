@@ -128,7 +128,9 @@ never built. Two faces, very different cost:
 - **P2-4** — God-class decomposition (internal grouping, keep public API): `geometry.py` (2,411),
   `Visual3DOperations` (1,905), `VisualOperations` (1,464), `MLIRCompiler` (1,326). Low urgency;
   do opportunistically. Note `geometry.py` was never in the original audit baseline.
-- **P2-5** — Fix the 8 exact-duplicate functions (D001) and 3 bare `except:` clauses (B001).
+- **P2-5** — ◐ PARTIAL 2026-07-11: 3 bare `except:` clauses (B001) fixed (vision, sparse_linalg,
+  mlir/optimizer). The 8 exact-duplicate functions (D001) still to dedup (needs per-pair
+  canonical-copy judgement).
 - **P2-6** — Document the `@operator` dynamic-dispatch false-positive so future dead-code audits
   don't re-litigate the ~284 "uncalled" functions (~15.5%, mostly not dead).
 
