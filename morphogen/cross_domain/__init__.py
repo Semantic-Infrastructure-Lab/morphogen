@@ -9,7 +9,11 @@ Key components:
 - Transform functions: Convert data between domain formats
 - Type validation: Ensure compatibility across domain boundaries
 - Composition operators: compose() and link() support
-- Transform composition: Automatic path finding and pipeline execution
+- Path finding: find_transform_path() discovers whether registered bridges connect two domains
+
+Note: the old "composition engine" (TransformComposer/TransformPipeline/auto_compose)
+was retired 2026-07-11 — it never executed (see composer.py). For time-coupled,
+feedback co-simulation across domains, use morphogen.coupling.
 """
 
 # Base classes
@@ -83,15 +87,29 @@ from .validators import (
     CrossDomainValidationError,
 )
 
-# Composer
+# Path finding + explicit composition (the composition *engine* was retired — see below)
 from .composer import (
-    TransformComposer,
-    TransformPipeline,
-    BatchTransformComposer,
     compose,
     find_transform_path,
-    auto_compose,
 )
+
+# Retired 2026-07-11 (BACKLOG P0-2): the auto-composition engine never executed.
+# Raise a clear, guiding error instead of silently 404-ing an import.
+_RETIRED_COMPOSER = {
+    "TransformComposer", "TransformPipeline", "BatchTransformComposer", "auto_compose",
+}
+
+
+def __getattr__(name):
+    if name in _RETIRED_COMPOSER:
+        raise AttributeError(
+            f"{name!r} was retired on 2026-07-11: the cross-domain auto-composition "
+            f"engine never executed (every built-in transform rejected its source_data= "
+            f"kwarg). Use compose(*explicitly_built_interfaces) for one-shot chaining, "
+            f"find_transform_path() to discover routes, or morphogen.coupling.couple() "
+            f"for time-coupled feedback co-simulation."
+        )
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     # Base infrastructure
@@ -129,13 +147,9 @@ __all__ = [
     'SpatialAffineInterface',
     'CartesianToPolarInterface',
     'PolarToCartesianInterface',
-    # Composition engine
-    'TransformComposer',
-    'TransformPipeline',
-    'BatchTransformComposer',
+    # Explicit composition + path finding (auto-composition engine retired 2026-07-11)
     'compose',
     'find_transform_path',
-    'auto_compose',
 ]
 
 # Note: Cross-domain transforms are auto-registered via

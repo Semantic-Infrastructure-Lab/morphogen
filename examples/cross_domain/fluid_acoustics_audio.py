@@ -542,7 +542,7 @@ def demo_with_formal_interfaces():
     print("  • Type-safe domain transformations")
     print("  • Validation before execution")
     print("  • Clear source/target domain metadata")
-    print("  • Composable with TransformComposer")
+    print("  • Composable explicitly with compose()")
     print("  • Registry-based discovery")
     print()
 

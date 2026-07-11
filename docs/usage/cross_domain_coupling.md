@@ -208,33 +208,36 @@ print(cls)   # MolecularToColorInterface
 
 ---
 
-## Composing interfaces with TransformComposer
+## Discovering routes and chaining interfaces
 
-`TransformComposer` finds and chains registered interfaces automatically.
+> **Retired 2026-07-11.** The old auto-composition engine
+> (`TransformComposer` / `auto_compose` — "just give it source and target, it
+> instantiates and runs the chain") never executed: every built-in interface
+> rejected the `source_data=` kwarg it passed. It was removed (BACKLOG P0-2). Use
+> `find_transform_path` to *discover* routes and `compose` to chain interfaces you
+> build explicitly. For domains that must **advance together over time with
+> feedback**, that's a different problem — see
+> [coupled_simulation.md](coupled_simulation.md) (`morphogen.coupling`).
+
+`find_transform_path` reports whether registered bridges connect two domains
+(it discovers; it runs nothing):
 
 ```python
-from morphogen.cross_domain.composer import TransformComposer, auto_compose
+from morphogen.cross_domain import find_transform_path
 
-composer = TransformComposer()
-
-# Find a registered path, molecular → visual
-pipeline = composer.compose_path("molecular", "visual")
-if pipeline:
-    result = pipeline(mol)
-    print(f"pipeline: {pipeline.visualize()}")
-else:
-    print("no registered path found — use direct interface")
+route = find_transform_path("molecular", "visual", max_hops=3)
+print(route)   # e.g. ['molecular', 'visual'] or None if no path exists
 ```
 
-For linear chains you control:
+`compose` chains interfaces you construct explicitly (each gets its real
+configuration — no auto-instantiation guesswork):
 
 ```python
-from morphogen.cross_domain.composer import compose
+from morphogen.cross_domain import compose
 
-# Chain two interfaces manually (no registry needed)
 pipeline = compose(
-    MolecularToColorInterface(),
-    # AnotherInterface() ...
+    MolecularToColorInterface(mol),
+    # AnotherInterface(...) ...
     validate=True,
 )
 output = pipeline(mol)

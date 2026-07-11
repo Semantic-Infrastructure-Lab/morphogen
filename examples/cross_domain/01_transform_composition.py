@@ -14,9 +14,8 @@ in other platforms without extensive glue code.
 import numpy as np
 from morphogen.cross_domain import (
     CrossDomainRegistry,
-    TransformComposer,
+    compose,
     find_transform_path,
-    auto_compose,
     FieldToAudioInterface,
     AudioToVisualInterface,
     TerrainToFieldInterface,
@@ -149,84 +148,46 @@ if path:
     print(f"  Hops: {len(path) - 1}")
 
 # ============================================================================
-# Part 4: Pipeline Composition
+# Part 4: Explicit composition with compose()
 # ============================================================================
 
 print("\n" + "=" * 70)
-print("PART 4: Transform Pipeline Composition")
+print("PART 4: Explicit Composition — compose(terrain→field, field→audio)")
 print("-" * 70)
+print()
+print("compose() chains transforms you build explicitly (each gets its real")
+print("configuration) — no auto-instantiation guesswork. Terrain → Field → Audio:")
 
-composer = TransformComposer(enable_caching=True)
+terrain_input = np.random.rand(64, 64) * 50.0
 
-# Example: Multi-hop pipeline (if intermediate transforms exist)
-print("\n[Pipeline] Creating Field → Audio pipeline...")
+# Build each hop explicitly, then chain their .transform() calls.
+pipeline = compose(
+    TerrainToFieldInterface(terrain_input, normalize=True),
+    FieldToAudioInterface(
+        np.zeros((64, 64)),  # placeholder; transform() receives the live field
+        mapping={"mean": "frequency", "std": "amplitude"},
+        sample_rate=44100,
+        duration=1.0,
+    ),
+    validate=False,  # interfaces expose domain tags loosely; we chain by construction
+)
 
-try:
-    # Create automatic pipeline
-    pipeline = composer.compose_path("field", "audio")
-
-    print(f"  Pipeline: {pipeline.visualize()}")
-    print(f"  Length: {pipeline.length} transform(s)")
-
-    # Execute pipeline
-    test_field = np.random.rand(64, 64) * 100.0
-    result = pipeline(test_field)
-
-    print(f"  Input shape: {test_field.shape}")
-    print(f"  Output: {type(result)}")
-    print("  ✓ Pipeline executed successfully")
-
-except ValueError as e:
-    print(f"  Pipeline creation note: {e}")
-
-# Create explicit pipeline with intermediate steps
-print("\n[Pipeline] Explicit routing: Terrain → Field → Audio")
-
-try:
-    pipeline = composer.compose_path(
-        "terrain",
-        "audio",
-        via=["field"]  # Explicit intermediate domain
-    )
-
-    print(f"  Pipeline: {pipeline.visualize()}")
-    print(f"  Length: {pipeline.length} transform(s)")
-
-    # Execute
-    terrain_data = np.random.rand(64, 64) * 50.0
-    result = pipeline(terrain_data)
-
-    print(f"  ✓ Multi-hop pipeline executed")
-    print(f"  Result type: {type(result)}")
-
-except ValueError as e:
-    print(f"  Note: {e}")
+audio_from_terrain = pipeline(terrain_input)
+print(f"  Input: terrain {terrain_input.shape}")
+print(f"  → Audio frequency: {audio_from_terrain.get('frequency', 0):.2f} Hz")
+print(f"  → Audio amplitude: {audio_from_terrain.get('amplitude', 0):.3f}")
+print("  ✓ Two hops, one callable, run explicitly")
+print()
+print("Note: for domains that must advance *together over time* with feedback")
+print("(a plant + its controller, thermal ↔ mechanics), use morphogen.coupling.couple()")
+print("— a co-simulation loop, not a one-shot chain. This module handles one-shot only.")
 
 # ============================================================================
-# Part 5: Performance Monitoring
+# Part 5: Practical Cross-Domain Workflow
 # ============================================================================
 
 print("\n" + "=" * 70)
-print("PART 5: Performance Monitoring")
-print("-" * 70)
-
-# Get composer statistics
-stats = composer.get_stats()
-print(f"\nComposer Statistics:")
-print(f"  Transforms executed: {stats['transforms_executed']}")
-print(f"  Cache hits: {stats['cache_hits']}")
-print(f"  Cache misses: {stats['cache_misses']}")
-
-if stats['transforms_executed'] > 0:
-    cache_ratio = stats['cache_hits'] / stats['transforms_executed']
-    print(f"  Cache hit ratio: {cache_ratio:.1%}")
-
-# ============================================================================
-# Part 6: Practical Cross-Domain Workflow
-# ============================================================================
-
-print("\n" + "=" * 70)
-print("PART 6: Practical Workflow - Procedural Sound from Terrain")
+print("PART 5: Practical Workflow - Procedural Sound from Terrain")
 print("-" * 70)
 
 print("\n[Workflow] Generate audio from procedurally generated terrain")
@@ -304,10 +265,10 @@ print("✓ CROSS-DOMAIN TRANSFORM DEMO COMPLETE")
 print("=" * 70)
 print()
 print("Summary:")
-print("- Demonstrated 8+ cross-domain transforms")
-print("- Showed automatic path finding capabilities")
-print("- Built multi-hop pipelines (Terrain → Field → Audio)")
+print("- Demonstrated direct single-hop cross-domain transforms")
+print("- Showed path finding over the registry (find_transform_path)")
+print("- Chained transforms explicitly with compose() (Terrain → Field → Audio)")
 print("- Generated procedural audio from terrain elevation data")
 print()
-print("This workflow is IMPOSSIBLE in other platforms without")
-print("extensive custom glue code. Morphogen makes it seamless!")
+print("These are one-shot transforms. For domains that co-advance with feedback")
+print("over time, see morphogen.coupling.couple().")
