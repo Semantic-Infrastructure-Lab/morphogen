@@ -185,22 +185,17 @@ pip install -e .
 Create `hello.morph` (Morphogen source files use `.morph` extension):
 
 ```morphogen
-# hello.morph - Heat diffusion
+# hello.morph — heat diffusion
 
 use field, visual
 
-@state temp : Field2D<f32 [K]> = random_normal(
-    seed=42,
-    shape=(128, 128),
-    mean=300.0,
-    std=50.0
-)
+@state temp : Field2D<f32> = field.alloc((128, 128), fill_value=100.0)
 
-const KAPPA : f32 [m²/s] = 0.1
+const KAPPA : f32 = 0.1
 
-flow(dt=0.01, steps=500) {
-    temp = diffuse(temp, rate=KAPPA, dt, iterations=20)
-    output colorize(temp, palette="fire", min=250.0, max=350.0)
+flow(dt=0.1, steps=200) {
+    temp = diffuse(temp, KAPPA, dt, iterations=10)
+    output colorize(temp, palette="fire", vmin=0.0, vmax=100.0)
 }
 ```
 
