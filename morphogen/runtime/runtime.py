@@ -4,6 +4,10 @@ This module provides the core runtime infrastructure for executing
 Creative Computation DSL programs using NumPy as the backend.
 """
 
+import random
+
+import numpy as np
+
 from typing import Any, Dict, Optional, List
 
 
@@ -239,7 +243,9 @@ class ExecutionContext:
         """Initialize execution context.
 
         Args:
-            global_seed: Global random seed for deterministic execution
+            global_seed: Global random seed for deterministic execution. It is
+                *applied* here (not merely stored): constructing a context seeds
+                the process RNGs so that two runs with the same seed reproduce.
         """
         self.symbols: Dict[str, Any] = {}
         self.const_symbols: set = set()  # Track which symbols are const
@@ -249,6 +255,25 @@ class ExecutionContext:
         self.timestep: int = 0
         self.global_seed: int = global_seed
         self.dt: float = 0.01  # default timestep
+        # A dedicated seeded Generator for new/deterministic code to draw from.
+        self.rng: np.random.Generator = np.random.default_rng(global_seed)
+        # Make the seed *real*: seed the process-global RNGs the stdlib domains
+        # actually use (the vast majority draw from np.random.* and stdlib random).
+        # Side effect by design — deterministic execution is the whole point.
+        self.apply_seed()
+
+    def apply_seed(self, seed: Optional[int] = None) -> None:
+        """(Re)seed the process-global RNGs and this context's Generator.
+
+        Args:
+            seed: Seed to apply; defaults to ``self.global_seed``. Passing a value
+                also updates ``self.global_seed`` so the context stays consistent.
+        """
+        if seed is not None:
+            self.global_seed = seed
+        np.random.seed(self.global_seed)      # global numpy RNG (77 stdlib call sites)
+        random.seed(self.global_seed)         # stdlib random
+        self.rng = np.random.default_rng(self.global_seed)
 
     def set_variable(self, name: str, value: Any, is_const: bool = False,
                      is_state: bool = False) -> None:
