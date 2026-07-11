@@ -27,49 +27,59 @@ This is not a minor inconvenience. It is a civilizational efficiency loss.
 
 ## The Solution
 
-Morphogen eliminates the integration tax by making cross-domain composition a first-class, type-safe operation:
+Morphogen cuts the integration tax by putting rigorous, validated domains in **one
+tested Python library** — and by adding the one thing single-domain libraries lack:
+a substrate that **co-advances several domains with per-timestep feedback**.
 
-```morphogen
-use circuit, audio, visual
+Model an engine idle governor — mechanics (a rigorous ODE integrator) coupled to a
+PID controller (rigorous controls), closing the loop every timestep:
 
-flow(dt=0.01) {
-    em_field   = board.to_em_field()
-    circuit    = board.to_circuit(em_field)
-    audio_out  = circuit.to_audio(input_signal)
-    play(audio_out)
-}
+```python
+from morphogen.coupling import Subsystem, couple
+from morphogen.stdlib.integrators import integrate
+from morphogen.stdlib.controls import pid, pid_step
+
+def mechanics(state, sig, t, dt):        # crank speed, RK4-integrated
+    ...                                   # reads sig["throttle"], publishes "rpm"
+def controller(gov, sig, t, dt):         # PID governor
+    throttle, gov = pid_step(gov, TARGET_RPM, sig["rpm"])
+    return gov, {"throttle": throttle}
+
+result = couple([Subsystem("ctrl", gov0, controller),
+                 Subsystem("mech", state0, mechanics)],
+                steps=3000, dt=0.002, record=("rpm",))
 ```
 
-**One program. Three domains. Zero glue code.** Hear the effect of PCB layout geometry on audio output in real time, while you edit.
+The governor holds idle under a load lurch a fairly-tuned open loop can't reject
+(~10× lower error). Scale it to three domains — thermal ↔ mechanics ↔ control — and
+you get a cold-start warm-up no single-domain library gives you. Runnable:
+`experiments/coupled-feedback/`.
 
-Or couple fluid dynamics to acoustics to audio synthesis:
-
-```morphogen
-use fluid, acoustics, audio
-
-@state flow     : FluidNetwork1D = engine_exhaust(length=2.5m, diameter=50mm)
-@state acoustic : AcousticField1D = waveguide_from_flow(flow)
-
-flow(dt=0.1ms) {
-    flow     = flow.advance(engine_pulse(t), method="lax_wendroff")
-    acoustic = acoustic.couple_from_fluid(flow, impedance_match=true)
-    audio.play(acoustic.to_audio(mic_position=1.5m))
-}
-```
+> A declarative `.morph` DSL front-end (`use circuit, audio; flow(dt=…) { … }`) is
+> **designed but only partially built** — its unbuilt surface is honestly xfail-scoped.
+> The Python API above is what runs today.
 
 ---
 
 ## What Makes It Different
 
-**Broad domain coverage** — physics, chemistry, audio synthesis, circuit simulation, fluid dynamics, geometry, neural networks, procedural graphics, and more, with a shared composition surface.
+**Rigor you can check** *(real today)* — domains validated against analytic ground
+truth: diode within 1 mV of closed form, integrator energy drift `<1e-4`, controllers
+vs. exact step response. ~1,600+ tests assert *physical invariants*.
 
-**Deterministic by design** — reproducible execution is a core goal. Today the most credible path is the Python/NumPy runtime; stronger cross-platform guarantees belong to the longer-term compiler trajectory.
+**Coupled multiphysics with feedback** *(real today)* — `morphogen.coupling.couple`
+co-advances rigorous domains with per-timestep feedback (sequential co-simulation,
+zero-order hold, multi-rate). The layer the vision always needed.
 
-**Category-theoretic foundations** — domains are categories, operators are morphisms, cross-domain translations are functors. Composition is algebra, not glue. The compiler optimizes via natural transformations (e.g., `fft ∘ filter ∘ ifft` becomes a single frequency-domain filter automatically).
+**Interoperable, not siloed** *(real today)* — ~16 single-hop cross-domain bridges;
+`compose()` chains explicitly-built transforms; `find_transform_path()` discovers routes.
 
-**Multirate scheduling** — audio at 48kHz, control at 60Hz, physics at 240Hz, all in the same program. The scheduler handles it.
+**Deterministic** *(real today)* — a fixed seed reproduces (`tests/test_determinism.py`).
+Stronger cross-platform bit-exactness belongs to the longer-term compiler trajectory.
 
-**Symbolic + numeric dual execution** — symbolic solutions first, numeric fallback when needed.
+**North star — designed, not yet built** *(not present-tense facts)* — MLIR
+compilation, category-theoretic optimization, and symbolic+numeric dual execution are
+the vision, not shipped code. See [BACKLOG.md](../BACKLOG.md).
 
 ---
 
@@ -95,4 +105,4 @@ The platform is the direct computational continuation: complex emergent behavior
 - **[docs/philosophy/heritage-and-naming.md](philosophy/heritage-and-naming.md)** — the Turing lineage in full
 - **[docs/philosophy/vision-and-value.md](philosophy/vision-and-value.md)** — strategic capabilities, hard problems, use cases
 - **[docs/ROADMAP.md](ROADMAP.md)** — v1.0 plan and implementation tracking
-- **[docs/DOMAINS.md](DOMAINS.md)** — all 39 domains with examples
+- **[docs/DOMAINS.md](DOMAINS.md)** — domain catalog (~11 rigorous + ~5 applied + ~24 utilities)

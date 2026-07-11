@@ -21,18 +21,48 @@ tags:
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-> *Where computation becomes composition*
+> *A tested Python library of rigorous, interoperable scientific domains.*
 
-**Morphogen** is a universal, deterministic computation platform that unifies domains that have never talked to each other before: **audio synthesis meets physics simulation meets circuit design meets geometry meets optimization** — all in one type system, one scheduler, one language.
+**Morphogen** is a Python library of **analytically-validated scientific-computing
+domains** — circuits, ODE integrators, control systems, thermodynamics, molecular
+mechanics, fluids, and more — that share one namespace and one testing discipline,
+plus a small **coupling substrate** that co-advances several of those domains with
+per-timestep feedback (model an engine: heat + mechanics + control, together).
 
-## Why Morphogen Exists
+Each domain is checked against analytic ground truth, not eyeballed: the circuit
+solver's diode lands within 1 mV of the closed-form answer, the symplectic
+integrators hold energy drift below `1e-4`, the controllers match closed-form step
+responses. That rigor — not a universal compiler or category-theoretic magic — is
+the asset.
 
-Current tools force you to:
-- Export CAD → import to FEA → export mesh → import to CFD → manually couple results
-- Write audio DSP in C++ → physics in Python → visualization in JavaScript
-- Bridge domains with brittle scripts and incompatible data formats
+```python
+from morphogen.stdlib.circuit import ...       # SPICE-grade MNA, validated
+from morphogen.stdlib.integrators import integrate   # symplectic, energy-conserving
+from morphogen.coupling import Subsystem, couple      # co-simulate them with feedback
+```
 
-**Morphogen eliminates this fragmentation.** Model a guitar string's physics, synthesize its sound, optimize its geometry, and visualize the result — all in the same deterministic execution environment.
+## What's real today (and what isn't)
+
+Morphogen is a **library**, honestly tiered — not a finished "platform." What works:
+
+- **~11 rigorous scientific domains** — circuit, integrators, controls, molecular
+  (MM force field), field (Stable-Fluids CFD), thermo, kinetics, electrochem,
+  multiphase, acoustics, sparse_linalg — each with tests asserting physical
+  invariants (~1,600+ tests total).
+- **~5 applied-engineering domains** and **~24 solid utilities** (DSL/graph/CA/
+  color/render) — good code, just not rigorous physics; counted separately.
+- **~16 single-hop cross-domain bridges** (direct instantiation) + **`compose()`**
+  for explicit chaining.
+- **The coupling substrate** (`morphogen.coupling.couple`) — co-simulate rigorous
+  domains with per-timestep feedback. See [docs/usage/coupled_simulation.md](docs/usage/coupled_simulation.md).
+- **Deterministic execution** — a fixed seed now reproduces (see `tests/test_determinism.py`).
+
+**North star — designed, not yet built** (do not read these as present-tense facts):
+MLIR compilation (bindings inert), the `.morph` DSL (partial, honestly xfail-scoped),
+symbolic+numeric and category-theoretic optimization (no code yet), and an intelligent
+cross-domain *planner*. These are the vision, tracked in
+[docs/reviews/2026-07-11-vision-vs-reality.md](docs/reviews/2026-07-11-vision-vs-reality.md)
+and [BACKLOG.md](BACKLOG.md) — not shipped capabilities.
 
 ---
 
@@ -68,30 +98,27 @@ Both compile to the same Graph IR, share the same operator registry, and guarant
 
 ## What Makes Morphogen Different
 
-**Cross-Domain Composition**
-- Audio synthesis + fluid dynamics + circuit simulation in the same program
-- Type-safe connections between domains (e.g., field → agent force, geometry → audio impulse response)
-- Single execution model handles multiple rates (audio @ 48kHz, control @ 60Hz, physics @ 240Hz)
+**Rigor you can check** *(real today)*
+- Domains validated against analytic ground truth, not eyeballed — diode within
+  1 mV of closed form, integrator energy drift `<1e-4`, controllers vs. exact step response
+- ~1,600+ tests that assert *physical invariants*, not just "it ran"
+- One namespace, one testing discipline across every domain
 
-**Deterministic by Design**
-- Bitwise-identical results across runs, platforms, and GPU vendors
-- Explicit RNG seeding, sample-accurate event scheduling
-- Three profiles: `strict` (bit-exact), `repro` (deterministic FP), `live` (low-latency)
+**Coupled multiphysics with feedback** *(real today)*
+- `morphogen.coupling.couple(...)` co-advances several rigorous domains with
+  per-timestep feedback — a plant and its controller, thermal ↔ mechanical states
+- Sequential (Gauss–Seidel) co-simulation with zero-order hold; multi-rate via `stride`
+- This is the one coordinating layer the vision needed; the retired one-shot
+  composer could not express it
 
-**Transform-First Thinking**
-- FFT, STFT, wavelets, DCT as first-class operations
-- Domain changes (time ↔ frequency, space ↔ k-space) are core primitives
-- Uniform transform API across all domains
+**Interoperable, not siloed** *(real today)*
+- ~16 single-hop cross-domain bridges (field → audio, terrain → field, physics → audio…)
+- `compose()` chains explicitly-built transforms; `find_transform_path()` discovers routes
 
-**Production-Grade Compilation**
-- MLIR-based compiler with 6 custom dialects
-- Lowers to optimized CPU/GPU code via LLVM
-- Field operations, agents, audio DSP, temporal execution all compile to native code
-
-**Category-Theoretic Foundations**
-- Domains are categories, operators are morphisms, cross-domain translations are functors
-- Composition is provably well-defined — not glue code, but algebra
-- Compiler optimizes via natural transformations (e.g., `fft ∘ filter ∘ ifft` → single frequency-domain filter automatically)
+**North star — designed, not yet built** *(not present-tense facts)*
+- MLIR compilation, the `.morph` DSL surface, symbolic+numeric optimization, and
+  category-theoretic composition are the vision, not shipped. See
+  [BACKLOG.md](BACKLOG.md) and [docs/reviews/](docs/reviews/).
 
 ---
 
